@@ -6,6 +6,7 @@ import { play } from "../lib/sound";
 import type { Restaurant } from "../lib/types";
 import GameThumb, { WHEEL_GRADIENT } from "../components/GameThumb";
 import FoodPhoto, { thumb } from "../components/FoodPhoto";
+import HowItWorks from "../components/HowItWorks";
 
 const LAST_CASA_KEY = "betfood-last-casa";
 
@@ -65,6 +66,8 @@ export default function Home() {
   const navigate = useNavigate();
   const restaurants = getRestaurants();
   const [pickerGame, setPickerGame] = useState<string | null>(null);
+  // Estado local de propósito: cada tela abre o próprio sheet, sem estado global.
+  const [helpOpen, setHelpOpen] = useState(false);
 
   function playGame(gameId: string) {
     play("tap");
@@ -184,6 +187,63 @@ export default function Home() {
           })}
         </div>
       </div>
+
+      {/* COMO FUNCIONA: card discreto de fechamento — explica as fichas e que
+          não é aposta, sem roubar espaço dos jogos. */}
+      <div className="px-5 pb-6">
+        <button
+          type="button"
+          onClick={() => {
+            play("tap");
+            setHelpOpen(true);
+          }}
+          aria-haspopup="dialog"
+          aria-expanded={helpOpen}
+          className="anim-fade-up press flex w-full items-center gap-3 rounded-card border border-ink/10 bg-white px-4 py-3.5 text-left"
+          style={{ animationDelay: "560ms" }}
+        >
+          <span
+            aria-hidden="true"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-600"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.8}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="h-5 w-5"
+            >
+              <circle cx="12" cy="12" r="9" />
+              <path d="M9.6 9.2a2.5 2.5 0 0 1 4.9.6c0 1.7-2.5 2.1-2.5 3.9" />
+              <path d="M12 17.1h.01" />
+            </svg>
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-display text-[15px] font-bold leading-tight">
+              Como funciona o BetFood
+            </span>
+            <span className="mt-0.5 block text-[12px] leading-relaxed text-ink/70">
+              De onde vêm as fichas e por que isto não é aposta
+            </span>
+          </span>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+            className="h-4 w-4 shrink-0 text-ink/65"
+          >
+            <path d="m9 5 7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+
+      <HowItWorks open={helpOpen} onClose={() => setHelpOpen(false)} />
 
       {/* Picker de casa (bottom sheet) */}
       {pickerGame && (

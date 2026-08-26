@@ -46,7 +46,14 @@ editorial serifado Broadsheet ("não tem cara de app").
 - **Fichas** (moeda global): boas-vindas 50, jogada custa `CHIP_COST` 10, bônus diário +30 (`claimDailyBonus`), código da mesa credita `credits × 10` fichas.
 - **XP/nível**: +10 por jogada, +25 por vitória; níveis Garfo de Bronze → Prata → Ouro → Chef da Casa → Lenda de Natal (`getProgress()`).
 - **Streak**: dias seguidos jogando (qualquer casa).
-- **Cupom** tem `expiresAt` (24h após o ganho).
+- **Cupom** tem `expiresAt` (24h após o ganho). A validação no caixa mora em
+  `store.ts`, não na página: `findCouponByCode(restaurantId, code)` (busca
+  case-insensitive e ignorando espaços, escopada por casa),
+  `redeemCouponByCode(restaurantId, code)` → `RedeemByCodeResult` (`ok` |
+  `nao-encontrado` | `ja-usado` | `expirado`, com o cupom junto pra tela mostrar
+  data), `getPendingCoupons(restaurantId)` e os auxiliares `couponExpiresAt` /
+  `isCouponExpired` (fallback `wonAt + 24h` pra cupom antigo sem `expiresAt`).
+  Nunca duplicar essa regra de prazo na UI.
 - **Dados de demonstração**: a primeira visita nasce com histórico fictício
   (códigos e cupons marcados `demo: true`) pra o painel do parceiro não abrir
   zerado no pitch. `clearDemoData()` limpa antes de uma demo ao vivo;

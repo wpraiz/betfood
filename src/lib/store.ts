@@ -83,6 +83,15 @@ function seededCode(seed: number): string {
   return out;
 }
 
+// 4 cupons por casa, um de cada estado — o painel precisa poder demonstrar
+// validação com sucesso, "já usado" e "expirado" sem depender de sorte.
+const DEMO_COUPONS = [
+  { agoMs: 7_200_000, redeemed: false }, // pendente: ganho há 2h, ainda vale
+  { agoMs: DAY + 7_200_000, redeemed: true }, // resgatado ontem
+  { agoMs: 3 * DAY, redeemed: false }, // expirado: passou das 24h
+  { agoMs: 5 * DAY, redeemed: true }, // resgatado há 5 dias
+];
+
 function withDemoData(db: DB): DB {
   const now = Date.now();
   let seed = 7;
@@ -100,11 +109,10 @@ function withDemoData(db: DB): DB {
         demo: true,
       });
     }
-    // ~3 cupons por casa, metade já resgatada
-    for (let i = 0; i < 3; i++) {
+    DEMO_COUPONS.forEach((d, i) => {
       seed += 31;
       const prize = r.prizes[i % (r.prizes.length - 1)];
-      const wonAt = new Date(now - ((i * 2) % 6) * DAY - 7_200_000);
+      const wonAt = new Date(now - d.agoMs);
       db.coupons.push({
         id: `demo-${r.id}-${i}`,
         restaurantId: r.id,
@@ -113,10 +121,10 @@ function withDemoData(db: DB): DB {
         code: seededCode(seed + ri * 7),
         wonAt: wonAt.toISOString(),
         expiresAt: new Date(wonAt.getTime() + DAY).toISOString(),
-        redeemedAt: i % 2 === 0 ? new Date(wonAt.getTime() + 5_400_000).toISOString() : null,
+        redeemedAt: d.redeemed ? new Date(wonAt.getTime() + 5_400_000).toISOString() : null,
         demo: true,
       });
-    }
+    });
   });
   db.coupons.sort((a, b) => b.wonAt.localeCompare(a.wonAt));
   return db;
@@ -319,4 +327,72 @@ export function getTableCodes(restaurantId: string): TableCode[] {
 
 export function getRestaurantCoupons(restaurantId: string): Coupon[] {
   return load().coupons.filter((c) => c.restaurantId === restaurantId);
+}
+
+// --- Validação de cupom no balcão -----------------------------------------
+// O garçom digita o código que o cliente mostra. Tudo aqui é por casa: um
+// cupom da pizzaria nunca pode ser aceito na churrascaria.
+
+/** Tira espaços (inclusive no meio, de quem digita "AB C123") e sobe a caixa. */
+function normalizeCode(code: string): string {
+  return code.replace(/\s+/g, "").toUpperCase();
+}
+
+/**
+ * Quando o cupom perde a validade. Cupons antigos podem não ter `expiresAt`;
+ * pra esses vale a regra da casa: 24h a partir do ganho.
+ */
+export function couponExpiresAt(coupon: Coupon): Date {
+  const declared = coupon.expiresAt ? Date.parse(coupon.expiresAt) : NaN;
+  if (!Number.isNaN(declared)) return new Date(declared);
+  return new Date(Date.parse(coupon.wonAt) + DAY);
+}
+
+export function isCouponExpired(coupon: Coupon, now: number = Date.now()): boolean {
+  return couponExpiresAt(coupon).getTime() <= now;
+}
+
+/** Busca o cupom desta casa pelo código, ignorando caixa e espaços. */
+export function findCouponByCode(restaurantId: string, code: string): Coupon | undefined {
+  const norm = normalizeCode(code);
+  if (!norm) return undefined;
+  return load().coupons.find(
+    (c) => c.restaurantId === restaurantId && normalizeCode(c.code) === norm
+  );
+}
+
+export interface RedeemByCodeResult {
+  ok: boolean;
+  reason?: "nao-encontrado" | "ja-usado" | "expirado";
+  coupon?: Coupon;
+}
+
+/**
+ * Valida e dá baixa no cupom. Devolve o cupom junto com o motivo pra tela
+ * poder dizer *quando* foi usado / *quando* expirou, não só que deu errado.
+ * "já usado" vem antes de "expirado": é a informação mais útil no balcão.
+ */
+export function redeemCouponByCode(restaurantId: string, code: string): RedeemByCodeResult {
+  const norm = normalizeCode(code);
+  if (!norm) return { ok: false, reason: "nao-encontrado" };
+  const db = load();
+  const coupon = db.coupons.find(
+    (c) => c.restaurantId === restaurantId && normalizeCode(c.code) === norm
+  );
+  if (!coupon) return { ok: false, reason: "nao-encontrado" };
+  if (coupon.redeemedAt) return { ok: false, reason: "ja-usado", coupon };
+  if (isCouponExpired(coupon)) return { ok: false, reason: "expirado", coupon };
+  coupon.redeemedAt = new Date().toISOString();
+  save(db);
+  return { ok: true, coupon };
+}
+
+/** Cupons da casa que ainda podem ser usados — mais recentes primeiro. */
+export function getPendingCoupons(restaurantId: string): Coupon[] {
+  const now = Date.now();
+  return load()
+    .coupons.filter(
+      (c) => c.restaurantId === restaurantId && !c.redeemedAt && !isCouponExpired(c, now)
+    )
+    .sort((a, b) => b.wonAt.localeCompare(a.wonAt));
 }

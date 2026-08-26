@@ -1,6 +1,6 @@
 # STATUS — BetFood POC
 
-Atualizado: 2026-08-26 (noite — fim do ciclo 1 do loop de melhoria)
+Atualizado: 2026-08-26 (noite — fim do ciclo 3 do loop de melhoria)
 
 ## O que estávamos fazendo
 
@@ -28,6 +28,72 @@ dopaminérgico** (fichas, XP, streak, som, motion).
 **https://betfood.vercel.app** (deploy automático a cada push em main).
 Games repaginados, modo imersivo, HUD de fichas/XP/streak, near-miss na roleta —
 tudo publicado e verificado sem erro de console.
+
+## Ciclo 3 (loop de melhoria) — 26/ago, noite
+
+Dois agentes em paralelo + verificação final. Fecha os itens 1, 2 e 7 do backlog
+do ciclo 1 (validar cupom no painel, tela "Como funciona", validade do cupom).
+
+### O que mudou
+
+**Validação de cupom no caixa (`src/lib/store.ts`, `src/pages/Partner.tsx`)**
+- `findCouponByCode`, `redeemCouponByCode`, `getPendingCoupons`,
+  `couponExpiresAt`, `isCouponExpired` — regra de prazo (24h, com fallback
+  `wonAt + 24h` pra cupom antigo) mora só no store; a página não recalcula nada.
+- `redeemCouponByCode` devolve `ok` | `nao-encontrado` | `ja-usado` | `expirado`
+  **com o cupom junto**, pra tela dizer *quando* foi usado ou expirou. Só o
+  caminho `ok` grava `redeemedAt`.
+- Painel: bloco "Validar cupom" acima das métricas (input em maiúsculas, Enter
+  valida), card verde com prêmio + som + confetti no sucesso, card vermelho com
+  motivo e saída no erro, lista "Cupons pendentes desta casa" (toque preenche o
+  código), "Limpar dados de demonstração" com confirmação inline.
+- Semente de demonstração passou a gerar 4 cupons por casa (1 pendente, 2
+  resgatados, 1 expirado) — antes nenhum cupom nascia pendente e não havia como
+  demonstrar uma validação bem-sucedida no pitch.
+
+**Tela "Como funciona" (`src/components/HowItWorks.tsx`, novo)**
+- Bottom sheet com 6 passos explicando a economia de FICHAS (custo da jogada,
+  50 de boas-vindas, +30 diário, código da mesa, cupom na carteira, prazo de
+  24h) e selo âmbar "Sem dinheiro real, sem aposta" — o app se chama BetFood e
+  isso precisa estar dito na primeira tela de dúvida.
+- Fecha no X (44px), no toque fora, no Esc e no "Entendi"; trava o scroll do
+  body; foco vai pro X ao abrir. Renderizado **fora** do `<header>` sticky do
+  HUD (o header cria contexto de empilhamento e prenderia o overlay).
+- Entradas: botão "?" no HUD e card no fim da Home.
+- Correção da verificação: o "Entendi" ficava abaixo da dobra a 390x844 (cortado
+  pela borda da tela). Virou rodapé fixo do sheet, fora da área rolável.
+
+**Validade visível na carteira (`src/pages/Wallet.tsx`)**
+- Chip "Vale até HH:MM de hoje / de amanhã / de DD/MM"; estado **Expirado** com
+  visual próprio (carimbo em tinta, faixa cinza distinta do "Usado", sem botão
+  "Marcar usado"). Contador de ativos exclui expirados; tick de 30s reavalia o
+  vencimento sem recarregar.
+
+### Verificação
+
+`npm run build` limpo. Chrome 390x844 com estado zerado: painel do parceiro
+mostra o bloco de validação e 1 cupom pendente; toque no pendente preenche o
+código → **Validar** dá sucesso (métrica "Cupons resgatados" 2 → 3, cupom vira
+"Usado" na carteira); o mesmo código de novo → "Esse cupom já foi usado em
+26/08/2026 às 20:44"; `XXXXXX` → "Código não encontrado nesta casa". Sheet abre
+pelo HUD e pela Home, fecha no X, no toque fora e no Esc, com o selo visível.
+Console: 0 erro, 0 warning.
+Screenshots: `C:\tmp\c3-validacao-ok.png`, `C:\tmp\c3-validacao-erro.png`,
+`C:\tmp\c3-sheet-aberto.png`.
+
+### Backlog restante
+
+1. **Lazy-load dos games** — bundle único de 313 kB; cada jogo devia entrar por
+   `React.lazy`.
+2. **Service worker / offline** — PWA instalada ainda não abre sem rede (cache
+   headers já estão no `vercel.json`).
+3. **Cobrar ficha só no início real da partida** — hoje a ficha sai na montagem
+   da tela; sair antes de jogar queima ficha.
+4. **Validar em iPhone real** — safe-area, alvos de 44px e o input de código com
+   `tracking` largo a 375px seguem sendo aposta de código.
+5. Elevar o nível visual dos games além da roleta (item 1 do backlog do José).
+6. Cupom expirado nunca sai da carteira — bom pro pitch (mostra a regra de 24h),
+   ruim em uso longo. Decisão de produto.
 
 ## Ciclo 1 (loop de melhoria) — 26/ago, noite
 

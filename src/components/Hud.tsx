@@ -7,6 +7,7 @@ import {
   getProgress,
 } from "../lib/store";
 import { isMuted, play, setMuted } from "../lib/sound";
+import HowItWorks from "./HowItWorks";
 
 /** Alto-falante (com ondas) ou alto-falante riscado quando está no mudo. */
 function SpeakerIcon({ muted, className }: { muted: boolean; className?: string }) {
@@ -71,6 +72,25 @@ function ChipIcon({ className }: { className?: string }) {
   );
 }
 
+/** "?" em círculo — abre o sheet que explica as fichas e que não é aposta. */
+function HelpIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9.6 9.2a2.5 2.5 0 0 1 4.9.6c0 1.7-2.5 2.1-2.5 3.9" />
+      <path d="M12 17.1h.01" />
+    </svg>
+  );
+}
+
 function FlameIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
@@ -105,6 +125,7 @@ export default function Hud() {
   const [chips, setChips] = useState(getChips());
   const [claimable, setClaimable] = useState(canClaimDailyBonus());
   const [muted, setMutedState] = useState(isMuted());
+  const [helpOpen, setHelpOpen] = useState(false);
   const progress = getProgress();
   const shown = useCountUp(chips);
 
@@ -151,73 +172,98 @@ export default function Hud() {
         );
 
   return (
-    /* pt-[env(safe-area-inset-top)]: em PWA instalada o conteúdo desenharia sob
-       a barra de status do iPhone (notch / Dynamic Island). */
-    <header className="sticky top-0 z-30 border-b border-ink/10 bg-white/95 pt-[env(safe-area-inset-top)] backdrop-blur-md">
-      <div className="flex items-center gap-1.5 px-3 py-2.5">
-        {/* Fichas */}
-        <div className="flex items-center gap-1.5 rounded-full bg-ink px-3 py-1.5">
-          <ChipIcon className="h-5 w-5" />
-          <span className="font-display text-sm font-black tabular-nums text-white">
-            {shown}
-          </span>
-        </div>
-
-        {/* Streak */}
-        {progress.streak > 0 && (
-          <div className="flex items-center gap-1 rounded-full bg-brand-50 px-2.5 py-1.5 text-brand-600">
-            <FlameIcon className="h-4 w-4" />
-            <span className="text-xs font-black tabular-nums">{progress.streak}</span>
-          </div>
-        )}
-
-        {/* Nível */}
-        <div className="min-w-0 flex-1">
-          <div className="flex items-baseline justify-between gap-1">
-            <span className="truncate text-[10px] font-bold uppercase tracking-[0.04em] text-ink/65">
-              Nv.{progress.level} {progress.levelName}
-            </span>
-            <span className="shrink-0 text-[10px] font-semibold tabular-nums text-ink/65">
-              {progress.xp} XP
+    /* O sheet fica FORA do <header>: header é sticky com z-index, ou seja cria
+       contexto de empilhamento — um overlay fixo lá dentro ficaria preso abaixo
+       da tab bar do Layout. */
+    <>
+      {/* pt-[env(safe-area-inset-top)]: em PWA instalada o conteúdo desenharia sob
+          a barra de status do iPhone (notch / Dynamic Island). */}
+      <header className="sticky top-0 z-30 border-b border-ink/10 bg-white/95 pt-[env(safe-area-inset-top)] backdrop-blur-md">
+        <div className="flex items-center gap-1.5 px-3 py-2.5">
+          {/* Fichas */}
+          <div className="flex items-center gap-1.5 rounded-full bg-ink px-3 py-1.5">
+            <ChipIcon className="h-5 w-5" />
+            <span className="font-display text-sm font-black tabular-nums text-white">
+              {shown}
             </span>
           </div>
-          <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-surface">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-brand-500 to-accent2 transition-all duration-700"
-              style={{ width: `${Math.max(4, pct)}%` }}
-            />
+
+          {/* Streak */}
+          {progress.streak > 0 && (
+            <div className="flex items-center gap-1 rounded-full bg-brand-50 px-2.5 py-1.5 text-brand-600">
+              <FlameIcon className="h-4 w-4" />
+              <span className="text-xs font-black tabular-nums">{progress.streak}</span>
+            </div>
+          )}
+
+          {/* Nível */}
+          <div className="min-w-0 flex-1">
+            <div className="flex items-baseline justify-between gap-1">
+              <span className="truncate text-[10px] font-bold uppercase tracking-[0.04em] text-ink/65">
+                Nv.{progress.level} {progress.levelName}
+              </span>
+              <span className="shrink-0 text-[10px] font-semibold tabular-nums text-ink/65">
+                {progress.xp} XP
+              </span>
+            </div>
+            <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-surface">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-brand-500 to-accent2 transition-all duration-700"
+                style={{ width: `${Math.max(4, pct)}%` }}
+              />
+            </div>
           </div>
-        </div>
 
-        {/* Som: respeita o silencioso do aparelho, este botão é o mudo do app.
-            h-11/w-11 = 44px de alvo; -mx-1.5 compensa o visual. */}
-        <button
-          type="button"
-          onClick={toggleMute}
-          aria-pressed={muted}
-          aria-label={muted ? "Ativar som" : "Desativar som"}
-          title={muted ? "Ativar som" : "Desativar som"}
-          className={`press -mx-1.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${
-            muted ? "text-ink/65" : "text-ink"
-          }`}
-        >
-          <SpeakerIcon muted={muted} className="h-5 w-5" />
-        </button>
-
-        {/* Bônus diário */}
-        {claimable ? (
+          {/* Som: respeita o silencioso do aparelho, este botão é o mudo do app.
+              h-11/w-11 = 44px de alvo; -mx-1.5 compensa o visual. */}
           <button
-            onClick={claim}
-            className="press inline-flex h-11 shrink-0 items-center rounded-full bg-gradient-to-r from-accent2 to-brand-500 px-3 text-[11px] font-black uppercase tracking-wide text-white whitespace-nowrap shadow-lg shadow-accent2/40 motion-safe:animate-pulse"
+            type="button"
+            onClick={toggleMute}
+            aria-pressed={muted}
+            aria-label={muted ? "Ativar som" : "Desativar som"}
+            title={muted ? "Ativar som" : "Desativar som"}
+            className={`press -mx-1.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${
+              muted ? "text-ink/65" : "text-ink"
+            }`}
           >
-            Bônus +30
+            <SpeakerIcon muted={muted} className="h-5 w-5" />
           </button>
-        ) : (
-          <span className="inline-flex h-11 shrink-0 items-center whitespace-nowrap rounded-full bg-surface px-3 text-[10px] font-bold uppercase tracking-wide text-ink/65">
-            Amanhã +30
-          </span>
-        )}
-      </div>
-    </header>
+
+          {/* Ajuda: de onde vêm as fichas, pra que servem e que NÃO é aposta. */}
+          <button
+            type="button"
+            onClick={() => {
+              play("tap", { volume: 0.4 });
+              setHelpOpen(true);
+            }}
+            aria-haspopup="dialog"
+            aria-expanded={helpOpen}
+            aria-label="Como funciona"
+            title="Como funciona"
+            /* só -mr: com -mx os 44px deste botão invadiriam os 44px do mudo
+               (o mudo já puxa -1.5 pra direita) e daria mistap entre os dois. */
+            className="press -mr-1.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-ink"
+          >
+            <HelpIcon className="h-5 w-5" />
+          </button>
+
+          {/* Bônus diário */}
+          {claimable ? (
+            <button
+              onClick={claim}
+              className="press inline-flex h-11 shrink-0 items-center rounded-full bg-gradient-to-r from-accent2 to-brand-500 px-3 text-[11px] font-black uppercase tracking-wide text-white whitespace-nowrap shadow-lg shadow-accent2/40 motion-safe:animate-pulse"
+            >
+              Bônus +30
+            </button>
+          ) : (
+            <span className="inline-flex h-11 shrink-0 items-center whitespace-nowrap rounded-full bg-surface px-3 text-[10px] font-bold uppercase tracking-wide text-ink/65">
+              Amanhã +30
+            </span>
+          )}
+        </div>
+      </header>
+
+      <HowItWorks open={helpOpen} onClose={() => setHelpOpen(false)} />
+    </>
   );
 }

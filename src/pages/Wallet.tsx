@@ -1,13 +1,82 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getCoupons, getRestaurant, redeemCoupon } from "../lib/store";
 import { play } from "../lib/sound";
 import FoodPhoto, { thumb } from "../components/FoodPhoto";
+import HowItWorks from "../components/HowItWorks";
+
+function ClockIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5.2l3.2 2" />
+    </svg>
+  );
+}
+
+function HelpIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9.6 9.2a2.5 2.5 0 0 1 4.9.6c0 1.7-2.5 2.1-2.5 3.9" />
+      <path d="M12 17.1h.01" />
+    </svg>
+  );
+}
+
+/**
+ * Validade do cupom (24h após o ganho). `expiresAt` é opcional no tipo — cupom
+ * antigo, salvo antes do campo existir, simplesmente não mostra validade.
+ */
+function expiryInfo(expiresAt: string | undefined, now: number) {
+  if (!expiresAt) return null;
+  const at = new Date(expiresAt).getTime();
+  if (Number.isNaN(at)) return null;
+  if (at <= now) return { expired: true, label: "Expirado" };
+
+  const d = new Date(at);
+  const hora = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  const dia = d.toDateString();
+  const quando =
+    dia === new Date(now).toDateString()
+      ? "hoje"
+      : dia === new Date(now + 86400000).toDateString()
+        ? "amanhã"
+        : d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+  return { expired: false, label: `Vale até ${hora} de ${quando}` };
+}
 
 export default function Wallet() {
   const [, forceUpdate] = useState(0);
+  const [helpOpen, setHelpOpen] = useState(false);
+  // Cupom vence em 24h: sem este tick a tela mostraria "Vale até" pra sempre em
+  // quem deixou o app aberto.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(Date.now()), 30000);
+    return () => window.clearInterval(id);
+  }, []);
+
   const coupons = getCoupons();
-  const active = coupons.filter((c) => !c.redeemedAt).length;
+  const active = coupons.filter(
+    (c) => !c.redeemedAt && !expiryInfo(c.expiresAt, now)?.expired
+  ).length;
 
   return (
     <div>
@@ -31,7 +100,7 @@ export default function Wallet() {
         </div>
         <p className="mt-3 max-w-[36ch] text-sm leading-relaxed text-ink/70">
           {active > 0
-            ? "Prêmio ganho é prêmio seu. Mostra o código pro garçom e pronto."
+            ? "Prêmio ganho é prêmio seu. Mostra o código pro garçom — vale 24h, só na casa que emitiu."
             : "Seus prêmios caem aqui, prontos pra usar."}
         </p>
       </div>
@@ -70,21 +139,23 @@ export default function Wallet() {
           {coupons.map((c, i) => {
             const r = getRestaurant(c.restaurantId);
             const used = Boolean(c.redeemedAt);
-            const accent = "#ea1d2c";
+            const info = expiryInfo(c.expiresAt, now);
+            // "Expirado" é um estado próprio: cupom que venceu SEM ter sido
+            // usado. Quem já usou continua mostrando só "Usado".
+            const expired = !used && Boolean(info?.expired);
+            const dim = used ? "opacity-40" : expired ? "opacity-55" : "";
+            const stripe = used ? "#dedbda" : expired ? "#a9a4a2" : "#ea1d2c";
             return (
               <div
                 key={c.id}
                 className="anim-fade-up relative overflow-hidden rounded-card bg-white shadow-sm"
                 style={{ animationDelay: `${Math.min(i, 8) * 70}ms` }}
               >
-                {/* Faixa lateral na cor do restaurante */}
-                <div
-                  className="absolute inset-y-0 left-0 w-1.5"
-                  style={{ background: used ? "#dedbda" : accent }}
-                />
+                {/* Faixa lateral: cor da marca quando vale, cinza quando não */}
+                <div className="absolute inset-y-0 left-0 w-1.5" style={{ background: stripe }} />
 
                 {/* Restaurante + prêmio */}
-                <div className={used ? "opacity-40" : ""}>
+                <div className={dim}>
                   <div className="flex items-center gap-3 p-4 pb-2.5 pl-5">
                     {r && (
                       <FoodPhoto
@@ -105,6 +176,20 @@ export default function Wallet() {
                   </div>
                 </div>
 
+                {/* Validade — fora do bloco esmaecido pra continuar legível */}
+                {!used && info && (
+                  <div className="px-4 pb-3 pl-5">
+                    <span
+                      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold ${
+                        expired ? "bg-surface text-ink/70" : "bg-brand-50 text-brand-700"
+                      }`}
+                    >
+                      <ClockIcon className="h-3.5 w-3.5" />
+                      {info.label}
+                    </span>
+                  </div>
+                )}
+
                 {/* Linha de recorte: tracejado + notches */}
                 <div className="relative flex items-center">
                   <div className="absolute -left-3 h-6 w-6 rounded-full bg-paper" />
@@ -113,24 +198,20 @@ export default function Wallet() {
                 </div>
 
                 {/* Código + ação */}
-                <div
-                  className={`flex items-end justify-between gap-3 p-4 pl-5 pt-3 ${
-                    used ? "opacity-40" : ""
-                  }`}
-                >
+                <div className={`flex items-end justify-between gap-3 p-4 pl-5 pt-3 ${dim}`}>
                   <div>
                     <div className="text-[10px] font-semibold uppercase tracking-[0.25em] text-ink/65">
                       Código do cupom
                     </div>
                     <div
                       className={`mt-0.5 font-display text-3xl font-bold tracking-[0.12em] ${
-                        used ? "text-ink/70" : "text-brand-600"
+                        used || expired ? "text-ink/70" : "text-brand-600"
                       }`}
                     >
                       {c.code}
                     </div>
                   </div>
-                  {!used && (
+                  {!used && !expired && (
                     <button
                       className="press inline-flex min-h-11 shrink-0 items-center justify-center rounded-full border border-ink/15 bg-white px-4 text-xs font-bold text-ink/70 transition-colors active:bg-surface"
                       onClick={() => {
@@ -144,11 +225,18 @@ export default function Wallet() {
                   )}
                 </div>
 
-                {/* Carimbo de usado */}
-                {used && (
+                {/* Carimbo: "Usado" (vermelho) e "Expirado" (tinta) são estados
+                    diferentes e têm carimbos diferentes de propósito. */}
+                {(used || expired) && (
                   <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                    <span className="-rotate-12 rounded-md border-[3px] border-brand-600/35 px-4 py-1 font-display text-2xl font-bold uppercase tracking-[0.3em] text-brand-600/40">
-                      Usado
+                    <span
+                      className={`-rotate-12 rounded-md border-[3px] px-4 py-1 font-display text-2xl font-bold uppercase tracking-[0.3em] ${
+                        used
+                          ? "border-brand-600/35 text-brand-600/40"
+                          : "border-ink/25 text-ink/60"
+                      }`}
+                    >
+                      {used ? "Usado" : "Expirado"}
                     </span>
                   </div>
                 )}
@@ -157,6 +245,25 @@ export default function Wallet() {
           })}
         </div>
       </div>
+
+      {/* Rodapé: regra do cupom sempre a um toque, sem beco sem saída */}
+      <div className="px-5 pb-8">
+        <button
+          type="button"
+          onClick={() => {
+            play("tap");
+            setHelpOpen(true);
+          }}
+          aria-haspopup="dialog"
+          aria-expanded={helpOpen}
+          className="press mx-auto flex min-h-11 items-center justify-center gap-2 rounded-full px-4 text-[13px] font-bold text-ink/70 active:bg-surface"
+        >
+          <HelpIcon className="h-4 w-4" />
+          Como funciona / regras do cupom
+        </button>
+      </div>
+
+      <HowItWorks open={helpOpen} onClose={() => setHelpOpen(false)} />
     </div>
   );
 }

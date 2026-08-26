@@ -1,12 +1,39 @@
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
+import confetti from "canvas-confetti";
 import {
+  clearDemoData,
+  couponExpiresAt,
   generateTableCodes,
+  getPendingCoupons,
   getRestaurantCoupons,
   getRestaurants,
   getTableCodes,
+  hasDemoData,
+  redeemCouponByCode,
+  type RedeemByCodeResult,
 } from "../lib/store";
 import { play } from "../lib/sound";
 import FoodPhoto, { thumb } from "../components/FoodPhoto";
+
+const CONFETTI_COLORS = ["#ea1d2c", "#f5a623", "#ffffff"];
+
+/** "26/08/2026 às 19:04" — o parceiro precisa do horário, não só do dia. */
+function formatDateTime(iso: string | Date): string {
+  const d = typeof iso === "string" ? new Date(iso) : iso;
+  const dia = d.toLocaleDateString("pt-BR");
+  const hora = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  return `${dia} às ${hora}`;
+}
+
+/** Quanto falta pra expirar, em linguagem de balcão. */
+function timeLeftLabel(until: Date, now: number): string {
+  const ms = until.getTime() - now;
+  if (ms <= 0) return "expirado";
+  const horas = Math.floor(ms / 3_600_000);
+  const minutos = Math.floor((ms % 3_600_000) / 60_000);
+  if (horas >= 1) return `vence em ${horas}h${minutos > 0 ? ` ${minutos}min` : ""}`;
+  return `vence em ${Math.max(1, minutos)}min`;
+}
 
 function Metric({
   label,
@@ -120,10 +147,74 @@ export default function Partner() {
   const [credits, setCredits] = useState(3);
   const [, forceUpdate] = useState(0);
 
+  // Validação de cupom no balcão
+  const [typedCode, setTypedCode] = useState("");
+  const [check, setCheck] = useState<{ typed: string; res: RedeemByCodeResult } | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [confirmClear, setConfirmClear] = useState(false);
+
+  const now = Date.now();
   const codes = getTableCodes(selected);
   const coupons = getRestaurantCoupons(selected);
+  const pending = getPendingCoupons(selected);
   const codesUsed = codes.filter((c) => c.usedAt).length;
   const couponsRedeemed = coupons.filter((c) => c.redeemedAt).length;
+  const restaurantName = restaurants.find((r) => r.id === selected)?.name ?? "esta casa";
+  const showClearDemo = hasDemoData();
+
+  /** Troca de casa zera o que era da casa anterior (código digitado e resultado). */
+  function selectRestaurant(id: string) {
+    setSelected(id);
+    setTypedCode("");
+    setCheck(null);
+    setConfirmClear(false);
+  }
+
+  function validateCode() {
+    const typed = typedCode.trim();
+    if (!typed) {
+      inputRef.current?.focus();
+      return;
+    }
+    const res = redeemCouponByCode(selected, typed);
+    setCheck({ typed, res });
+    if (res.ok) {
+      play("coupon");
+      // Confetti discreto: é o balcão do restaurante, não a tela de vitória.
+      confetti({
+        particleCount: 45,
+        spread: 55,
+        startVelocity: 26,
+        scalar: 0.8,
+        origin: { y: 0.28 },
+        colors: CONFETTI_COLORS,
+      });
+      setTypedCode(""); // pronto pro próximo cliente
+    } else {
+      play("wrong"); // erro mantém o texto pra corrigir o dígito errado
+    }
+    forceUpdate((n) => n + 1);
+  }
+
+  /** Mensagem do card de erro, por motivo. */
+  function errorText(res: RedeemByCodeResult, typed: string): { title: string; hint: string } {
+    if (res.reason === "ja-usado" && res.coupon?.redeemedAt) {
+      return {
+        title: `Esse cupom já foi usado em ${formatDateTime(res.coupon.redeemedAt)}`,
+        hint: `${res.coupon.prizeLabel} — a baixa já tinha sido dada.`,
+      };
+    }
+    if (res.reason === "expirado" && res.coupon) {
+      return {
+        title: `Cupom expirado em ${formatDateTime(couponExpiresAt(res.coupon))}`,
+        hint: `${res.coupon.prizeLabel} — cupom vale 24h depois de ganho.`,
+      };
+    }
+    return {
+      title: "Código não encontrado nesta casa",
+      hint: `Nenhum cupom com "${typed.toUpperCase()}" em ${restaurantName}. Confira as letras com o cliente.`,
+    };
+  }
 
   return (
     <div>
@@ -150,7 +241,7 @@ export default function Partner() {
               <button
                 key={r.id}
                 type="button"
-                onClick={() => setSelected(r.id)}
+                onClick={() => selectRestaurant(r.id)}
                 className={`press flex min-h-11 shrink-0 items-center gap-2.5 rounded-full border py-1.5 pl-1.5 pr-4 transition-colors ${
                   on ? "border-brand-500 bg-brand-50" : "border-ink/10 bg-white"
                 }`}
@@ -170,6 +261,179 @@ export default function Partner() {
               </button>
             );
           })}
+        </div>
+
+        {/* Validar cupom — primeira coisa que o dono usa no balcão */}
+        <div
+          className="anim-fade-up mb-6 rounded-card border border-ink/10 bg-white p-4 shadow-sm"
+          style={{ animationDelay: "20ms" }}
+        >
+          <div className="font-display text-base font-bold">Validar cupom</div>
+          <p className="mt-1 text-xs leading-relaxed text-ink/70">
+            Digite o código que o cliente mostrou. Se estiver valendo, a baixa é dada na hora.
+          </p>
+
+          <form
+            className="mt-3 flex gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              validateCode();
+            }}
+          >
+            <input
+              ref={inputRef}
+              value={typedCode}
+              onChange={(e) => {
+                setTypedCode(e.target.value.toUpperCase());
+                if (check) setCheck(null); // digitou de novo: resultado anterior sai da frente
+              }}
+              placeholder="XXXXXX"
+              aria-label="Código do cupom"
+              maxLength={12}
+              autoCapitalize="characters"
+              autoCorrect="off"
+              autoComplete="off"
+              spellCheck={false}
+              enterKeyHint="done"
+              className="min-h-11 w-full min-w-0 flex-1 rounded-card border border-ink/15 bg-paper px-4 py-3 text-center font-display text-2xl font-bold uppercase tracking-[0.25em] text-ink placeholder:tracking-[0.2em] placeholder:text-ink/55 focus:border-brand-500 focus:outline-none"
+            />
+            <button
+              type="submit"
+              className="press min-h-11 shrink-0 rounded-card bg-brand-500 px-5 text-sm font-bold text-white transition-colors active:bg-brand-600 disabled:opacity-40"
+              disabled={typedCode.trim().length === 0}
+            >
+              Validar
+            </button>
+          </form>
+
+          {/* Resultado */}
+          {check && check.res.ok && check.res.coupon && (
+            <div className="anim-pop mt-3 rounded-card border border-emerald-600/25 bg-emerald-50 p-4">
+              <div className="flex items-start gap-3">
+                <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-4 w-4"
+                  >
+                    <path d="m5 12.5 4.5 4.5L19 7" />
+                  </svg>
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-800">
+                    Cupom válido · {check.res.coupon.code}
+                  </div>
+                  <div className="mt-1 font-display text-lg font-bold leading-snug text-emerald-950">
+                    {check.res.coupon.prizeLabel}
+                  </div>
+                  <div className="mt-1.5 text-xs leading-relaxed text-emerald-900/80">
+                    Ganho em {formatDateTime(check.res.coupon.wonAt)} · valia até{" "}
+                    {formatDateTime(couponExpiresAt(check.res.coupon))}
+                  </div>
+                  <div className="mt-2.5 inline-flex items-center rounded-full bg-emerald-600 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.15em] text-white">
+                    Resgatado agora
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="press mt-3 min-h-11 w-full rounded-card border border-emerald-600/25 text-xs font-bold text-emerald-900"
+                onClick={() => {
+                  play("tap");
+                  setCheck(null);
+                  inputRef.current?.focus();
+                }}
+              >
+                Validar outro cupom
+              </button>
+            </div>
+          )}
+
+          {check && !check.res.ok && (
+            <div className="anim-pop mt-3 rounded-card border border-brand-500/25 bg-brand-50 p-4">
+              <div className="flex items-start gap-3">
+                <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-500 text-white">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    className="h-4 w-4"
+                  >
+                    <path d="M12 7v6M12 16.5v.5" />
+                  </svg>
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="font-display text-base font-bold leading-snug text-brand-700">
+                    {errorText(check.res, check.typed).title}
+                  </div>
+                  <p className="mt-1 text-xs leading-relaxed text-ink/70">
+                    {errorText(check.res, check.typed).hint}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="press mt-3 min-h-11 w-full rounded-card border border-brand-500/25 text-xs font-bold text-brand-700"
+                onClick={() => {
+                  play("tap");
+                  setCheck(null);
+                  inputRef.current?.focus();
+                }}
+              >
+                Tentar de novo
+              </button>
+            </div>
+          )}
+
+          {/* Cupons pendentes — atalho pra demo e visão do que está em aberto */}
+          <div className="mt-4 border-t border-ink/10 pt-3">
+            <div className="flex items-baseline justify-between gap-3">
+              <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-ink/65">
+                Cupons pendentes desta casa
+              </h3>
+              <span className="text-[11px] font-semibold tabular-nums text-ink/65">
+                {pending.length}
+              </span>
+            </div>
+            {pending.length === 0 ? (
+              <p className="mt-2 text-xs leading-relaxed text-ink/70">
+                Nenhum cupom em aberto agora — cupom vale 24h depois de ganho.
+              </p>
+            ) : (
+              <ul className="mt-2 divide-y divide-ink/5">
+                {pending.map((c) => (
+                  <li key={c.id}>
+                    <button
+                      type="button"
+                      className="press flex min-h-11 w-full items-center gap-3 py-2.5 text-left"
+                      onClick={() => {
+                        play("tap");
+                        setTypedCode(c.code);
+                        setCheck(null);
+                        inputRef.current?.focus();
+                      }}
+                    >
+                      <span className="font-display text-base font-bold tracking-[0.18em] text-brand-600">
+                        {c.code}
+                      </span>
+                      <span className="min-w-0 flex-1 truncate text-xs text-ink/70">
+                        {c.prizeLabel}
+                      </span>
+                      <span className="shrink-0 rounded-full bg-accent2/15 px-2.5 py-1 text-[10px] font-bold text-[#8a5a00]">
+                        {timeLeftLabel(couponExpiresAt(c), now)}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
 
         {/* Métricas */}
@@ -296,6 +560,57 @@ export default function Partner() {
             </div>
           ))}
         </div>
+
+        {/* Rodapé: zerar a semente antes de gerar códigos ao vivo no pitch */}
+        {showClearDemo && (
+          <div className="mt-8 border-t border-ink/10 pt-5 text-center">
+            {confirmClear ? (
+              <div className="anim-fade-up">
+                <p className="mx-auto max-w-[34ch] text-xs leading-relaxed text-ink/70">
+                  Apagar os códigos e cupons de exemplo de todas as casas? Só sai o que veio da
+                  demonstração — o que você gerou e jogou fica.
+                </p>
+                <div className="mt-3 flex justify-center gap-2">
+                  <button
+                    type="button"
+                    className="press min-h-11 rounded-full border border-ink/15 bg-white px-5 text-xs font-bold text-ink/70"
+                    onClick={() => {
+                      play("tap");
+                      setConfirmClear(false);
+                    }}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    className="press min-h-11 rounded-full bg-brand-500 px-5 text-xs font-bold text-white transition-colors active:bg-brand-600"
+                    onClick={() => {
+                      play("tap");
+                      clearDemoData();
+                      setConfirmClear(false);
+                      setCheck(null);
+                      setTypedCode("");
+                      forceUpdate((n) => n + 1);
+                    }}
+                  >
+                    Apagar exemplos
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="press inline-flex min-h-11 items-center px-4 text-xs font-semibold text-ink/65 underline underline-offset-4"
+                onClick={() => {
+                  play("tap");
+                  setConfirmClear(true);
+                }}
+              >
+                Limpar dados de demonstração
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
