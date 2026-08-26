@@ -10,16 +10,37 @@ interface DB {
   tableCodes: TableCode[];
   credits: Record<string, number>; // por restaurante
   lastFreePlay: Record<string, string>; // ISO date (yyyy-mm-dd) por restaurante
+  xp: number;
+  streak: number; // dias seguidos jogando
+  lastPlayDay: string | null; // yyyy-mm-dd da última jogada (qualquer casa)
+  chips: number; // moeda global do app (fichas)
+  lastBonusDay: string | null; // yyyy-mm-dd do último bônus diário resgatado
 }
 
 function load(): DB {
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) return JSON.parse(raw) as DB;
+    if (raw) {
+      const db = JSON.parse(raw) as DB;
+      // migração: estados salvos antes da economia de fichas
+      if (typeof db.chips !== "number") db.chips = WELCOME_CHIPS;
+      if (db.lastBonusDay === undefined) db.lastBonusDay = null;
+      return db;
+    }
   } catch {
     /* estado corrompido: recomeça */
   }
-  return { coupons: [], tableCodes: [], credits: {}, lastFreePlay: {} };
+  return {
+    coupons: [],
+    tableCodes: [],
+    credits: {},
+    lastFreePlay: {},
+    xp: 0,
+    streak: 0,
+    lastPlayDay: null,
+    chips: WELCOME_CHIPS,
+    lastBonusDay: null,
+  };
 }
 
 function save(db: DB) {
@@ -34,30 +55,93 @@ export function getRestaurant(id: string): Restaurant | undefined {
   return RESTAURANTS.find((r) => r.id === id);
 }
 
-// --- Jogadas ---------------------------------------------------------------
-// 1 jogada grátis por dia por restaurante; códigos da mesa liberam extras.
+// --- Fichas ----------------------------------------------------------------
+// Moeda global: cada jogada custa CHIP_COST; bônus diário e códigos da mesa
+// recarregam. Novo usuário começa com bônus de boas-vindas.
 
-export function availablePlays(restaurantId: string): number {
+export const CHIP_COST = 10; // fichas por jogada
+export const WELCOME_CHIPS = 50;
+export const DAILY_BONUS_CHIPS = 30;
+
+export function getChips(): number {
   const db = load();
-  const today = new Date().toISOString().slice(0, 10);
-  const free = db.lastFreePlay[restaurantId] === today ? 0 : 1;
-  return free + (db.credits[restaurantId] ?? 0);
+  return db.chips ?? 0;
 }
 
-export function consumePlay(restaurantId: string): boolean {
+export function canClaimDailyBonus(): boolean {
   const db = load();
   const today = new Date().toISOString().slice(0, 10);
-  if (db.lastFreePlay[restaurantId] !== today) {
-    db.lastFreePlay[restaurantId] = today;
-    save(db);
-    return true;
+  return db.lastBonusDay !== today;
+}
+
+export function claimDailyBonus(): { ok: boolean; amount: number; chips: number } {
+  const db = load();
+  const today = new Date().toISOString().slice(0, 10);
+  if (db.lastBonusDay === today) return { ok: false, amount: 0, chips: db.chips ?? 0 };
+  db.lastBonusDay = today;
+  db.chips = (db.chips ?? 0) + DAILY_BONUS_CHIPS;
+  save(db);
+  return { ok: true, amount: DAILY_BONUS_CHIPS, chips: db.chips };
+}
+
+export function availablePlays(_restaurantId?: string): number {
+  return Math.floor(getChips() / CHIP_COST);
+}
+
+export function consumePlay(_restaurantId?: string): boolean {
+  const db = load();
+  if ((db.chips ?? 0) < CHIP_COST) return false;
+  db.chips -= CHIP_COST;
+  touchProgress(db, new Date().toISOString().slice(0, 10));
+  save(db);
+  return true;
+}
+
+// --- Progresso (XP, nível, streak) ----------------------------------------
+
+export const XP_PER_PLAY = 10;
+export const XP_PER_WIN = 25;
+
+const LEVELS = [
+  { name: "Garfo de Bronze", min: 0 },
+  { name: "Garfo de Prata", min: 100 },
+  { name: "Garfo de Ouro", min: 250 },
+  { name: "Chef da Casa", min: 500 },
+  { name: "Lenda de Natal", min: 1000 },
+];
+
+export interface Progress {
+  xp: number;
+  streak: number;
+  level: number; // 1-based
+  levelName: string;
+  levelFloor: number; // xp onde o nível atual começa
+  levelCeil: number | null; // xp do próximo nível (null no último)
+}
+
+/** Atualiza streak e dá o XP da jogada. Chamado por consumePlay. */
+function touchProgress(db: DB, today: string) {
+  if (db.lastPlayDay !== today) {
+    const yesterday = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10);
+    db.streak = db.lastPlayDay === yesterday ? (db.streak ?? 0) + 1 : 1;
+    db.lastPlayDay = today;
   }
-  if ((db.credits[restaurantId] ?? 0) > 0) {
-    db.credits[restaurantId] -= 1;
-    save(db);
-    return true;
-  }
-  return false;
+  db.xp = (db.xp ?? 0) + XP_PER_PLAY;
+}
+
+export function getProgress(): Progress {
+  const db = load();
+  const xp = db.xp ?? 0;
+  let idx = 0;
+  for (let i = 0; i < LEVELS.length; i++) if (xp >= LEVELS[i].min) idx = i;
+  return {
+    xp,
+    streak: db.streak ?? 0,
+    level: idx + 1,
+    levelName: LEVELS[idx].name,
+    levelFloor: LEVELS[idx].min,
+    levelCeil: idx + 1 < LEVELS.length ? LEVELS[idx + 1].min : null,
+  };
 }
 
 export function redeemTableCode(code: string): { ok: boolean; message: string; restaurantId?: string } {
@@ -67,9 +151,10 @@ export function redeemTableCode(code: string): { ok: boolean; message: string; r
   if (!tc) return { ok: false, message: "Código não encontrado. Confira com o restaurante." };
   if (tc.usedAt) return { ok: false, message: "Esse código já foi usado." };
   tc.usedAt = new Date().toISOString();
-  db.credits[tc.restaurantId] = (db.credits[tc.restaurantId] ?? 0) + tc.credits;
+  const amount = tc.credits * CHIP_COST;
+  db.chips = (db.chips ?? 0) + amount;
   save(db);
-  return { ok: true, message: `+${tc.credits} jogadas liberadas!`, restaurantId: tc.restaurantId };
+  return { ok: true, message: `+${amount} fichas na sua conta!`, restaurantId: tc.restaurantId };
 }
 
 // --- Sorteio e cupons ------------------------------------------------------
@@ -101,6 +186,7 @@ export function awardCoupon(restaurantId: string, gameId: string, prizeLabel: st
     redeemedAt: null,
   };
   db.coupons.unshift(coupon);
+  db.xp = (db.xp ?? 0) + XP_PER_WIN;
   save(db);
   return coupon;
 }

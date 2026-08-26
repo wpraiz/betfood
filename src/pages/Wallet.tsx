@@ -1,5 +1,28 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { getCoupons, getRestaurant, redeemCoupon } from "../lib/store";
+import { play } from "../lib/sound";
+
+/** Foto com skeleton shimmer enquanto carrega. */
+function Photo({ src, alt, className }: { src: string; alt: string; className: string }) {
+  const [loaded, setLoaded] = useState(false);
+  return (
+    <div
+      className={`relative shrink-0 overflow-hidden bg-surface ${
+        loaded ? "" : "animate-pulse"
+      } ${className}`}
+    >
+      <img
+        src={src}
+        alt={alt}
+        onLoad={() => setLoaded(true)}
+        className={`h-full w-full object-cover transition-opacity duration-500 ${
+          loaded ? "opacity-100" : "opacity-0"
+        }`}
+      />
+    </div>
+  );
+}
 
 export default function Wallet() {
   const [, forceUpdate] = useState(0);
@@ -8,77 +31,114 @@ export default function Wallet() {
 
   return (
     <div>
-      {/* Cabeçalho editorial */}
+      {/* Cabeçalho com contador de cupons ativos */}
       <div className="border-b border-ink/10 px-5 pb-7 pt-12">
-        <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.3em] text-brand-600">
-          Carteira
-        </p>
-        <h1 className="font-display text-3xl font-bold tracking-tight">Meus cupons</h1>
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.3em] text-brand-600">
+              Carteira
+            </p>
+            <h1 className="font-display text-3xl font-bold tracking-tight">Meus cupons</h1>
+          </div>
+          <div className="anim-pop shrink-0 rounded-card bg-brand-50 px-4 py-2.5 text-center">
+            <div className="font-display text-3xl font-bold leading-none tabular-nums text-brand-600">
+              {active}
+            </div>
+            <div className="mt-1 text-[9px] font-bold uppercase tracking-[0.15em] text-brand-700/70">
+              {active === 1 ? "ativo" : "ativos"}
+            </div>
+          </div>
+        </div>
         <p className="mt-3 max-w-[36ch] text-sm leading-relaxed text-ink/60">
-          {active > 0 ? (
-            <>
-              Você tem <span className="font-semibold text-brand-600">{active}</span>{" "}
-              {active === 1 ? "cupom pronto" : "cupons prontos"} para usar. Apresente o código
-              ao garçom.
-            </>
-          ) : (
-            "Seus prêmios aparecem aqui, prontos para apresentar ao garçom."
-          )}
+          {active > 0
+            ? "Prêmio ganho é prêmio seu. Mostra o código pro garçom e pronto."
+            : "Seus prêmios caem aqui, prontos pra usar."}
         </p>
       </div>
 
       <div className="px-5 pb-4 pt-6">
+        {/* Empty state ilustrado */}
         {coupons.length === 0 && (
-          <div className="rounded-card border border-dashed border-ink/20 bg-white p-8 text-center">
-            <p className="font-display text-base font-semibold text-ink/70">Nenhum cupom ainda</p>
-            <p className="mt-1 text-xs text-ink/40">
-              Escolha um restaurante e jogue — o prêmio cai direto aqui.
+          <div className="anim-fade-up rounded-card border border-dashed border-ink/20 bg-white px-6 py-10 text-center">
+            <svg
+              viewBox="0 0 48 48"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="mx-auto h-16 w-16 text-ink/25"
+            >
+              <path d="M5 20v-3a2 2 0 0 1 2-2h34a2 2 0 0 1 2 2v3a4 4 0 0 0 0 8v3a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-3a4 4 0 0 0 0-8Z" />
+              <path d="M31 15v3M31 22.5v3M31 30v3" />
+              <path d="m16 20.5 1.5 2.8 3.1.5-2.2 2.2.5 3.1-2.9-1.5-2.9 1.5.5-3.1-2.2-2.2 3.1-.5z" />
+            </svg>
+            <p className="mt-4 font-display text-lg font-bold">Nenhum cupom ainda</p>
+            <p className="mx-auto mt-1 max-w-[28ch] text-xs leading-relaxed text-ink/50">
+              Escolhe uma casa, joga e o prêmio cai direto aqui.
             </p>
+            <Link
+              to="/"
+              className="press mt-6 inline-block rounded-full bg-brand-500 px-8 py-3 text-sm font-bold text-white transition-colors active:bg-brand-600"
+            >
+              Ir jogar
+            </Link>
           </div>
         )}
 
         <div className="grid gap-4">
-          {coupons.map((c) => {
+          {coupons.map((c, i) => {
             const r = getRestaurant(c.restaurantId);
             const used = Boolean(c.redeemedAt);
-            const accent = r?.accent ?? "#5f8296";
+            const accent = "#ea1d2c";
             return (
               <div
                 key={c.id}
-                className="relative overflow-hidden rounded-card border border-ink/10 bg-white shadow-sm"
-                style={used ? undefined : { borderLeft: `3px solid ${accent}` }}
+                className="anim-fade-up relative overflow-hidden rounded-card bg-white shadow-sm"
+                style={{ animationDelay: `${Math.min(i, 8) * 70}ms` }}
               >
-                {/* Parte de cima do ticket: restaurante + prêmio */}
-                <div className={`p-4 pb-3 ${used ? "opacity-40" : ""}`}>
-                  <div className="flex items-baseline gap-2">
-                    <span className="truncate text-[11px] font-bold uppercase tracking-[0.2em] text-ink/50">
-                      {r?.name}
-                    </span>
-                    <span className="ml-auto shrink-0 text-[10px] font-semibold uppercase tracking-wide text-ink/35">
-                      {new Date(c.wonAt).toLocaleDateString("pt-BR")}
-                    </span>
+                {/* Faixa lateral na cor do restaurante */}
+                <div
+                  className="absolute inset-y-0 left-0 w-1.5"
+                  style={{ background: used ? "#dedbda" : accent }}
+                />
+
+                {/* Restaurante + prêmio */}
+                <div className={used ? "opacity-40" : ""}>
+                  <div className="flex items-center gap-3 p-4 pb-2.5 pl-5">
+                    {r && <Photo src={r.photo} alt={r.name} className="h-11 w-11 rounded-full" />}
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-bold">{r?.name}</div>
+                      <div className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink/40">
+                        {new Date(c.wonAt).toLocaleDateString("pt-BR")}
+                      </div>
+                    </div>
                   </div>
-                  <div className="mt-1.5 font-display text-lg font-semibold leading-snug">
+                  <div className="px-4 pb-3 pl-5 font-display text-lg font-bold leading-snug">
                     {c.prizeLabel}
                   </div>
                 </div>
 
-                {/* Linha de recorte: tracejado + notches circulares */}
+                {/* Linha de recorte: tracejado + notches */}
                 <div className="relative flex items-center">
-                  <div className="absolute -left-3 h-6 w-6 rounded-full border-r border-ink/10 bg-paper" />
-                  <div className="mx-4 flex-1 border-t border-dashed border-ink/20" />
-                  <div className="absolute -right-3 h-6 w-6 rounded-full border-l border-ink/10 bg-paper" />
+                  <div className="absolute -left-3 h-6 w-6 rounded-full bg-paper" />
+                  <div className="mx-4 ml-5 flex-1 border-t-2 border-dashed border-ink/10" />
+                  <div className="absolute -right-3 h-6 w-6 rounded-full bg-paper" />
                 </div>
 
-                {/* Parte de baixo: código + ação */}
-                <div className={`flex items-center justify-between gap-3 p-4 pt-3 ${used ? "opacity-40" : ""}`}>
+                {/* Código + ação */}
+                <div
+                  className={`flex items-end justify-between gap-3 p-4 pl-5 pt-3 ${
+                    used ? "opacity-40" : ""
+                  }`}
+                >
                   <div>
                     <div className="text-[10px] font-semibold uppercase tracking-[0.25em] text-ink/40">
                       Código do cupom
                     </div>
                     <div
-                      className={`mt-0.5 font-display text-2xl font-bold tracking-[0.15em] ${
-                        used ? "text-ink/60" : "text-brand-600"
+                      className={`mt-0.5 font-display text-3xl font-bold tracking-[0.12em] ${
+                        used ? "text-ink/50" : "text-brand-600"
                       }`}
                     >
                       {c.code}
@@ -86,8 +146,9 @@ export default function Wallet() {
                   </div>
                   {!used && (
                     <button
-                      className="shrink-0 rounded-card border border-ink/15 bg-white px-3 py-2 text-xs font-semibold text-ink/70 transition-colors active:bg-surface"
+                      className="press shrink-0 rounded-full border border-ink/15 bg-white px-4 py-2 text-xs font-bold text-ink/70 transition-colors active:bg-surface"
                       onClick={() => {
+                        play("tap");
                         redeemCoupon(c.id);
                         forceUpdate((n) => n + 1);
                       }}
@@ -100,7 +161,7 @@ export default function Wallet() {
                 {/* Carimbo de usado */}
                 {used && (
                   <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                    <span className="-rotate-12 border-2 border-accent2/30 px-4 py-1 font-display text-xl font-bold uppercase tracking-[0.25em] text-accent2/40">
+                    <span className="-rotate-12 rounded-md border-[3px] border-brand-600/35 px-4 py-1 font-display text-2xl font-bold uppercase tracking-[0.3em] text-brand-600/40">
                       Usado
                     </span>
                   </div>

@@ -5,6 +5,8 @@ export interface Restaurant {
   neighborhood: string; // bairro de Natal/RN
   description: string;
   accent: string; // cor tailwind-friendly em hex
+  photo: string; // foto do prato-assinatura (URL)
+  rating: number; // ex.: 4.8
   prizes: Prize[];
 }
 

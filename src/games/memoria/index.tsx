@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import confetti from "canvas-confetti";
+import { play } from "../../lib/sound";
 import type { GameDefinition, GameProps, GameResult } from "../../lib/types";
 
 // Pares tipográficos: nomes curtos de ingredientes/pratos da casa
@@ -15,6 +16,13 @@ const FOOD_WORDS = [
 ];
 const MAX_MOVES = 20;
 const MISMATCH_DELAY = 800;
+
+const CONFETTI_COLORS = ["#ea1d2c", "#f5a623", "#ffffff"];
+
+// Verso das cartas: brand-500 com losangos sutis em CSS
+const BACK_PATTERN =
+  "repeating-linear-gradient(45deg, rgba(255,255,255,0.08) 0 8px, transparent 8px 16px), " +
+  "repeating-linear-gradient(-45deg, rgba(255,255,255,0.08) 0 8px, transparent 8px 16px)";
 
 interface Card {
   key: number;
@@ -81,19 +89,19 @@ function Memoria({ restaurant, drawPrize, onFinish }: GameProps) {
     setStatus("won");
     const prize = drawPrize();
     const won = prize.tier !== "none";
-    if (won) {
-      confetti({
-        particleCount: 70,
-        spread: 55,
-        origin: { y: 0.6 },
-        colors: ["#0088b0", "#d6006c", "#201e1d", "#bd9b57"],
-      });
-    }
+    play("win");
+    confetti({
+      particleCount: 110,
+      spread: 70,
+      origin: { y: 0.6 },
+      colors: CONFETTI_COLORS,
+    });
     later(() => finish({ won, prize }), 1400);
   };
 
   const handleLose = () => {
     setStatus("lost");
+    play("lose");
     later(() => finish({ won: false }), 2000);
   };
 
@@ -101,6 +109,7 @@ function Memoria({ restaurant, drawPrize, onFinish }: GameProps) {
     if (locked || status !== "playing") return;
     if (flipped.includes(index) || matched.has(index)) return;
 
+    play("flip");
     const nextFlipped = [...flipped, index];
     setFlipped(nextFlipped);
     if (nextFlipped.length < 2) return;
@@ -114,6 +123,7 @@ function Memoria({ restaurant, drawPrize, onFinish }: GameProps) {
     const isMatch = deck[a].word === deck[b].word;
 
     if (isMatch) {
+      play("correct");
       const nextMatched = new Set(matched);
       nextMatched.add(a);
       nextMatched.add(b);
@@ -138,21 +148,49 @@ function Memoria({ restaurant, drawPrize, onFinish }: GameProps) {
   };
 
   const movesLeft = MAX_MOVES - moves;
-  const monogram = restaurant.name.charAt(0);
+  const lowMoves = movesLeft <= 5;
+  const pairsFound = matched.size / 2;
 
   return (
     <div className="px-5 py-4">
-      {/* Placar */}
-      <div className="mb-4 flex items-center justify-between rounded-card border border-ink/10 bg-white px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.2em] shadow-sm">
-        <span className="text-ink/40">
-          Jogadas{" "}
-          <span style={{ color: movesLeft <= 5 ? "#a85751" : "var(--color-ink)" }}>
-            {moves}/{MAX_MOVES}
+      {/* Placar: barra de jogadas + pills de pares */}
+      <div className="anim-fade-up mb-4 rounded-card bg-white p-4 shadow-md shadow-ink/5">
+        <div className="mb-2.5 flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.2em] text-ink/40">
+          <span>
+            Jogadas{" "}
+            <span
+              className={`font-display text-sm ${lowMoves ? "text-brand-500" : "text-ink"}`}
+            >
+              {movesLeft}
+            </span>{" "}
+            restantes
           </span>
-        </span>
-        <span className="text-ink/40">
-          Tempo <span className="text-ink">{formatTime(seconds)}</span>
-        </span>
+          <span>
+            Tempo <span className="font-display text-sm text-ink">{formatTime(seconds)}</span>
+          </span>
+        </div>
+        <div className="h-2 overflow-hidden rounded-full bg-surface">
+          <div
+            className={`h-full rounded-full bg-brand-500 transition-all duration-300 ${
+              lowMoves ? "animate-pulse" : ""
+            }`}
+            style={{ width: `${(movesLeft / MAX_MOVES) * 100}%` }}
+          />
+        </div>
+        <div className="mt-2.5 flex items-center gap-1.5">
+          {FOOD_WORDS.map((word, i) => (
+            <span
+              key={word}
+              className="h-1.5 flex-1 rounded-full transition-colors duration-300"
+              style={{
+                background: i < pairsFound ? "#f5a623" : "var(--color-surface)",
+              }}
+            />
+          ))}
+          <span className="ml-1 text-[10px] font-bold uppercase tracking-[0.15em] text-ink/40">
+            Pares {pairsFound}/{FOOD_WORDS.length}
+          </span>
+        </div>
       </div>
 
       {/* Grade 4x4 */}
@@ -168,8 +206,8 @@ function Memoria({ restaurant, drawPrize, onFinish }: GameProps) {
               aria-label={isUp ? card.word : "Carta virada"}
               onClick={() => handleFlip(index)}
               disabled={isUp || locked || status !== "playing"}
-              className="aspect-square w-full"
-              style={{ perspective: "600px" }}
+              className="press anim-fade-up aspect-square w-full"
+              style={{ perspective: "600px", animationDelay: `${index * 35}ms` }}
             >
               <div
                 className="relative h-full w-full"
@@ -179,29 +217,28 @@ function Memoria({ restaurant, drawPrize, onFinish }: GameProps) {
                   transition: "transform 0.4s",
                 }}
               >
-                {/* Verso (monograma da casa) */}
+                {/* Verso (vermelho, losangos + monograma B) */}
                 <div
-                  className="absolute inset-0 flex items-center justify-center rounded-card border border-ink/10 bg-surface font-display text-xl font-bold"
+                  className="absolute inset-0 flex items-center justify-center rounded-xl font-display text-2xl font-bold text-white shadow-sm"
                   style={{
                     backfaceVisibility: "hidden",
-                    color: restaurant.accent,
+                    background: "var(--color-brand-500)",
+                    backgroundImage: BACK_PATTERN,
                   }}
                 >
-                  {monogram}
+                  B
                 </div>
                 {/* Frente (ingrediente/prato) */}
                 <div
-                  className={`absolute inset-0 flex items-center justify-center overflow-hidden rounded-card bg-white px-0.5 font-display text-[11px] font-semibold leading-tight text-ink ${
-                    isPulsing ? "animate-pulse" : ""
-                  }`}
+                  className="absolute inset-0 flex items-center justify-center overflow-hidden rounded-xl px-0.5 font-display text-[11px] font-bold leading-tight text-ink"
                   style={{
                     backfaceVisibility: "hidden",
                     transform: "rotateY(180deg)",
-                    border: `1px solid ${isMatched ? restaurant.accent : "rgba(32,30,29,0.15)"}`,
-                    background: isMatched ? `${restaurant.accent}14` : undefined,
+                    border: `2px solid ${isMatched ? "#f5a623" : "rgba(32,30,29,0.08)"}`,
+                    background: isMatched ? "#f5a6231f" : "#f5a6230d",
                   }}
                 >
-                  {card.word}
+                  <span className={isPulsing ? "anim-pop" : ""}>{card.word}</span>
                 </div>
               </div>
             </button>
@@ -212,13 +249,15 @@ function Memoria({ restaurant, drawPrize, onFinish }: GameProps) {
       {/* Mensagem de fim */}
       <div className="mt-5 min-h-6 text-center text-sm leading-relaxed text-ink/60">
         {status === "won" && (
-          <p>Todos os pares em {moves} jogadas. Vamos ver o que saiu.</p>
+          <p className="anim-fade-up font-semibold text-ink">
+            Fechou os {FOOD_WORDS.length} pares em {moves} jogadas. Vamos ver o que saiu.
+          </p>
         )}
         {status === "lost" && (
-          <p>Não foi dessa vez — os pares se esconderam bem.</p>
+          <p className="anim-fade-up">As jogadas acabaram — os pares venceram essa.</p>
         )}
-        {status === "playing" && movesLeft <= 5 && (
-          <p>
+        {status === "playing" && lowMoves && (
+          <p className="font-semibold text-brand-500">
             Só mais {movesLeft} {movesLeft === 1 ? "jogada" : "jogadas"} — atenção aos pares.
           </p>
         )}

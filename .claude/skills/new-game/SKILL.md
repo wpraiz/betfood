@@ -1,18 +1,17 @@
 ---
 name: new-game
-description: Cria um novo mini-game do BetFood seguindo o contrato GameDefinition — pasta em src/games/<id>/, registro no registry e regras da casca GamePlay. Use quando pedirem "novo jogo", "adicionar mini-game" ou similar.
+description: Cria um novo mini-game do BetFood seguindo o contrato GameDefinition — pasta em src/games/<id>/, registro no registry, estilo iFood épico com som e motion. Use quando pedirem "novo jogo", "adicionar mini-game" ou similar.
 ---
 
 # Novo mini-game
 
-1. Crie `src/games/<id>/index.tsx` exportando um `GameDefinition` (ver `src/lib/types.ts`):
-   - `id` kebab-case, `name`, `tagline` curta em pt-BR, `emoji`, `component`.
-2. O componente recebe `GameProps`:
-   - `restaurant` — pra tematizar (nome, emoji, accent).
-   - `drawPrize()` — sorteia na tabela de prêmios do restaurante (pode vir tier `"none"`).
-   - `onFinish(result)` — chamar **exatamente uma vez** no fim; `won: prize.tier !== "none"`.
-   - O game NÃO acessa `store.ts`, localStorage nem rotas — a casca `GamePlay.tsx` cuida de jogadas e cupons.
-3. Registre no array `GAMES` em `src/games/index.ts`.
-4. Estilo: Tailwind, mobile-first dentro de `max-w-md`, tema escuro, acento `brand-*`. Animações CSS ou canvas leves; `canvas-confetti` já está instalado pra celebração.
-5. Tom: divertido e não agressivo. Perder = "não foi dessa vez" — nunca pressionar o jogador.
-6. Valide com `npm run build`.
+1. Leia antes: `CLAUDE.md` (direção visual) e `.claude/skills/frontend-design/SKILL.md`.
+2. Crie `src/games/<id>/index.tsx` exportando um `GameDefinition` (ver `src/lib/types.ts`): `id` kebab-case, `name`, `tagline` curta pt-BR, `component`. **Sem campo emoji.**
+3. O componente recebe `GameProps`:
+   - `restaurant` — tematize com `name`, `accent`, `photo`.
+   - `drawPrize()` — fonte ÚNICA do resultado (pode vir tier `"none"`). O jogo é apresentação; nunca decida o prêmio por conta própria.
+   - `onFinish(result)` — exatamente uma vez (guarde com ref); `won = prize.tier !== "none"`. Sem acessar store/localStorage/rotas.
+4. Estilo: claro, `brand-500` vermelho de ação, `accent2` âmbar pra prêmio, `rounded-card`, SEM emoji (SVG inline), motion com `.anim-fade-up`/`.anim-pop`/`.press`.
+5. Som: `import { play, stop } from "../../lib/sound"` — use os 13 SFX existentes (tap, win, lose, correct, wrong, flip, tick, jackpot…). Vitória: confetti (`canvas-confetti`, cores #ea1d2c #f5a623 #ffffff) + `play("win")` (ou `jackpot` em tier big).
+6. Registre em `src/games/index.ts` e adicione a thumbnail do jogo na Home (grade de jogos).
+7. Valide com `npm run build`.

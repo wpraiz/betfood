@@ -1,16 +1,15 @@
 @import "tailwindcss";
 
-/* Tema claro com linguagem de app de consumo. Paleta derivada do design system
-   "Broadsheet" do José (claude.ai/design): magenta #d6006c como cor de ação,
-   petróleo #0088b0 como acento secundário, neutros quentes. */
+/* Tema claro estilo app de delivery (referência iFood): vermelho vivo como cor
+   de ação, fundo claro, cards arredondados, fotografia de comida em destaque. */
 @theme {
-  --color-brand-50: #fdeef5;
-  --color-brand-100: #fad2e4;
-  --color-brand-500: #d6006c;
-  --color-brand-600: #b8005d;
-  --color-brand-700: #94004b;
-  --color-brand-900: #4d0227;
-  --color-accent2: #0088b0;
+  --color-brand-50: #fdeeee;
+  --color-brand-100: #fbd6d8;
+  --color-brand-500: #ea1d2c;
+  --color-brand-600: #cf1626;
+  --color-brand-700: #a81220;
+  --color-brand-900: #5c0a12;
+  --color-accent2: #f5a623; /* âmbar pra destaques de prêmio */
   --color-ink: #201e1d; /* texto principal */
   --color-paper: #faf9f9; /* fundo da página */
   --color-surface: #f1efef; /* superfícies rebaixadas */

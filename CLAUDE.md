@@ -1,35 +1,60 @@
 # BetFood — POC de mini-games recompensadores em restaurantes (Natal/RN)
 
-Webapp + APK (mesmo código) onde restaurantes parceiros distribuem códigos de mesa
-e clientes jogam mini-games leves pra ganhar cupons reais. **Nada de aposta com
-dinheiro** — é gamificação de fidelidade, tom divertido e não agressivo.
+Webapp + APK (mesmo código): restaurantes parceiros distribuem códigos de mesa,
+clientes jogam mini-games e ganham cupons reais. Gamificação de fidelidade — **sem
+dinheiro real, sem aposta**; dopaminérgico no bom sentido, nunca predatório.
+
+## Direção visual (decidida pelo José em 26/ago/2026, após várias iterações)
+
+**Estilo iFood épico + lobby de jogos.** Interface CLARA (bg-paper #faf9f9),
+vermelho vivo `brand-500 #ea1d2c` como cor de ação, âmbar `accent2 #f5a623` pra
+prêmio/bônus, cards arredondados (`rounded-card` 1.25rem) com FOTO de comida,
+sans bold (`font-display`). **PROIBIDO emoji na UI** — ícones são SVG inline.
+Motion obrigatório: utilities `.anim-fade-up`, `.anim-pop`, `.press` em
+`src/index.css` (+ `animationDelay` inline pra cascata). Home é **games-first**:
+roleta-herói girando com luzes → thumbnails dos jogos → restaurantes.
+Iterações rejeitadas (não voltar): tema escuro com emojis ("infantil"),
+editorial serifado Broadsheet ("não tem cara de app").
 
 ## Stack
 
-- Vite + React 18 + TypeScript + Tailwind 4 (`@tailwindcss/vite`)
-- React Router (HashRouter — funciona igual na web e dentro do APK)
-- Capacitor 7 pra gerar o APK Android a partir do `dist/`
-- Dados: **localStorage** via `src/lib/store.ts` (POC offline). O schema Supabase
-  equivalente está em `supabase/schema.sql` pra quando sair do mock — trocar o
-  backend é reescrever só o `store.ts`.
+- Vite + React 18 + TS + Tailwind 4 (`@tailwindcss/vite`), HashRouter, Capacitor 7
+- Dados: localStorage via `src/lib/store.ts` (única porta; schema Supabase espelhado em `supabase/schema.sql`)
+- Som: `src/lib/sound.ts` — `play(name, {loop?, volume?})`/`stop(name)`; 13 SFX ElevenLabs em `public/sounds/` (spin, win, lose, scratch, coupon, tap, flip, correct, wrong, shimmer, levelup, tick, jackpot). Respeita mute, nunca lança.
+- Fotos: `restaurant.photo` (Unsplash) + `restaurant.rating` no seed; sempre com skeleton shimmer no carregamento.
 
-## Comandos
+## Economia e progressão (store.ts)
 
-- `npm run dev` — dev server em http://localhost:5199
-- `npm run build` — typecheck + build de produção
-- `npm run apk:sync` — build + sync no projeto Android (requer `npx cap add android` na 1ª vez + Android Studio)
+- **Fichas** (moeda global): boas-vindas 50, jogada custa `CHIP_COST` 10, bônus diário +30 (`claimDailyBonus`), código da mesa credita `credits × 10` fichas.
+- **XP/nível**: +10 por jogada, +25 por vitória; níveis Garfo de Bronze → Prata → Ouro → Chef da Casa → Lenda de Natal (`getProgress()`).
+- **Streak**: dias seguidos jogando (qualquer casa).
 
 ## Arquitetura
 
-- `src/lib/types.ts` — contratos centrais. **`GameProps`/`GameDefinition` é o contrato de todo mini-game.**
-- `src/lib/store.ts` — única porta de dados (jogadas, códigos de mesa, cupons, sorteio por peso). Nunca acessar localStorage fora daqui.
-- `src/lib/seed.ts` — restaurantes fictícios da POC (todos dados inventados, sem pessoa real).
-- `src/games/<id>/index.tsx` — um mini-game por pasta; exporta `GameDefinition`; registrado em `src/games/index.ts`.
-- `src/pages/GamePlay.tsx` — casca comum: consome a jogada, monta o game, transforma `onFinish` em cupom. **Games não mexem em store nem em rota** — só chamam `drawPrize()` e `onFinish()` uma vez.
+- `src/lib/types.ts` — contratos. **`GameProps`/`GameDefinition` é o contrato de mini-game** (sem campo emoji).
+- `src/games/<id>/index.tsx` — um game por pasta, registrado em `src/games/index.ts`. Games NÃO acessam store/rotas; só `drawPrize()` (fonte única do resultado) e `onFinish()` exatamente uma vez.
+- `src/pages/GamePlay.tsx` — casca: consome fichas, monta o game, converte vitória em cupom.
+- `/welcome` — splash + onboarding (flag `betfood-onboarded` no localStorage; redirect em App.tsx).
 
-## Regras do projeto
+## Comandos
 
-- Mobile-first, tela máx. `max-w-md`, tema escuro (`--color-ink`), acento laranja (`brand-*`).
-- Texto de UI em pt-BR, tom leve. Recompensa sempre positiva: perder = "não foi dessa vez", nunca punição.
-- Sem dados de pessoas reais em seed/testes — nomes e restaurantes fictícios.
-- Novo mini-game: usar a skill `new-game` (em `.claude/skills/`).
+- `npm run dev` → http://localhost:5199 · `npm run build` → typecheck + build
+- APK: skill `release-apk`. Novo jogo: skill `new-game`. Demo: skill `demo-poc`.
+
+## Deploy
+
+- GitHub: `origin` → https://github.com/wpraiz/betfood.git (push em main).
+- Vercel: time hobby `jose-icaro-bezerra-clementes-projects` (team_dtUUbPLAwnQRtxX2EUM7Ita5). Preview antes de production; **publicar é decisão do José** (portão irreversível).
+
+## Skills de design instaladas (.claude/skills)
+
+`frontend-design` (Anthropic — ler antes de qualquer redesign), `ui-ux-pro-max`
+(busca local: `python scripts/search.py "<query>" --domain style` — nesta máquina
+é `python`, não `python3`), `web-design-guidelines` e `react-best-practices`
+(auditorias Vercel). Use-as em qualquer trabalho de UI neste repo.
+
+## Regras
+
+- Texto pt-BR adulto e energético; perder = "não foi dessa vez", nunca punição/pressão.
+- Sem dados de pessoa real em seed/testes.
+- Som + motion em toda interação significativa; confetti nas vitórias (cores #ea1d2c #f5a623 #ffffff).

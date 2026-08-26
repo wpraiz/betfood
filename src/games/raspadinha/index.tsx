@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import confetti from "canvas-confetti";
+import { play, stop } from "../../lib/sound";
 import type { GameDefinition, GameProps, Prize } from "../../lib/types";
 
 const BRUSH_RADIUS = 24; // px (CSS), pincel redondo
@@ -7,7 +8,7 @@ const REVEAL_THRESHOLD = 0.55; // >55% raspado => revela tudo
 const SAMPLE_EVERY_N_EVENTS = 8; // amostra alpha a cada N pointermoves
 const SAMPLE_STRIDE = 6; // amostra 1 pixel a cada 6 (nas duas direções)
 
-const CONFETTI_COLORS = ["#0088b0", "#d6006c", "#201e1d", "#bd9b57"];
+const CONFETTI_COLORS = ["#ea1d2c", "#f5a623", "#ffffff"];
 
 function Raspadinha({ restaurant, drawPrize, onFinish }: GameProps) {
   // Sorteia uma única vez, na montagem.
@@ -24,6 +25,11 @@ function Raspadinha({ restaurant, drawPrize, onFinish }: GameProps) {
   const moveCountRef = useRef(0);
   const revealedRef = useRef(false);
   const finishedRef = useRef(false);
+
+  // Garante que o loop de raspagem para se o componente desmontar no meio.
+  useEffect(() => {
+    return () => stop("scratch");
+  }, []);
 
   // Pinta a camada metálica (com devicePixelRatio pra não borrar).
   useEffect(() => {
@@ -72,7 +78,7 @@ function Raspadinha({ restaurant, drawPrize, onFinish }: GameProps) {
 
     // Texto convite.
     ctx.fillStyle = "#5b6068";
-    ctx.font = "600 16px system-ui, -apple-system, sans-serif";
+    ctx.font = "700 16px system-ui, -apple-system, sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText("RASPE AQUI", w / 2, h / 2 - 12);
@@ -92,10 +98,31 @@ function Raspadinha({ restaurant, drawPrize, onFinish }: GameProps) {
     revealedRef.current = true;
     setRevealed(true);
     setProgress(100);
+    stop("scratch");
+    play(won ? "win" : "lose");
     if (won) {
-      confetti({ particleCount: 70, spread: 55, origin: { y: 0.6 }, colors: CONFETTI_COLORS });
+      confetti({ particleCount: 120, spread: 75, origin: { y: 0.6 }, colors: CONFETTI_COLORS });
+      window.setTimeout(() => {
+        confetti({
+          particleCount: 50,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0, y: 0.68 },
+          colors: CONFETTI_COLORS,
+        });
+        confetti({
+          particleCount: 50,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1, y: 0.68 },
+          colors: CONFETTI_COLORS,
+        });
+      }, 180);
     }
-    window.setTimeout(finish, 1100);
+    if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+      navigator.vibrate(won ? [60, 40, 120] : 60);
+    }
+    window.setTimeout(finish, 1400);
   }, [won, finish]);
 
   // Amostra o alpha do canvas pra estimar o % raspado.
@@ -154,6 +181,7 @@ function Raspadinha({ restaurant, drawPrize, onFinish }: GameProps) {
     if (revealedRef.current) return;
     scratchingRef.current = true;
     lastPointRef.current = null;
+    play("scratch", { loop: true, volume: 0.5 });
     e.currentTarget.setPointerCapture(e.pointerId);
     scratchAt(e.currentTarget, getCoordinates(e));
   };
@@ -171,54 +199,56 @@ function Raspadinha({ restaurant, drawPrize, onFinish }: GameProps) {
     if (!scratchingRef.current) return;
     scratchingRef.current = false;
     lastPointRef.current = null;
+    stop("scratch");
     if (!revealedRef.current) measureScratched();
   };
 
   return (
     <div className="flex flex-col items-center gap-4 p-4 text-ink">
       {/* Bilhete */}
-      <div
-        className="relative w-full max-w-sm overflow-hidden rounded-card border bg-white shadow-sm"
-        style={{ borderColor: restaurant.accent }}
-      >
+      <div className="anim-fade-up relative w-full max-w-sm overflow-hidden rounded-card border-2 border-brand-500 bg-white shadow-lg shadow-brand-500/15">
         {/* Furos laterais estilo bilhete */}
-        <div className="absolute -left-3 top-1/2 z-10 h-6 w-6 -translate-y-1/2 rounded-full bg-paper" />
-        <div className="absolute -right-3 top-1/2 z-10 h-6 w-6 -translate-y-1/2 rounded-full bg-paper" />
+        <div className="absolute -left-3 top-1/2 z-10 h-6 w-6 -translate-y-1/2 rounded-full border-2 border-brand-500 bg-paper" />
+        <div className="absolute -right-3 top-1/2 z-10 h-6 w-6 -translate-y-1/2 rounded-full border-2 border-brand-500 bg-paper" />
 
-        {/* Cabeçalho tipográfico */}
-        <div className="border-b border-ink/10 px-5 py-4">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-ink/40">
-            Raspadinha
+        {/* Cabeçalho com o nome da casa */}
+        <div className="bg-brand-500 px-5 py-4 text-white">
+          <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/70">
+            Raspadinha BetFood
           </p>
-          <p className="mt-1 font-display text-lg font-semibold leading-tight text-ink">
+          <p className="mt-0.5 font-display text-xl font-extrabold leading-tight">
             {restaurant.name}
           </p>
         </div>
 
         {/* Área raspável */}
-        <div ref={wrapRef} className="relative h-44 select-none">
+        <div ref={wrapRef} className="relative h-48 select-none">
           {/* Resultado escondido sob a camada */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 px-6 text-center">
+          <div
+            className={`absolute inset-0 flex flex-col items-center justify-center gap-1.5 px-6 text-center ${
+              revealed ? "anim-pop" : ""
+            }`}
+          >
             {won ? (
               <>
-                <p
-                  className="font-display text-xl font-semibold leading-snug"
-                  style={{ color: restaurant.accent }}
-                >
+                {prize.tier === "big" && (
+                  <span className="rounded-full bg-accent2 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-ink">
+                    Prêmio top
+                  </span>
+                )}
+                <p className="font-display text-3xl font-extrabold leading-tight text-brand-600">
                   {prize.label}
                 </p>
-                <p className="text-xs text-ink/50">
-                  Você ganhou. Apresente o cupom ao garçom.
+                <p className="text-xs font-medium text-ink/50">
+                  Raspou, ganhou. Mostra pro garçom e pronto.
                 </p>
               </>
             ) : (
               <>
-                <p className="font-display text-xl font-semibold leading-snug text-ink/60">
+                <p className="font-display text-2xl font-extrabold leading-tight text-ink/40">
                   Não foi dessa vez.
                 </p>
-                <p className="text-xs text-ink/50">
-                  A próxima raspadinha pode ser a sua.
-                </p>
+                <p className="text-xs text-ink/50">A próxima raspadinha pode ser a sua.</p>
               </>
             )}
           </div>
@@ -238,21 +268,29 @@ function Raspadinha({ restaurant, drawPrize, onFinish }: GameProps) {
         </div>
 
         {/* Rodapé do bilhete */}
-        <div className="border-t border-dashed border-ink/15 px-5 py-2 text-center">
-          <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-ink/35">
-            BetFood · Prêmio válido só hoje, só aqui
+        <div className="border-t border-dashed border-brand-500/30 px-5 py-2.5 text-center">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-ink/35">
+            Prêmio válido só hoje, só aqui
           </p>
         </div>
       </div>
 
       {/* Progresso */}
-      <p className="text-xs text-ink/40">
-        {revealed
-          ? "Revelado."
-          : progress > 0
-            ? `Raspado: ${Math.min(progress, 100)}%`
-            : "Raspe a área prateada para revelar"}
-      </p>
+      <div className="anim-fade-up w-full max-w-sm" style={{ animationDelay: "120ms" }}>
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface">
+          <div
+            className="h-full rounded-full bg-brand-500 transition-all duration-300"
+            style={{ width: `${Math.min(progress, 100)}%` }}
+          />
+        </div>
+        <p className="mt-1.5 text-center text-xs font-medium text-ink/45">
+          {revealed
+            ? "Revelado."
+            : progress > 0
+              ? `Raspado: ${Math.min(progress, 100)}%`
+              : "Raspe a área prateada e descubra"}
+        </p>
+      </div>
     </div>
   );
 }
