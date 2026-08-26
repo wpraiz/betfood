@@ -156,7 +156,9 @@ export default function Welcome() {
       >
         {/* Slide 1 — Jogue enquanto espera (foto full-bleed) */}
         <section className="relative flex w-full shrink-0 snap-center flex-col justify-end overflow-hidden">
-          <Photo src={heroPhoto.photo} alt={heroPhoto.name} className="absolute inset-0" />
+          <div className="absolute inset-0">
+            <Photo src={heroPhoto.photo} alt={heroPhoto.name} className="h-full w-full" />
+          </div>
           <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/10" />
           <div className="relative z-10 px-6 pb-8 text-white">
             <p
@@ -257,7 +259,9 @@ export default function Welcome() {
                   className={`relative aspect-square overflow-hidden rounded-2xl ${on(idx === 2, "anim-pop")}`}
                   style={{ animationDelay: `${i * 90}ms` }}
                 >
-                  <Photo src={r.photo} alt={r.name} className="absolute inset-0" />
+                  <div className="absolute inset-0">
+                    <Photo src={r.photo} alt={r.name} className="h-full w-full" />
+                  </div>
                   <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
                   <span className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-white/95 px-2 py-0.5 text-[11px] font-bold text-ink shadow-sm">
                     <StarIcon className="h-3 w-3 text-accent2" />
