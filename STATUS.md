@@ -23,6 +23,12 @@ dopaminérgico** (fichas, XP, streak, som, motion).
 2. **Passe dopaminérgico final** (aguardando o commit do verificador pra não conflitar): HUD no Layout (fichas com count-up + tick, bônus diário pulsando, streak, nível), Home games-first (roleta-herói girando com luzes + shimmer, thumbnails ricas dos jogos, restaurantes abaixo), near-miss na roleta, XP flutuante no resultado.
 3. Build + push + **deploy preview na Vercel** (José já autorizou preview? — ele pediu o plano; o "sobe" final é dele). Team: jose-icaro-bezerra-clementes-projects.
 
+## No ar
+
+**https://betfood.vercel.app** (deploy automático a cada push em main).
+Games repaginados, modo imersivo, HUD de fichas/XP/streak, near-miss na roleta —
+tudo publicado e verificado sem erro de console.
+
 ## Backlog priorizado (pedido do José, 26/ago à noite)
 
 1. **Subir o nível dos games além da roleta** — "memória e demais tão muito low
@@ -34,7 +40,7 @@ dopaminérgico** (fichas, XP, streak, som, motion).
    - Quiz: visual game-show (palco, pontos voando, tensão no timer).
    Usar skill frontend-design + sons existentes; contrato GameProps intocado.
 2. Nome do nível trunca no HUD em telas estreitas — encurtar nomes ou animar marquee.
-3. Vercel: conectar GitHub app ao wpraiz/betfood (projeto betfood-poc → Settings → Git).
+3. ~~Vercel: conectar~~ FEITO — betfood.vercel.app com auto-deploy.
 
 ## Bloqueios / atenção
 

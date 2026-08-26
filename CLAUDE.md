@@ -43,8 +43,15 @@ editorial serifado Broadsheet ("não tem cara de app").
 
 ## Deploy
 
-- GitHub: `origin` → https://github.com/wpraiz/betfood.git (push em main).
-- Vercel: time hobby `jose-icaro-bezerra-clementes-projects` (team_dtUUbPLAwnQRtxX2EUM7Ita5). Preview antes de production; **publicar é decisão do José** (portão irreversível).
+**URL oficial da POC: https://betfood.vercel.app** — é o alvo, não usar outra.
+
+- GitHub: `origin` → https://github.com/wpraiz/betfood.git. A Vercel está ligada
+  ao repo: **todo push em `main` vira deploy automático**. Não precisa build
+  manual nem CLI; basta commitar e empurrar.
+- Conferir se o deploy pegou: comparar o bundle servido
+  (`curl -s https://betfood.vercel.app | grep -o 'assets/[^"]*\.js'`) com o
+  `dist/index.html` local após `npm run build`.
+- GitHub Pages foi um plano B abandonado (branch `gh-pages` apagada). Ignorar.
 
 ## Skills de design instaladas (.claude/skills)
 
