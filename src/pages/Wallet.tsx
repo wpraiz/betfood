@@ -2,27 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { getCoupons, getRestaurant, redeemCoupon } from "../lib/store";
 import { play } from "../lib/sound";
-
-/** Foto com skeleton shimmer enquanto carrega. */
-function Photo({ src, alt, className }: { src: string; alt: string; className: string }) {
-  const [loaded, setLoaded] = useState(false);
-  return (
-    <div
-      className={`relative shrink-0 overflow-hidden bg-surface ${
-        loaded ? "" : "animate-pulse"
-      } ${className}`}
-    >
-      <img
-        src={src}
-        alt={alt}
-        onLoad={() => setLoaded(true)}
-        className={`h-full w-full object-cover transition-opacity duration-500 ${
-          loaded ? "opacity-100" : "opacity-0"
-        }`}
-      />
-    </div>
-  );
-}
+import FoodPhoto, { thumb } from "../components/FoodPhoto";
 
 export default function Wallet() {
   const [, forceUpdate] = useState(0);
@@ -49,7 +29,7 @@ export default function Wallet() {
             </div>
           </div>
         </div>
-        <p className="mt-3 max-w-[36ch] text-sm leading-relaxed text-ink/60">
+        <p className="mt-3 max-w-[36ch] text-sm leading-relaxed text-ink/70">
           {active > 0
             ? "Prêmio ganho é prêmio seu. Mostra o código pro garçom e pronto."
             : "Seus prêmios caem aqui, prontos pra usar."}
@@ -74,7 +54,7 @@ export default function Wallet() {
               <path d="m16 20.5 1.5 2.8 3.1.5-2.2 2.2.5 3.1-2.9-1.5-2.9 1.5.5-3.1-2.2-2.2 3.1-.5z" />
             </svg>
             <p className="mt-4 font-display text-lg font-bold">Nenhum cupom ainda</p>
-            <p className="mx-auto mt-1 max-w-[28ch] text-xs leading-relaxed text-ink/50">
+            <p className="mx-auto mt-1 max-w-[28ch] text-xs leading-relaxed text-ink/70">
               Escolhe uma casa, joga e o prêmio cai direto aqui.
             </p>
             <Link
@@ -106,10 +86,16 @@ export default function Wallet() {
                 {/* Restaurante + prêmio */}
                 <div className={used ? "opacity-40" : ""}>
                   <div className="flex items-center gap-3 p-4 pb-2.5 pl-5">
-                    {r && <Photo src={r.photo} alt={r.name} className="h-11 w-11 rounded-full" />}
+                    {r && (
+                      <FoodPhoto
+                        src={thumb(r.photo, 160)}
+                        alt={r.name}
+                        className="h-11 w-11 rounded-full"
+                      />
+                    )}
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-sm font-bold">{r?.name}</div>
-                      <div className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink/40">
+                      <div className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink/65">
                         {new Date(c.wonAt).toLocaleDateString("pt-BR")}
                       </div>
                     </div>
@@ -133,12 +119,12 @@ export default function Wallet() {
                   }`}
                 >
                   <div>
-                    <div className="text-[10px] font-semibold uppercase tracking-[0.25em] text-ink/40">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.25em] text-ink/65">
                       Código do cupom
                     </div>
                     <div
                       className={`mt-0.5 font-display text-3xl font-bold tracking-[0.12em] ${
-                        used ? "text-ink/50" : "text-brand-600"
+                        used ? "text-ink/70" : "text-brand-600"
                       }`}
                     >
                       {c.code}
@@ -146,7 +132,7 @@ export default function Wallet() {
                   </div>
                   {!used && (
                     <button
-                      className="press shrink-0 rounded-full border border-ink/15 bg-white px-4 py-2 text-xs font-bold text-ink/70 transition-colors active:bg-surface"
+                      className="press inline-flex min-h-11 shrink-0 items-center justify-center rounded-full border border-ink/15 bg-white px-4 text-xs font-bold text-ink/70 transition-colors active:bg-surface"
                       onClick={() => {
                         play("tap");
                         redeemCoupon(c.id);

@@ -24,7 +24,9 @@ export interface Coupon {
   prizeLabel: string;
   code: string; // código curto pra mostrar ao garçom
   wonAt: string; // ISO
+  expiresAt?: string; // ISO — cupom vale 24h a partir do ganho
   redeemedAt: string | null;
+  demo?: true; // veio da semente de demonstração
 }
 
 export interface TableCode {
@@ -33,6 +35,7 @@ export interface TableCode {
   credits: number; // jogadas extras que o código libera
   createdAt: string;
   usedAt: string | null;
+  demo?: true; // veio da semente de demonstração
 }
 
 export interface GameResult {

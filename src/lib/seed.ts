@@ -11,12 +11,12 @@ const basePrizes = (big: string, medium: string, small: string) => [
 export const RESTAURANTS: Restaurant[] = [
   {
     id: "camaroes-potiguar",
-    name: "Camarões do Potengi",
+    name: "Potengi Camaroeira",
     cuisine: "Frutos do mar",
     neighborhood: "Ponta Negra",
     description: "Casa de camarão à beira-mar, clássico das noites de Ponta Negra.",
     accent: "#5f8296",
-    photo: "https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?w=900&q=80",
+    photo: "https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?w=600&q=70&fm=webp",
     rating: 4.8,
     prizes: basePrizes(
       "Camarão empanado grátis pra mesa",
@@ -31,7 +31,7 @@ export const RESTAURANTS: Restaurant[] = [
     neighborhood: "Petrópolis",
     description: "Tapiocas e cafés regionais com receita de avó potiguar.",
     accent: "#bd9b57",
-    photo: "https://images.unsplash.com/photo-1484723091739-30a097e8f929?w=900&q=80",
+    photo: "https://images.unsplash.com/photo-1484723091739-30a097e8f929?w=600&q=70&fm=webp",
     rating: 4.7,
     prizes: basePrizes(
       "Combo tapioca + suco grátis",
@@ -46,7 +46,7 @@ export const RESTAURANTS: Restaurant[] = [
     neighborhood: "Lagoa Nova",
     description: "Rodízio completo com cortes nobres e buffet regional.",
     accent: "#a85751",
-    photo: "https://images.unsplash.com/photo-1544025162-d76694265947?w=900&q=80",
+    photo: "https://images.unsplash.com/photo-1544025162-d76694265947?w=600&q=70&fm=webp",
     rating: 4.9,
     prizes: basePrizes(
       "1 rodízio grátis na próxima visita",
@@ -61,7 +61,7 @@ export const RESTAURANTS: Restaurant[] = [
     neighborhood: "Praia do Forte",
     description: "Pizza napolitana com vista pro Forte dos Reis Magos.",
     accent: "#6f8f6a",
-    photo: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=900&q=80",
+    photo: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600&q=70&fm=webp",
     rating: 4.6,
     prizes: basePrizes(
       "Pizza broto grátis",

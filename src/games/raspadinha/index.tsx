@@ -6,7 +6,11 @@ import type { GameDefinition, GameProps, Prize } from "../../lib/types";
 const BRUSH_RADIUS = 24; // px (CSS), pincel redondo
 const REVEAL_THRESHOLD = 0.55; // >55% raspado => revela tudo
 const SAMPLE_EVERY_N_EVENTS = 8; // amostra alpha a cada N pointermoves
-const SAMPLE_STRIDE = 6; // amostra 1 pixel a cada 6 (nas duas direções)
+const MAX_DPR = 2; // acima disso o canvas só custa memória
+// Canvas offscreen minúsculo pra medir o % raspado: o alpha sobrevive ao
+// drawImage, então 96x52 basta e lê ~5k px em vez de milhões.
+const SAMPLE_W = 96;
+const SAMPLE_H = 52;
 const CHIP_EVERY_N_EVENTS = 3; // solta uma lasca a cada N pointermoves
 const MAX_CHIPS = 30; // máximo de lascas vivas ao mesmo tempo
 const CHIP_LIFE_MS = 620; // vida da lasca (casada com o keyframe)
@@ -24,6 +28,7 @@ function Raspadinha({ restaurant, drawPrize, onFinish }: GameProps) {
 
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const sampleCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const chipLayerRef = useRef<HTMLDivElement>(null);
   const chipCountRef = useRef(0);
   const scratchingRef = useRef(false);
@@ -32,9 +37,20 @@ function Raspadinha({ restaurant, drawPrize, onFinish }: GameProps) {
   const revealedRef = useRef(false);
   const finishedRef = useRef(false);
 
+  // Timeouts da revelação: cancelados no unmount pra som/confetti não caírem na
+  // tela seguinte nem creditar cupom de rodada abandonada (padrão da roleta).
+  const timeoutsRef = useRef<number[]>([]);
+  const later = useCallback((fn: () => void, ms: number) => {
+    timeoutsRef.current.push(window.setTimeout(fn, ms));
+  }, []);
+
   // Garante que o loop de raspagem para se o componente desmontar no meio.
   useEffect(() => {
-    return () => stop("scratch");
+    return () => {
+      timeoutsRef.current.forEach((t) => window.clearTimeout(t));
+      timeoutsRef.current = [];
+      stop("scratch");
+    };
   }, []);
 
   // Pinta a camada metálica (com devicePixelRatio pra não borrar).
@@ -44,7 +60,7 @@ function Raspadinha({ restaurant, drawPrize, onFinish }: GameProps) {
     if (!canvas || !wrap) return;
 
     const rect = wrap.getBoundingClientRect();
-    const dpr = window.devicePixelRatio || 1;
+    const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
     canvas.width = Math.max(1, Math.round(rect.width * dpr));
     canvas.height = Math.max(1, Math.round(rect.height * dpr));
     canvas.style.width = `${rect.width}px`;
@@ -132,9 +148,9 @@ function Raspadinha({ restaurant, drawPrize, onFinish }: GameProps) {
     if (won) {
       // Sons em camadas: impacto da vitória + cupom carimbando logo depois.
       play("win");
-      window.setTimeout(() => play("coupon", { volume: 0.8 }), 300);
+      later(() => play("coupon", { volume: 0.8 }), 300);
       confetti({ particleCount: 120, spread: 75, origin: { y: 0.6 }, colors: CONFETTI_COLORS });
-      window.setTimeout(() => {
+      later(() => {
         confetti({
           particleCount: 50,
           angle: 60,
@@ -156,28 +172,35 @@ function Raspadinha({ restaurant, drawPrize, onFinish }: GameProps) {
     if (typeof navigator !== "undefined" && "vibrate" in navigator) {
       navigator.vibrate(won ? [60, 40, 120] : 60);
     }
-    window.setTimeout(finish, 1500);
-  }, [won, finish]);
+    later(finish, 1500);
+  }, [won, finish, later]);
 
-  // Amostra o alpha do canvas pra estimar o % raspado.
+  // Amostra o alpha pra estimar o % raspado. Em vez de ler o canvas inteiro
+  // (megabytes em DPR alto), reduz pra um canvas offscreen de 96x52 — o alpha
+  // sobrevive ao drawImage, então a proporção de área raspada se mantém.
   const measureScratched = useCallback(() => {
     const canvas = canvasRef.current;
-    const ctx = canvas?.getContext("2d");
-    if (!canvas || !ctx) return;
+    if (!canvas || canvas.width === 0 || canvas.height === 0) return;
 
-    const { width, height } = canvas;
-    const data = ctx.getImageData(0, 0, width, height).data;
-    let cleared = 0;
-    let total = 0;
-    const strideX = SAMPLE_STRIDE * 4;
-    for (let y = 0; y < height; y += SAMPLE_STRIDE) {
-      const row = y * width * 4;
-      for (let x = 0; x < width * 4; x += strideX) {
-        total++;
-        if (data[row + x + 3] < 128) cleared++;
-      }
+    let sample = sampleCanvasRef.current;
+    if (!sample) {
+      sample = document.createElement("canvas");
+      sample.width = SAMPLE_W;
+      sample.height = SAMPLE_H;
+      sampleCanvasRef.current = sample;
     }
-    const ratio = total > 0 ? cleared / total : 0;
+    const sctx = sample.getContext("2d", { willReadFrequently: true });
+    if (!sctx) return;
+
+    sctx.clearRect(0, 0, SAMPLE_W, SAMPLE_H);
+    sctx.drawImage(canvas, 0, 0, SAMPLE_W, SAMPLE_H);
+    const data = sctx.getImageData(0, 0, SAMPLE_W, SAMPLE_H).data;
+
+    let cleared = 0;
+    for (let i = 3; i < data.length; i += 4) {
+      if (data[i] < 128) cleared++;
+    }
+    const ratio = cleared / (SAMPLE_W * SAMPLE_H);
     setProgress(Math.round(ratio * 100));
     if (ratio > REVEAL_THRESHOLD) reveal();
   }, [reveal]);
@@ -349,16 +372,16 @@ function Raspadinha({ restaurant, drawPrize, onFinish }: GameProps) {
                   <p className="font-display text-3xl font-extrabold leading-tight text-brand-600">
                     {prize.label}
                   </p>
-                  <p className="text-xs font-medium text-ink/50">
+                  <p className="text-xs font-medium text-ink/70">
                     Raspou, ganhou. Mostra pro garçom e pronto.
                   </p>
                 </>
               ) : (
                 <>
-                  <p className="font-display text-2xl font-extrabold leading-tight text-ink/40">
+                  <p className="font-display text-2xl font-extrabold leading-tight text-ink/65">
                     Não foi dessa vez.
                   </p>
-                  <p className="text-xs text-ink/50">A próxima raspadinha pode ser a sua.</p>
+                  <p className="text-xs text-ink/70">A próxima raspadinha pode ser a sua.</p>
                 </>
               )}
             </div>
@@ -402,7 +425,7 @@ function Raspadinha({ restaurant, drawPrize, onFinish }: GameProps) {
 
           {/* Rodapé do bilhete */}
           <div className="border-t border-dashed border-accent2/40 px-5 py-2.5 text-center">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-ink/35">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-ink/65">
               Prêmio válido só hoje, só aqui
             </p>
           </div>
@@ -428,7 +451,7 @@ function Raspadinha({ restaurant, drawPrize, onFinish }: GameProps) {
             }}
           />
         </div>
-        <p className="mt-1.5 text-center text-xs font-medium text-ink/45">
+        <p className="mt-1.5 text-center text-xs font-medium text-ink/65">
           {revealed
             ? "Revelado."
             : progress > 0

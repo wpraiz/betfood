@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import confetti from "canvas-confetti";
 import { getRestaurants } from "../lib/store";
 import { play } from "../lib/sound";
+import FoodPhoto, { thumb } from "../components/FoodPhoto";
 
 const CONFETTI_COLORS = ["#ea1d2c", "#f5a623", "#ffffff"];
 
@@ -50,22 +51,6 @@ function StarIcon({ className }: { className?: string }) {
     <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
       <path d="M12 17.3l-5.4 3.2 1.4-6.1L3.3 10l6.2-.5L12 3.8l2.5 5.7 6.2.5-4.7 4.4 1.4 6.1z" />
     </svg>
-  );
-}
-
-/* --- Foto com skeleton shimmer ----------------------------------------- */
-
-function Photo({ src, alt, className }: { src: string; alt: string; className?: string }) {
-  const [loaded, setLoaded] = useState(false);
-  return (
-    <div className={`relative overflow-hidden bg-surface ${loaded ? "" : "animate-pulse"} ${className ?? ""}`}>
-      <img
-        src={src}
-        alt={alt}
-        onLoad={() => setLoaded(true)}
-        className={`h-full w-full object-cover transition-opacity duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}
-      />
-    </div>
   );
 }
 
@@ -140,8 +125,8 @@ export default function Welcome() {
       {splash === "off" && (
         <button
           onClick={finish}
-          className={`press anim-fade-up absolute right-4 top-4 z-20 rounded-full px-4 py-1.5 text-[13px] font-semibold transition-colors ${
-            idx === 0 ? "bg-black/30 text-white backdrop-blur-sm" : "bg-ink/5 text-ink/45"
+          className={`press anim-fade-up absolute right-4 top-4 z-20 inline-flex min-h-11 min-w-11 items-center justify-center rounded-full px-4 text-[13px] font-semibold transition-colors ${
+            idx === 0 ? "bg-black/40 text-white backdrop-blur-sm" : "bg-ink/5 text-ink/70"
           }`}
         >
           Pular
@@ -157,7 +142,7 @@ export default function Welcome() {
         {/* Slide 1 — Jogue enquanto espera (foto full-bleed) */}
         <section className="relative flex w-full shrink-0 snap-center flex-col justify-end overflow-hidden">
           <div className="absolute inset-0">
-            <Photo src={heroPhoto.photo} alt={heroPhoto.name} className="h-full w-full" />
+            <FoodPhoto src={heroPhoto.photo} alt={heroPhoto.name} className="h-full w-full" priority />
           </div>
           <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/10" />
           <div className="relative z-10 px-6 pb-8 text-white">
@@ -197,7 +182,10 @@ export default function Welcome() {
                 style={{ animationDelay: "120ms" }}
               >
                 <div className="flex items-center justify-between">
-                  <span className="rounded-full bg-accent2/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-accent2">
+                  <span
+                    className="rounded-full bg-accent2/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em]"
+                    style={{ color: "#8a5a00" }}
+                  >
                     Prêmio
                   </span>
                   <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-500 text-white">
@@ -207,7 +195,7 @@ export default function Welcome() {
                 <p className="mt-4 font-display text-2xl font-black leading-tight tracking-tight">
                   Sobremesa grátis
                 </p>
-                <p className="mt-1 text-[13px] text-ink/50">{restaurants[1].name}</p>
+                <p className="mt-1 text-[13px] text-ink/70">{restaurants[1].name}</p>
                 {/* picote */}
                 <div className="relative my-5">
                   <div className="border-t-2 border-dashed border-ink/15" />
@@ -215,7 +203,7 @@ export default function Welcome() {
                   <span className="absolute -right-9 top-1/2 h-6 w-6 -translate-y-1/2 rounded-full bg-paper" />
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/40">
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/65">
                     Código
                   </span>
                   <span className="font-display text-lg font-black tracking-[0.22em] text-brand-600">
@@ -241,10 +229,10 @@ export default function Welcome() {
               de verdade
             </h2>
             <p
-              className={`mt-3 max-w-[32ch] font-display text-[15px] leading-relaxed text-ink/60 ${on(idx === 1, "anim-fade-up")}`}
+              className={`mt-3 max-w-[32ch] font-display text-[15px] leading-relaxed text-ink/70 ${on(idx === 1, "anim-fade-up")}`}
               style={{ animationDelay: "360ms" }}
             >
-              Girou, ganhou: o cupom aparece na hora. Mostra pro garçom e pronto.
+              Deu prêmio, o cupom cai na hora na sua carteira. Mostra pro garçom e pronto.
             </p>
           </div>
         </section>
@@ -260,7 +248,7 @@ export default function Welcome() {
                   style={{ animationDelay: `${i * 90}ms` }}
                 >
                   <div className="absolute inset-0">
-                    <Photo src={r.photo} alt={r.name} className="h-full w-full" />
+                    <FoodPhoto src={thumb(r.photo, 400)} alt={r.name} className="h-full w-full" />
                   </div>
                   <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
                   <span className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-white/95 px-2 py-0.5 text-[11px] font-bold text-ink shadow-sm">
@@ -279,7 +267,7 @@ export default function Welcome() {
               className={`mb-2 text-[11px] font-bold uppercase tracking-[0.28em] text-brand-600 ${on(idx === 2, "anim-fade-up")}`}
               style={{ animationDelay: "300ms" }}
             >
-              Parceiros em Natal · RN
+              Casas de exemplo · Natal/RN
             </p>
             <h2
               className={`font-display text-4xl font-black leading-[1.05] tracking-tight ${on(idx === 2, "anim-fade-up")}`}
@@ -290,10 +278,10 @@ export default function Welcome() {
               restaurantes de Natal
             </h2>
             <p
-              className={`mt-3 max-w-[32ch] font-display text-[15px] leading-relaxed text-ink/60 ${on(idx === 2, "anim-fade-up")}`}
+              className={`mt-3 max-w-[32ch] font-display text-[15px] leading-relaxed text-ink/70 ${on(idx === 2, "anim-fade-up")}`}
               style={{ animationDelay: "460ms" }}
             >
-              Casas escolhidas a dedo, de Ponta Negra à Praia do Forte.
+              Casas de exemplo pra você conhecer o BetFood, de Ponta Negra à Praia do Forte.
             </p>
           </div>
         </section>
@@ -301,16 +289,23 @@ export default function Welcome() {
 
       {/* Barra inferior: dots + CTA */}
       <div className="z-10 px-6 pb-8 pt-2">
-        <div className="mb-5 flex items-center justify-center gap-2">
+        <div className="mb-1 flex items-center justify-center">
           {[0, 1, 2].map((i) => (
             <button
               key={i}
+              type="button"
               aria-label={`Ir para o passo ${i + 1}`}
+              aria-current={i === idx ? "step" : undefined}
               onClick={() => goTo(i)}
-              className={`h-2 rounded-full transition-all duration-300 ${
-                i === idx ? "w-7 bg-brand-500" : "w-2 bg-ink/15"
-              }`}
-            />
+              /* alvo de 44x44 (px-2 + h-11) com o ponto visual pequeno dentro */
+              className="flex h-11 w-11 items-center justify-center"
+            >
+              <span
+                className={`block h-2 rounded-full transition-all duration-300 ${
+                  i === idx ? "w-7 bg-brand-500" : "w-2 bg-ink/25"
+                }`}
+              />
+            </button>
           ))}
         </div>
         <button

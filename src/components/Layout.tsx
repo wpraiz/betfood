@@ -1,5 +1,33 @@
+/**
+ * Casca do app: HUD no topo, tab bar embaixo.
+ *
+ * CONTRATO DO MODO IMERSIVO (ImmersiveContext)
+ * --------------------------------------------
+ * Durante a PARTIDA o app sai de cena (sem HUD, sem tab bar). Mas as telas de
+ * resultado e de "fichas esgotadas" — que também moram na rota /jogar/ —
+ * precisam do shell de volta (contador de fichas, bônus, navegação).
+ *
+ * Por isso o Layout apenas ESCOLHE O PADRÃO pela rota (`/jogar/` → imersivo) e
+ * a tela filha manda no resto:
+ *
+ *   const { setImmersive } = useContext(ImmersiveContext);
+ *   useEffect(() => setImmersive(false), []);   // mostra o shell de novo
+ *
+ * - `setImmersive(true)`  → esconde HUD e tab bar (partida rolando)
+ * - `setImmersive(false)` → mostra HUD e tab bar (resultado / sem fichas)
+ *
+ * O default do contexto é no-op, então usar o hook fora do Layout não quebra.
+ * O pedido vale só para a rota que o fez: ao mudar de pathname o Layout volta
+ * sozinho ao padrão — a tela filha não precisa limpar nada ao desmontar.
+ * Chamar com o mesmo valor duas vezes não re-renderiza (seguro em effect solto).
+ */
+import { createContext, useMemo, useRef, useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import Hud from "./Hud";
+
+export const ImmersiveContext = createContext<{ setImmersive: (v: boolean) => void }>({
+  setImmersive: () => {},
+});
 
 const lineProps = {
   viewBox: "0 0 24 24",
@@ -69,7 +97,7 @@ export default function Layout() {
         to={to}
         aria-current={active ? "page" : undefined}
         className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-[10px] font-semibold transition-colors duration-200 ${
-          active ? "text-brand-500" : "text-ink/40"
+          active ? "text-brand-500" : "text-ink/65"
         }`}
       >
         <span
@@ -81,24 +109,49 @@ export default function Layout() {
       </Link>
     );
   };
-  // Dentro do jogo o app sai de cena: sem HUD, sem tab bar — só a partida.
-  const immersive = pathname.includes("/jogar/");
+  // Padrão pela rota: dentro do jogo o app sai de cena. A tela filha pode pedir
+  // o shell de volta via ImmersiveContext (ver contrato no topo do arquivo).
+  const routeImmersive = pathname.includes("/jogar/");
+
+  // O override guarda a rota que o pediu: ao trocar de rota ele deixa de valer
+  // sozinho (nada de effect no Layout, que rodaria DEPOIS do effect da filha e
+  // sobrescreveria o pedido dela).
+  const [override, setOverride] = useState<{ path: string; value: boolean } | null>(null);
+  const pathRef = useRef(pathname);
+  pathRef.current = pathname;
+  const overrideRef = useRef(override);
+  overrideRef.current = override;
+
+  const ctx = useMemo(
+    () => ({
+      setImmersive: (value: boolean) => {
+        const cur = overrideRef.current;
+        if (cur && cur.path === pathRef.current && cur.value === value) return;
+        setOverride({ path: pathRef.current, value });
+      },
+    }),
+    []
+  );
+
+  const immersive = override && override.path === pathname ? override.value : routeImmersive;
 
   return (
-    <div className="mx-auto flex min-h-dvh max-w-md flex-col bg-paper text-ink">
-      {!immersive && <Hud />}
-      <main className={`flex-1 ${immersive ? "" : "pb-24"}`}>
-        <Outlet />
-      </main>
-      {!immersive && (
-        <nav className="fixed bottom-0 left-1/2 w-full max-w-md -translate-x-1/2 border-t border-ink/10 bg-white pb-[env(safe-area-inset-bottom)]">
-          <div className="flex">
-            {tab("/", "Início", "restaurantes")}
-            {tab("/cupons", "Cupons", "cupons")}
-            {tab("/parceiro", "Parceiro", "parceiro")}
-          </div>
-        </nav>
-      )}
-    </div>
+    <ImmersiveContext.Provider value={ctx}>
+      <div className="mx-auto flex min-h-dvh max-w-md flex-col bg-paper text-ink">
+        {!immersive && <Hud />}
+        <main className={`flex-1 ${immersive ? "" : "pb-24"}`}>
+          <Outlet />
+        </main>
+        {!immersive && (
+          <nav className="fixed bottom-0 left-1/2 w-full max-w-md -translate-x-1/2 border-t border-ink/10 bg-white pb-[env(safe-area-inset-bottom)]">
+            <div className="flex">
+              {tab("/", "Início", "restaurantes")}
+              {tab("/cupons", "Cupons", "cupons")}
+              {tab("/parceiro", "Parceiro", "parceiro")}
+            </div>
+          </nav>
+        )}
+      </div>
+    </ImmersiveContext.Provider>
   );
 }

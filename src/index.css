@@ -104,3 +104,27 @@ body {
 .anim-glow {
   animation: glow-pulse 2.2s ease-in-out infinite;
 }
+
+/* --- Acessibilidade: quem pede menos movimento não vê nada girando/piscando -- */
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-spin-slow,
+  .anim-glow,
+  .anim-fade-up,
+  .anim-pop,
+  [class*="marquee-blink"],
+  [style*="marquee-blink"] {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+
+  /* nada de transição longa nem scroll animado no app inteiro */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

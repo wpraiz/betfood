@@ -1,18 +1,23 @@
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import confetti from "canvas-confetti";
 import { getGame } from "../games";
+import { ImmersiveContext } from "../components/Layout";
 import type { GameResult } from "../lib/types";
 import {
   awardCoupon,
+  canClaimDailyBonus,
+  CHIP_COST,
+  claimDailyBonus,
   consumePlay,
+  DAILY_BONUS_CHIPS,
   drawPrize,
   getChips,
   getRestaurant,
   XP_PER_PLAY,
   XP_PER_WIN,
 } from "../lib/store";
-import { play, stop } from "../lib/sound";
+import { isMuted, play, setMuted, stop } from "../lib/sound";
 
 const CONFETTI_COLORS = ["#ea1d2c", "#f5a623", "#ffffff"];
 
@@ -22,7 +27,7 @@ function XpBadge({ amount }: { amount: number }) {
     <>
       <style>{`@keyframes xp-float{0%{opacity:0;transform:translateY(10px) scale(.8)}25%{opacity:1;transform:translateY(0) scale(1.08)}75%{opacity:1;transform:translateY(-4px) scale(1)}100%{opacity:0;transform:translateY(-22px) scale(.95)}}`}</style>
       <span
-        className="inline-block rounded-full bg-accent2/15 px-3 py-1 text-xs font-black tabular-nums text-accent2"
+        className="inline-block rounded-full bg-accent2/20 px-3 py-1 text-xs font-black tabular-nums text-[#8a5a00]"
         style={{ animation: "xp-float 2.4s cubic-bezier(0.16,1,0.3,1) 0.5s both" }}
       >
         +{amount} XP
@@ -57,8 +62,10 @@ export default function GamePlay() {
   const navigate = useNavigate();
   const restaurant = getRestaurant(restaurantId);
   const game = getGame(gameId);
+  const { setImmersive } = useContext(ImmersiveContext);
   const [result, setResult] = useState<GameResult | null>(null);
   const [couponCode, setCouponCode] = useState<string | null>(null);
+  const [muted, setMutedState] = useState(() => isMuted());
 
   // Consome a jogada UMA única vez por montagem — o ref sobrevive ao
   // double-mount do StrictMode em dev (useMemo cobraria duas vezes).
@@ -71,15 +78,30 @@ export default function GamePlay() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Só a partida em si esconde o app. Resultado e "fichas acabaram" devolvem
+  // HUD (fichas/bônus) e tab bar — sem isso a tela vira beco sem saída.
+  const inMatch = allowed !== false && !result;
+  useEffect(() => {
+    setImmersive(inMatch);
+    return () => setImmersive(false);
+  }, [inMatch, setImmersive]);
+
   // Ambiente sonoro discreto durante a partida (para ao sair ou ao terminar).
   useEffect(() => {
-    if (allowed && !result) {
+    if (allowed && !result && !muted) {
       play("shimmer", { loop: true, volume: 0.12 });
     } else {
       stop("shimmer");
     }
     return () => stop("shimmer");
-  }, [allowed, result]);
+  }, [allowed, result, muted]);
+
+  const toggleMute = () => {
+    const next = !muted;
+    setMuted(next);
+    setMutedState(next);
+    if (!next) play("tap");
+  };
 
   // Celebração (ou lamento) quando o resultado chega.
   useEffect(() => {
@@ -119,32 +141,39 @@ export default function GamePlay() {
   }, [result]);
 
   if (!restaurant || !game)
-    return <div className="p-5 text-sm text-ink/50">Jogo não encontrado.</div>;
+    return <div className="p-5 text-sm text-ink/70">Jogo não encontrado.</div>;
 
   // Ainda decidindo se a jogada foi cobrada (primeiro frame): não pisca tela.
   if (allowed === null && !result) return null;
 
-  // --- Jogadas esgotadas ---------------------------------------------------
-  if (!allowed && !result)
+  // --- Sem fichas ----------------------------------------------------------
+  if (!allowed && !result) {
+    const canClaim = canClaimDailyBonus();
+    // O bônus vira jogada na hora: credita, cobra de novo e a partida começa.
+    const claimBonus = () => {
+      const r = claimDailyBonus();
+      if (!r.ok) return;
+      play("jackpot");
+      setAllowed(consumePlay(restaurant.id));
+    };
+
     return (
       <div className="px-6 pb-12 pt-16 text-center">
         <div className="anim-pop mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-brand-50 text-brand-600">
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="h-9 w-9"
-          >
-            <path d="M7 3h10M7 21h10" />
-            <path d="M8 3v3.5c0 2.2 4 3.3 4 5.5s-4 3.3-4 5.5V21" />
-            <path d="M16 3v3.5c0 2.2-4 3.3-4 5.5s4 3.3 4 5.5V21" />
+          <svg viewBox="0 0 24 24" className="h-9 w-9" aria-hidden>
+            <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="1.8" />
+            <circle cx="12" cy="12" r="4.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
+            <path
+              d="M5 19 19 5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+            />
           </svg>
         </div>
         <p
-          className="anim-fade-up mt-6 text-[11px] font-semibold uppercase tracking-[0.3em] text-ink/40"
+          className="anim-fade-up mt-6 text-[11px] font-semibold uppercase tracking-[0.3em] text-ink/65"
           style={{ animationDelay: "80ms" }}
         >
           {restaurant.name}
@@ -153,23 +182,50 @@ export default function GamePlay() {
           className="anim-fade-up mt-2 font-display text-3xl font-bold tracking-tight"
           style={{ animationDelay: "140ms" }}
         >
-          Jogadas esgotadas
+          Suas fichas acabaram
         </h1>
         <p
-          className="anim-fade-up mx-auto mt-3 max-w-[32ch] text-sm leading-relaxed text-ink/60"
+          className="anim-fade-up mx-auto mt-3 max-w-[32ch] text-sm leading-relaxed text-ink/70"
           style={{ animationDelay: "200ms" }}
         >
-          As de hoje acabaram por aqui. Um código da mesa libera mais na hora — é só pedir.
+          Cada jogada custa {CHIP_COST} fichas. Você tem {getChips()} agora — dá pra repor sem
+          sair daqui.
         </p>
-        <Link
-          to={`/r/${restaurant.id}`}
-          className="press anim-fade-up mt-8 inline-block rounded-full bg-brand-500 px-8 py-3.5 text-sm font-bold text-white transition-colors active:bg-brand-600"
+
+        <div
+          className="anim-fade-up mx-auto mt-8 grid max-w-xs gap-3"
           style={{ animationDelay: "280ms" }}
         >
-          Pegar código da mesa
-        </Link>
+          {canClaim && (
+            <button
+              onClick={claimBonus}
+              className="press min-h-11 rounded-full bg-brand-500 px-6 py-3.5 text-sm font-bold text-white transition-colors active:bg-brand-600"
+            >
+              Resgatar bônus de hoje · +{DAILY_BONUS_CHIPS} fichas
+            </button>
+          )}
+          <Link
+            to="/parceiro"
+            onClick={() => play("tap")}
+            className={`press flex min-h-11 items-center justify-center rounded-full px-6 py-3.5 text-sm font-bold transition-colors ${
+              canClaim
+                ? "border border-ink/15 bg-white text-ink active:bg-surface"
+                : "bg-brand-500 text-white active:bg-brand-600"
+            }`}
+          >
+            Gerar um código no painel do parceiro
+          </Link>
+          <Link
+            to="/"
+            onClick={() => play("tap")}
+            className="press flex min-h-11 items-center justify-center rounded-full px-6 py-3 text-sm font-semibold text-ink/70 underline underline-offset-4 transition-colors active:text-ink"
+          >
+            Voltar ao início
+          </Link>
+        </div>
       </div>
     );
+  }
 
   // --- Resultado -----------------------------------------------------------
   if (result) {
@@ -178,7 +234,7 @@ export default function GamePlay() {
     if (won && result.prize)
       return (
         <div className="px-6 pb-12 pt-12 text-center">
-          <p className="anim-fade-up text-[11px] font-semibold uppercase tracking-[0.3em] text-ink/40">
+          <p className="anim-fade-up text-[11px] font-semibold uppercase tracking-[0.3em] text-ink/65">
             {restaurant.name}
           </p>
           <h1
@@ -201,7 +257,7 @@ export default function GamePlay() {
               <Photo src={restaurant.photo} alt={restaurant.name} className="h-11 w-11 rounded-full" />
               <div className="min-w-0">
                 <div className="truncate text-sm font-bold">{restaurant.name}</div>
-                <div className="mt-0.5 text-[10px] font-bold uppercase tracking-[0.2em] text-accent2">
+                <div className="mt-0.5 text-[10px] font-bold uppercase tracking-[0.2em] text-[#8a5a00]">
                   Prêmio da rodada
                 </div>
               </div>
@@ -218,7 +274,7 @@ export default function GamePlay() {
             </div>
 
             <div className="p-4 pt-3">
-              <div className="text-[10px] font-semibold uppercase tracking-[0.25em] text-ink/40">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.25em] text-ink/65">
                 Código do cupom
               </div>
               {couponCode && (
@@ -226,7 +282,7 @@ export default function GamePlay() {
                   {couponCode}
                 </div>
               )}
-              <p className="mt-2 text-xs font-semibold text-ink/50">Mostra pro garçom e pronto.</p>
+              <p className="mt-2 text-xs font-semibold text-ink/70">Mostra pro garçom e pronto.</p>
             </div>
           </div>
 
@@ -250,7 +306,7 @@ export default function GamePlay() {
     // Derrota: leve e encorajadora.
     return (
       <div className="px-6 pb-12 pt-16 text-center">
-        <div className="anim-pop mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-surface text-ink/40">
+        <div className="anim-pop mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-surface text-ink/65">
           <svg
             viewBox="0 0 24 24"
             fill="none"
@@ -274,7 +330,7 @@ export default function GamePlay() {
           <XpBadge amount={XP_PER_PLAY} />
         </div>
         <p
-          className="anim-fade-up mx-auto mt-3 max-w-[30ch] text-sm leading-relaxed text-ink/60"
+          className="anim-fade-up mx-auto mt-3 max-w-[30ch] text-sm leading-relaxed text-ink/70"
           style={{ animationDelay: "140ms" }}
         >
           A sorte muda rápido por aqui. Respira e vem de novo.
@@ -302,12 +358,13 @@ export default function GamePlay() {
       />
       <div className="pointer-events-none fixed inset-0 -z-10 bg-gradient-to-b from-paper/60 via-paper/85 to-paper" />
 
-      {/* Barra do jogo: sair + nome + fichas (o resto do app sai de cena) */}
-      <div className="flex items-center justify-between px-4 py-3">
+      {/* Barra do jogo: sair + nome + mudo + fichas (o resto do app sai de cena).
+          Padding do topo respeita o notch do iPhone; alvos com 44px. */}
+      <div className="flex items-center justify-between gap-2 px-4 pb-3 pt-[calc(env(safe-area-inset-top)+0.75rem)]">
         <Link
           to={`/r/${restaurant.id}`}
           onClick={() => play("tap")}
-          className="press flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur"
+          className="press flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur"
           aria-label="Sair do jogo"
         >
           <svg
@@ -316,20 +373,50 @@ export default function GamePlay() {
             stroke="currentColor"
             strokeWidth="2"
             strokeLinecap="round"
-            className="h-4 w-4 text-ink/70"
+            className="h-5 w-5 text-ink/70"
           >
             <path d="m15 6-6 6 6 6" />
           </svg>
         </Link>
-        <div className="font-display text-[13px] font-bold uppercase tracking-[0.18em] text-ink/45">
+        <div className="min-w-0 truncate font-display text-[13px] font-bold uppercase tracking-[0.18em] text-ink/65">
           {game.name}
         </div>
-        <div className="flex items-center gap-1 rounded-full bg-ink px-2.5 py-1.5">
-          <svg viewBox="0 0 24 24" className="h-3.5 w-3.5">
-            <circle cx="12" cy="12" r="10" fill="#f5a623" />
-            <circle cx="12" cy="12" r="6" fill="#fff3d6" />
-          </svg>
-          <span className="text-[11px] font-black tabular-nums text-white">{getChips()}</span>
+        <div className="flex shrink-0 items-center gap-1.5">
+          <button
+            type="button"
+            onClick={toggleMute}
+            aria-pressed={muted}
+            aria-label={muted ? "Ativar som" : "Desativar som"}
+            className="press flex h-11 w-11 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.9"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="h-5 w-5 text-ink/70"
+              aria-hidden
+            >
+              <path d="M11 5 6.5 9H3v6h3.5L11 19V5Z" />
+              {muted ? (
+                <path d="m16 9.5 4 5M20 9.5l-4 5" />
+              ) : (
+                <>
+                  <path d="M15.5 8.8a4.5 4.5 0 0 1 0 6.4" />
+                  <path d="M18.4 6.2a8.5 8.5 0 0 1 0 11.6" />
+                </>
+              )}
+            </svg>
+          </button>
+          <div className="flex h-11 items-center gap-1 rounded-full bg-ink px-3">
+            <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" aria-hidden>
+              <circle cx="12" cy="12" r="10" fill="#f5a623" />
+              <circle cx="12" cy="12" r="6" fill="#fff3d6" />
+            </svg>
+            <span className="text-[11px] font-black tabular-nums text-white">{getChips()}</span>
+          </div>
         </div>
       </div>
       <GameComponent

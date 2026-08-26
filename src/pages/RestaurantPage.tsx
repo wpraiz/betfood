@@ -87,7 +87,7 @@ export default function RestaurantPage() {
   const [, forceUpdate] = useState(0);
 
   if (!restaurant)
-    return <div className="p-5 text-sm text-ink/50">Restaurante não encontrado.</div>;
+    return <div className="p-5 text-sm text-ink/70">Restaurante não encontrado.</div>;
   const plays = availablePlays(restaurant.id);
 
   const redeem = () => {
@@ -108,7 +108,7 @@ export default function RestaurantPage() {
         <Link
           to="/"
           aria-label="Voltar"
-          className="press absolute left-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink shadow-lg"
+          className="press absolute left-4 top-4 flex h-11 w-11 items-center justify-center rounded-full bg-white text-ink shadow-lg"
         >
           <svg
             viewBox="0 0 24 24"
@@ -146,10 +146,10 @@ export default function RestaurantPage() {
         >
           <div className="flex items-center justify-between">
             <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-ink/45">
+              <span className="text-xs font-bold uppercase tracking-wider text-ink/65">
                 Jogadas disponíveis
               </span>
-              <p className="mt-0.5 text-xs text-ink/40">Código da mesa libera mais.</p>
+              <p className="mt-0.5 text-xs text-ink/65">Código da mesa libera mais.</p>
             </div>
             <span className="font-display text-5xl font-bold leading-none tabular-nums text-brand-500">
               {plays}
@@ -161,11 +161,11 @@ export default function RestaurantPage() {
               onChange={(e) => setCode(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && redeem()}
               placeholder="Código da mesa"
-              className="min-w-0 flex-1 rounded-full border border-ink/15 bg-paper px-4 py-2.5 text-sm font-semibold uppercase tracking-wider placeholder:font-normal placeholder:normal-case placeholder:tracking-normal placeholder:text-ink/35 focus:border-brand-500 focus:outline-none"
+              className="min-h-11 min-w-0 flex-1 rounded-full border border-ink/15 bg-paper px-4 py-2.5 text-sm font-semibold uppercase tracking-wider placeholder:font-normal placeholder:normal-case placeholder:tracking-normal placeholder:text-ink/65 focus:border-brand-500 focus:outline-none"
             />
             <button
               onClick={redeem}
-              className="press rounded-full bg-brand-500 px-5 py-2.5 text-sm font-bold text-white transition-colors active:bg-brand-700"
+              className="press min-h-11 rounded-full bg-brand-500 px-5 py-2.5 text-sm font-bold text-white transition-colors active:bg-brand-700"
             >
               Resgatar
             </button>
@@ -173,7 +173,7 @@ export default function RestaurantPage() {
           {msg && (
             <p
               className={`anim-pop mt-2.5 text-[13px] font-semibold ${
-                msg.ok ? "text-brand-600" : "text-ink/50"
+                msg.ok ? "text-brand-600" : "text-ink/70"
               }`}
             >
               {msg.text}
@@ -187,7 +187,7 @@ export default function RestaurantPage() {
           style={{ animationDelay: "140ms" }}
         >
           <h2 className="font-display text-lg font-bold tracking-tight">Escolha seu jogo</h2>
-          <span className="text-xs font-semibold text-ink/35">{GAMES.length} jogos</span>
+          <span className="text-xs font-semibold text-ink/65">{GAMES.length} jogos</span>
         </div>
         <div className="grid grid-cols-2 gap-3">
           {GAMES.map((g, i) => (
@@ -203,7 +203,7 @@ export default function RestaurantPage() {
               </div>
               <div className="p-3">
                 <div className="font-display text-[15px] font-bold leading-snug">{g.name}</div>
-                <div className="mt-0.5 text-[11px] leading-relaxed text-ink/50">{g.tagline}</div>
+                <div className="mt-0.5 text-[11px] leading-relaxed text-ink/70">{g.tagline}</div>
               </div>
             </Link>
           ))}

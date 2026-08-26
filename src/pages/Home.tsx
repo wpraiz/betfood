@@ -5,26 +5,9 @@ import { getRestaurants } from "../lib/store";
 import { play } from "../lib/sound";
 import type { Restaurant } from "../lib/types";
 import GameThumb, { WHEEL_GRADIENT } from "../components/GameThumb";
+import FoodPhoto, { thumb } from "../components/FoodPhoto";
 
 const LAST_CASA_KEY = "betfood-last-casa";
-
-/** Foto com skeleton shimmer enquanto carrega. */
-function FoodPhoto({ src, alt, className = "" }: { src: string; alt: string; className?: string }) {
-  const [loaded, setLoaded] = useState(false);
-  return (
-    <div className={`relative overflow-hidden bg-surface ${className}`}>
-      {!loaded && <div className="absolute inset-0 animate-pulse bg-surface" />}
-      <img
-        src={src}
-        alt={alt}
-        onLoad={() => setLoaded(true)}
-        className={`h-full w-full object-cover transition-opacity duration-500 ${
-          loaded ? "opacity-100" : "opacity-0"
-        }`}
-      />
-    </div>
-  );
-}
 
 function Star({ className = "h-3 w-3" }: { className?: string }) {
   return (
@@ -113,8 +96,8 @@ export default function Home() {
         <h1 className="mt-4 font-display text-3xl font-black leading-none tracking-tight">
           Roleta <span className="text-brand-500">BetFood</span>
         </h1>
-        <p className="mt-1.5 text-sm font-medium text-ink/50">
-          Prêmios de verdade a cada giro · 10 fichas
+        <p className="mt-1.5 text-sm font-medium text-ink/70">
+          Gire por prêmios de verdade · 10 fichas
         </p>
         <span className="anim-glow mt-4 inline-block rounded-full bg-brand-500 px-10 py-3.5 font-display text-base font-black uppercase tracking-wide text-white">
           Girar agora
@@ -126,7 +109,7 @@ export default function Home() {
         <div className="anim-fade-up mb-3 flex items-baseline justify-between" style={{ animationDelay: "80ms" }}>
           <h2 className="font-display text-lg font-bold tracking-tight">Jogos</h2>
           {lastCasa && (
-            <span className="text-[11px] font-semibold text-ink/35">
+            <span className="text-[11px] font-semibold text-ink/65">
               jogando em {lastCasa.name}
             </span>
           )}
@@ -144,7 +127,7 @@ export default function Home() {
               </div>
               <div className="p-3">
                 <div className="font-display text-[15px] font-bold leading-tight">{g.name}</div>
-                <div className="mt-0.5 text-[11px] text-ink/45">{g.tagline}</div>
+                <div className="mt-0.5 text-[11px] text-ink/65">{g.tagline}</div>
               </div>
             </button>
           ))}
@@ -155,7 +138,9 @@ export default function Home() {
       <div className="px-5 pb-4 pt-7">
         <div className="anim-fade-up mb-3 flex items-baseline justify-between" style={{ animationDelay: "300ms" }}>
           <h2 className="font-display text-lg font-bold tracking-tight">Onde resgatar</h2>
-          <span className="text-xs font-semibold text-ink/35">{restaurants.length} casas em Natal</span>
+          <span className="text-xs font-semibold text-ink/65">
+            {restaurants.length} casas de exemplo
+          </span>
         </div>
         <div className="grid gap-4">
           {restaurants.map((r, i) => {
@@ -169,8 +154,11 @@ export default function Home() {
                 style={{ animationDelay: `${340 + i * 70}ms` }}
               >
                 <div className="relative">
-                  <FoodPhoto src={r.photo} alt={r.name} className="h-36" />
+                  <FoodPhoto src={r.photo} alt={r.name} className="h-36" priority={i === 0} />
                   <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/55 to-transparent" />
+                  <span className="absolute left-3 top-3 rounded-full bg-ink/70 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-white">
+                    Casa exemplo
+                  </span>
                   <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-white px-2 py-1 text-xs font-bold text-ink shadow-md">
                     <Star className="h-3 w-3 text-accent2" />
                     {r.rating.toFixed(1)}
@@ -182,11 +170,11 @@ export default function Home() {
                 <div className="p-4">
                   <div className="flex items-baseline justify-between gap-3">
                     <h3 className="truncate font-display text-[16px] font-bold">{r.name}</h3>
-                    <span className="shrink-0 text-xs font-medium text-ink/45">{r.neighborhood}</span>
+                    <span className="shrink-0 text-xs font-medium text-ink/65">{r.neighborhood}</span>
                   </div>
                   {big && (
                     <div className="mt-1.5 text-[13px]">
-                      <span className="text-ink/50">Prêmio máximo: </span>
+                      <span className="text-ink/70">Prêmio máximo: </span>
                       <span className="font-bold text-brand-600">{big.label}</span>
                     </div>
                   )}
@@ -213,12 +201,16 @@ export default function Home() {
                   onClick={() => pickCasa(r)}
                   className="press flex items-center gap-3 rounded-card border border-ink/10 p-2.5 text-left"
                 >
-                  <FoodPhoto src={r.photo} alt={r.name} className="h-11 w-11 shrink-0 rounded-xl" />
+                  <FoodPhoto
+                    src={thumb(r.photo, 160)}
+                    alt={r.name}
+                    className="h-11 w-11 shrink-0 rounded-xl"
+                  />
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-sm font-bold">{r.name}</div>
-                    <div className="text-[11px] text-ink/45">{r.neighborhood}</div>
+                    <div className="text-[11px] text-ink/65">{r.neighborhood}</div>
                   </div>
-                  <span className="inline-flex items-center gap-1 text-xs font-bold text-ink/60">
+                  <span className="inline-flex items-center gap-1 text-xs font-bold text-ink/70">
                     <Star className="h-3 w-3 text-accent2" />
                     {r.rating.toFixed(1)}
                   </span>

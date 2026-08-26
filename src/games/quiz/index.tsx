@@ -111,8 +111,9 @@ const FEEDBACK_DELAY = 1_800; // ms
 const COUNTUP_STEP = 380; // ms entre pontos na contagem final
 const FLY_MS = 620; // duração do "+1" voando até o placar
 
-// Verde de acerto / vermelho terroso de erro (feedback, não ação)
-const OK = "#22a06b";
+// Verde de acerto / vermelho terroso de erro (feedback, não ação).
+// Tons escurecidos pra passar AA como texto e como fundo de texto branco.
+const OK = "#1a7f52";
 const BAD = "#a85751";
 const CONFETTI_COLORS = ["#ea1d2c", "#f5a623", "#ffffff"];
 
@@ -308,6 +309,19 @@ function Quiz({ restaurant, drawPrize, onFinish }: GameProps) {
   const scoreRef = useRef<HTMLSpanElement>(null);
   const lastTickSecondRef = useRef<number | null>(null);
 
+  // Timeouts agendados pelo fluxo de resposta: cancelados no unmount pra não
+  // avançar pergunta nem creditar rodada abandonada (mesmo padrão da roleta).
+  const timeoutsRef = useRef<number[]>([]);
+  const later = (fn: () => void, ms: number) => {
+    timeoutsRef.current.push(window.setTimeout(fn, ms));
+  };
+  useEffect(() => {
+    return () => {
+      timeoutsRef.current.forEach((t) => window.clearTimeout(t));
+      timeoutsRef.current = [];
+    };
+  }, []);
+
   const current = questions[idx];
 
   // Timer da pergunta atual
@@ -375,7 +389,7 @@ function Quiz({ restaurant, drawPrize, onFinish }: GameProps) {
         dy: to.top + to.height / 2 - (from.top + from.height / 2),
         key: Date.now(),
       });
-      setTimeout(() => {
+      later(() => {
         setFly(null);
         setHeaderScore(newScore); // o placar "recebe" o ponto e pulsa
       }, FLY_MS);
@@ -383,7 +397,7 @@ function Quiz({ restaurant, drawPrize, onFinish }: GameProps) {
       setHeaderScore(newScore);
     }
 
-    setTimeout(() => {
+    later(() => {
       if (idx + 1 < TOTAL_QUESTIONS) {
         setIdx(idx + 1);
         setSelected(null);
@@ -468,7 +482,7 @@ function Quiz({ restaurant, drawPrize, onFinish }: GameProps) {
               3 perguntas. 2 acertos. Prêmio na mesa.
             </h2>
             <p
-              className="anim-fade-up mt-2 text-sm leading-relaxed text-ink/60"
+              className="anim-fade-up mt-2 text-sm leading-relaxed text-ink/70"
               style={{ animationDelay: "140ms" }}
             >
               Comida daqui, resposta rápida — quem conhece o sabor da terra leva.
@@ -505,7 +519,7 @@ function Quiz({ restaurant, drawPrize, onFinish }: GameProps) {
         <style>{localCss}</style>
         <Vignette />
         <div className="anim-pop relative z-10 rounded-card bg-white p-6 text-center shadow-lg shadow-ink/10">
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-ink/40">
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-ink/65">
             Fim de jogo
           </p>
           <p
@@ -515,9 +529,9 @@ function Quiz({ restaurant, drawPrize, onFinish }: GameProps) {
             <span key={displayScore} className="anim-pop inline-block">
               {displayScore}
             </span>
-            <span className="text-2xl text-ink/25"> /{TOTAL_QUESTIONS}</span>
+            <span className="text-2xl text-ink/50"> /{TOTAL_QUESTIONS}</span>
           </p>
-          <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.2em] text-ink/40">
+          <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.2em] text-ink/65">
             Respostas certas
           </p>
           <h2 className="mt-5 font-display text-2xl font-bold tracking-tight">
@@ -531,7 +545,7 @@ function Quiz({ restaurant, drawPrize, onFinish }: GameProps) {
               {finalResult.prize.label}
             </p>
           )}
-          <p className="mt-3 text-sm leading-relaxed text-ink/60">
+          <p className="mt-3 text-sm leading-relaxed text-ink/70">
             {won
               ? "Conhecimento vale prêmio por aqui. Bom apetite."
               : score >= 2
@@ -570,7 +584,7 @@ function Quiz({ restaurant, drawPrize, onFinish }: GameProps) {
               left: fly.x,
               top: fly.y,
               color: OK,
-              textShadow: "0 2px 10px rgba(34,160,107,0.35)",
+              textShadow: "0 2px 10px rgba(26,127,82,0.35)",
               "--fly-dx": `${fly.dx}px`,
               "--fly-dy": `${fly.dy}px`,
             } as CSSProperties
@@ -589,7 +603,7 @@ function Quiz({ restaurant, drawPrize, onFinish }: GameProps) {
           <div className="flex items-center gap-2">
             <span
               ref={scoreRef}
-              className="flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-ink/40 shadow-sm"
+              className="flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-ink/65 shadow-sm"
             >
               Acertos
               <span
@@ -641,7 +655,7 @@ function Quiz({ restaurant, drawPrize, onFinish }: GameProps) {
             key={idx}
             className="anim-fade-up relative z-10 mb-4 mt-10 rounded-card bg-white p-5 shadow-md shadow-ink/5"
           >
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-ink/35">
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-ink/65">
               Pergunta {idx + 1} de {TOTAL_QUESTIONS}
             </p>
             <p className="mt-1.5 font-display text-lg font-bold leading-snug">{current.question}</p>
@@ -656,11 +670,11 @@ function Quiz({ restaurant, drawPrize, onFinish }: GameProps) {
                 "press anim-fade-up flex items-center gap-3 rounded-card border-2 px-4 py-3.5 text-left text-sm font-semibold transition-colors";
               let cls = `${base} border-transparent bg-white shadow-sm hover:border-brand-100 active:border-brand-500`;
               let style: CSSProperties = { animationDelay: `${100 + i * 60}ms` };
-              let letterCls = "bg-surface text-ink/50";
+              let letterCls = "bg-surface text-ink/70";
               if (phase === "feedback") {
                 if (isCorrect) {
                   cls = `${base} quiz-correct-pop border-transparent text-white shadow-lg`;
-                  style = { ...style, background: OK, boxShadow: "0 8px 22px -6px rgba(34,160,107,0.55)" };
+                  style = { ...style, background: OK, boxShadow: "0 8px 22px -6px rgba(26,127,82,0.55)" };
                   letterCls = "bg-white/20 text-white";
                 } else if (isPicked) {
                   cls = `${base} quiz-shake border-transparent text-white`;

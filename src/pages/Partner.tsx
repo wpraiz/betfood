@@ -6,27 +6,7 @@ import {
   getTableCodes,
 } from "../lib/store";
 import { play } from "../lib/sound";
-
-/** Foto com skeleton shimmer enquanto carrega. */
-function Photo({ src, alt, className }: { src: string; alt: string; className: string }) {
-  const [loaded, setLoaded] = useState(false);
-  return (
-    <div
-      className={`relative shrink-0 overflow-hidden bg-surface ${
-        loaded ? "" : "animate-pulse"
-      } ${className}`}
-    >
-      <img
-        src={src}
-        alt={alt}
-        onLoad={() => setLoaded(true)}
-        className={`h-full w-full object-cover transition-opacity duration-500 ${
-          loaded ? "opacity-100" : "opacity-0"
-        }`}
-      />
-    </div>
-  );
-}
+import FoodPhoto, { thumb } from "../components/FoodPhoto";
 
 function Metric({
   label,
@@ -62,7 +42,7 @@ function Metric({
       <div className="font-display text-4xl font-bold leading-none tabular-nums text-ink">
         {value}
       </div>
-      <div className="mt-2 text-[10px] font-semibold uppercase leading-tight tracking-[0.15em] text-ink/45">
+      <div className="mt-2 text-[10px] font-semibold uppercase leading-tight tracking-[0.15em] text-ink/65">
         {label}
       </div>
     </div>
@@ -82,11 +62,12 @@ function Stepper({
   max: number;
   onChange: (v: number) => void;
 }) {
+  // 44x44 de área clicável (mínimo de toque), círculo visual dentro.
   const btn =
-    "press flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-ink/10 bg-white text-ink/70 shadow-sm disabled:opacity-30";
+    "press flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-ink/10 bg-white text-ink/70 shadow-sm disabled:opacity-30";
   return (
     <div className="min-w-0 flex-1">
-      <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.15em] text-ink/45">
+      <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.15em] text-ink/65">
         {label}
       </span>
       <div className="flex items-center justify-between gap-1 rounded-card bg-paper p-1.5">
@@ -152,14 +133,14 @@ export default function Partner() {
           Painel do parceiro
         </p>
         <h1 className="font-display text-3xl font-bold tracking-tight">Sua casa</h1>
-        <p className="mt-3 max-w-[36ch] text-sm leading-relaxed text-ink/60">
+        <p className="mt-3 max-w-[36ch] text-sm leading-relaxed text-ink/70">
           Gere códigos de mesa e acompanhe o movimento da sua casa.
         </p>
       </div>
 
       <div className="px-5 pb-4 pt-6">
         {/* Seletor de restaurante com foto */}
-        <div className="anim-fade-up mb-2 text-[11px] font-bold uppercase tracking-[0.2em] text-ink/40">
+        <div className="anim-fade-up mb-2 text-[11px] font-bold uppercase tracking-[0.2em] text-ink/65">
           Restaurante
         </div>
         <div className="anim-fade-up -mx-5 mb-6 flex gap-2.5 overflow-x-auto px-5 pb-1">
@@ -170,11 +151,15 @@ export default function Partner() {
                 key={r.id}
                 type="button"
                 onClick={() => setSelected(r.id)}
-                className={`press flex shrink-0 items-center gap-2.5 rounded-full border py-1.5 pl-1.5 pr-4 transition-colors ${
+                className={`press flex min-h-11 shrink-0 items-center gap-2.5 rounded-full border py-1.5 pl-1.5 pr-4 transition-colors ${
                   on ? "border-brand-500 bg-brand-50" : "border-ink/10 bg-white"
                 }`}
               >
-                <Photo src={r.photo} alt={r.name} className="h-8 w-8 rounded-full" />
+                <FoodPhoto
+                  src={thumb(r.photo, 160)}
+                  alt={r.name}
+                  className="h-8 w-8 rounded-full"
+                />
                 <span
                   className={`whitespace-nowrap text-sm font-semibold ${
                     on ? "text-brand-700" : "text-ink/70"
@@ -272,16 +257,16 @@ export default function Partner() {
           className="anim-fade-up mb-2 flex items-baseline justify-between"
           style={{ animationDelay: "400ms" }}
         >
-          <h2 className="text-[11px] font-bold uppercase tracking-[0.2em] text-ink/40">
+          <h2 className="text-[11px] font-bold uppercase tracking-[0.2em] text-ink/65">
             Códigos da casa
           </h2>
-          <span className="text-[11px] font-semibold text-ink/35">
+          <span className="text-[11px] font-semibold text-ink/65">
             {codesUsed}/{codes.length} usados
           </span>
         </div>
         {codes.length === 0 && (
           <p
-            className="anim-fade-up rounded-card border border-dashed border-ink/20 bg-white p-5 text-center text-xs text-ink/40"
+            className="anim-fade-up rounded-card border border-dashed border-ink/20 bg-white p-5 text-center text-xs text-ink/70"
             style={{ animationDelay: "440ms" }}
           >
             Nenhum código gerado ainda — crie a primeira leva acima.
@@ -300,7 +285,7 @@ export default function Partner() {
             >
               <span className="font-display text-base font-bold tracking-[0.2em]">{c.code}</span>
               {c.usedAt ? (
-                <span className="rounded-full bg-surface px-3 py-1 text-[10px] font-bold uppercase tracking-[0.15em] text-ink/45">
+                <span className="rounded-full bg-surface px-3 py-1 text-[10px] font-bold uppercase tracking-[0.15em] text-ink/65">
                   Usado
                 </span>
               ) : (

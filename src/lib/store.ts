@@ -21,16 +21,27 @@ function load(): DB {
   try {
     const raw = localStorage.getItem(KEY);
     if (raw) {
-      const db = JSON.parse(raw) as DB;
-      // migração: estados salvos antes da economia de fichas
-      if (typeof db.chips !== "number") db.chips = WELCOME_CHIPS;
-      if (db.lastBonusDay === undefined) db.lastBonusDay = null;
-      return db;
+      const db = JSON.parse(raw) as Partial<DB>;
+      // Defensivo: estado antigo ou corrompido nunca deve derrubar a demo.
+      return {
+        coupons: Array.isArray(db.coupons) ? db.coupons : [],
+        tableCodes: Array.isArray(db.tableCodes) ? db.tableCodes : [],
+        credits: db.credits && typeof db.credits === "object" ? db.credits : {},
+        lastFreePlay:
+          db.lastFreePlay && typeof db.lastFreePlay === "object" ? db.lastFreePlay : {},
+        xp: typeof db.xp === "number" ? db.xp : 0,
+        streak: typeof db.streak === "number" ? db.streak : 0,
+        lastPlayDay: typeof db.lastPlayDay === "string" ? db.lastPlayDay : null,
+        chips: typeof db.chips === "number" ? db.chips : WELCOME_CHIPS,
+        lastBonusDay: typeof db.lastBonusDay === "string" ? db.lastBonusDay : null,
+      };
     }
   } catch {
     /* estado corrompido: recomeça */
   }
-  return {
+  // Primeira visita: já nasce com histórico de demonstração, pra o painel do
+  // parceiro contar uma história em vez de abrir zerado no pitch.
+  return withDemoData({
     coupons: [],
     tableCodes: [],
     credits: {},
@@ -40,11 +51,85 @@ function load(): DB {
     lastPlayDay: null,
     chips: WELCOME_CHIPS,
     lastBonusDay: null,
-  };
+  });
 }
 
 function save(db: DB) {
-  localStorage.setItem(KEY, JSON.stringify(db));
+  try {
+    localStorage.setItem(KEY, JSON.stringify(db));
+  } catch {
+    /* cota cheia ou modo privado: a sessão segue só em memória */
+  }
+}
+
+// --- Dados de demonstração -------------------------------------------------
+// O painel do parceiro precisa contar uma história no pitch. Estes registros
+// nascem com a primeira visita, são marcados com `demo: true` e podem ser
+// apagados por clearDemoData() antes de uma demonstração ao vivo de geração.
+
+const DAY = 86_400_000;
+
+function seededCode(seed: number): string {
+  const chars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+  let out = "";
+  let s = seed;
+  for (let i = 0; i < 6; i++) {
+    s = (s * 1103515245 + 12345) % 2147483648;
+    out += chars[Math.floor((s / 2147483648) * chars.length)];
+  }
+  return out;
+}
+
+function withDemoData(db: DB): DB {
+  const now = Date.now();
+  let seed = 7;
+  RESTAURANTS.forEach((r, ri) => {
+    // ~12 códigos por casa, dois terços já usados
+    for (let i = 0; i < 12; i++) {
+      seed += 17;
+      const used = i % 3 !== 0;
+      db.tableCodes.push({
+        code: seededCode(seed + ri * 100),
+        restaurantId: r.id,
+        credits: 3,
+        createdAt: new Date(now - ((i % 7) + 1) * DAY).toISOString(),
+        usedAt: used ? new Date(now - (i % 7) * DAY + 3_600_000).toISOString() : null,
+        demo: true,
+      });
+    }
+    // ~3 cupons por casa, metade já resgatada
+    for (let i = 0; i < 3; i++) {
+      seed += 31;
+      const prize = r.prizes[i % (r.prizes.length - 1)];
+      const wonAt = new Date(now - ((i * 2) % 6) * DAY - 7_200_000);
+      db.coupons.push({
+        id: `demo-${r.id}-${i}`,
+        restaurantId: r.id,
+        gameId: ["roleta", "raspadinha", "quiz", "memoria"][(i + ri) % 4],
+        prizeLabel: prize.label,
+        code: seededCode(seed + ri * 7),
+        wonAt: wonAt.toISOString(),
+        expiresAt: new Date(wonAt.getTime() + DAY).toISOString(),
+        redeemedAt: i % 2 === 0 ? new Date(wonAt.getTime() + 5_400_000).toISOString() : null,
+        demo: true,
+      });
+    }
+  });
+  db.coupons.sort((a, b) => b.wonAt.localeCompare(a.wonAt));
+  return db;
+}
+
+/** Remove tudo que veio da semente de demonstração (mantém o que o José jogou). */
+export function clearDemoData() {
+  const db = load();
+  db.tableCodes = db.tableCodes.filter((t) => !t.demo);
+  db.coupons = db.coupons.filter((c) => !c.demo);
+  save(db);
+}
+
+export function hasDemoData(): boolean {
+  const db = load();
+  return db.tableCodes.some((t) => t.demo) || db.coupons.some((c) => c.demo);
 }
 
 export function getRestaurants(): Restaurant[] {
@@ -180,12 +265,14 @@ function shortCode(): string {
 export function awardCoupon(restaurantId: string, gameId: string, prizeLabel: string): Coupon {
   const db = load();
   const coupon: Coupon = {
-    id: crypto.randomUUID(),
+    // randomUUID não existe em contexto não-seguro (ex.: teste por IP na LAN)
+    id: crypto.randomUUID?.() ?? `c-${Date.now()}-${shortCode()}`,
     restaurantId,
     gameId,
     prizeLabel,
     code: shortCode(),
     wonAt: new Date().toISOString(),
+    expiresAt: new Date(Date.now() + DAY).toISOString(), // vale 24h
     redeemedAt: null,
   };
   db.coupons.unshift(coupon);

@@ -6,7 +6,35 @@ import {
   getChips,
   getProgress,
 } from "../lib/store";
-import { play } from "../lib/sound";
+import { isMuted, play, setMuted } from "../lib/sound";
+
+/** Alto-falante (com ondas) ou alto-falante riscado quando está no mudo. */
+function SpeakerIcon({ muted, className }: { muted: boolean; className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="M11 5 6.5 9H3v6h3.5L11 19V5Z" />
+      {muted ? (
+        <>
+          <path d="m16 9.5 5 5" />
+          <path d="m21 9.5-5 5" />
+        </>
+      ) : (
+        <>
+          <path d="M15.5 9.5a3.5 3.5 0 0 1 0 5" />
+          <path d="M18.5 7a7 7 0 0 1 0 10" />
+        </>
+      )}
+    </svg>
+  );
+}
 
 function ChipIcon({ className }: { className?: string }) {
   return (
@@ -76,6 +104,7 @@ function useCountUp(target: number) {
 export default function Hud() {
   const [chips, setChips] = useState(getChips());
   const [claimable, setClaimable] = useState(canClaimDailyBonus());
+  const [muted, setMutedState] = useState(isMuted());
   const progress = getProgress();
   const shown = useCountUp(chips);
 
@@ -84,9 +113,18 @@ export default function Hud() {
     const id = window.setInterval(() => {
       setChips(getChips());
       setClaimable(canClaimDailyBonus());
+      setMutedState(isMuted());
     }, 700);
     return () => window.clearInterval(id);
   }, []);
+
+  // O mesmo toggle existe na barra do jogo: a fonte da verdade é o sound.ts.
+  function toggleMute() {
+    const next = !isMuted();
+    setMuted(next);
+    setMutedState(next);
+    if (!next) play("tap", { volume: 0.4 });
+  }
 
   function claim() {
     const r = claimDailyBonus();
@@ -113,8 +151,10 @@ export default function Hud() {
         );
 
   return (
-    <header className="sticky top-0 z-30 border-b border-ink/10 bg-white/95 backdrop-blur-md">
-      <div className="flex items-center gap-2 px-4 py-2.5">
+    /* pt-[env(safe-area-inset-top)]: em PWA instalada o conteúdo desenharia sob
+       a barra de status do iPhone (notch / Dynamic Island). */
+    <header className="sticky top-0 z-30 border-b border-ink/10 bg-white/95 pt-[env(safe-area-inset-top)] backdrop-blur-md">
+      <div className="flex items-center gap-1.5 px-3 py-2.5">
         {/* Fichas */}
         <div className="flex items-center gap-1.5 rounded-full bg-ink px-3 py-1.5">
           <ChipIcon className="h-5 w-5" />
@@ -132,12 +172,12 @@ export default function Hud() {
         )}
 
         {/* Nível */}
-        <div className="min-w-0 flex-1 px-1">
-          <div className="flex items-baseline justify-between gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink/45">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline justify-between gap-1">
+            <span className="truncate text-[10px] font-bold uppercase tracking-[0.04em] text-ink/65">
               Nv.{progress.level} {progress.levelName}
             </span>
-            <span className="shrink-0 text-[10px] font-semibold tabular-nums text-ink/30">
+            <span className="shrink-0 text-[10px] font-semibold tabular-nums text-ink/65">
               {progress.xp} XP
             </span>
           </div>
@@ -149,16 +189,31 @@ export default function Hud() {
           </div>
         </div>
 
+        {/* Som: respeita o silencioso do aparelho, este botão é o mudo do app.
+            h-11/w-11 = 44px de alvo; -mx-1.5 compensa o visual. */}
+        <button
+          type="button"
+          onClick={toggleMute}
+          aria-pressed={muted}
+          aria-label={muted ? "Ativar som" : "Desativar som"}
+          title={muted ? "Ativar som" : "Desativar som"}
+          className={`press -mx-1.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${
+            muted ? "text-ink/65" : "text-ink"
+          }`}
+        >
+          <SpeakerIcon muted={muted} className="h-5 w-5" />
+        </button>
+
         {/* Bônus diário */}
         {claimable ? (
           <button
             onClick={claim}
-            className="press animate-pulse rounded-full bg-gradient-to-r from-accent2 to-brand-500 px-3.5 py-2 text-[11px] font-black uppercase tracking-wide text-white shadow-lg shadow-accent2/40"
+            className="press inline-flex h-11 shrink-0 items-center rounded-full bg-gradient-to-r from-accent2 to-brand-500 px-3 text-[11px] font-black uppercase tracking-wide text-white whitespace-nowrap shadow-lg shadow-accent2/40 motion-safe:animate-pulse"
           >
             Bônus +30
           </button>
         ) : (
-          <span className="rounded-full bg-surface px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-ink/30">
+          <span className="inline-flex h-11 shrink-0 items-center whitespace-nowrap rounded-full bg-surface px-3 text-[10px] font-bold uppercase tracking-wide text-ink/65">
             Amanhã +30
           </span>
         )}

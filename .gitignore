@@ -6,3 +6,4 @@ android/
 *.local
 .DS_Store
 .playwright-cli/
+.claude/scheduled_tasks.lock
