@@ -134,8 +134,8 @@ export default function Hud() {
         {/* Nível */}
         <div className="min-w-0 flex-1 px-1">
           <div className="flex items-baseline justify-between gap-2">
-            <span className="truncate text-[10px] font-bold uppercase tracking-[0.12em] text-ink/45">
-              {progress.levelName}
+            <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink/45">
+              Nv.{progress.level} {progress.levelName}
             </span>
             <span className="shrink-0 text-[10px] font-semibold tabular-nums text-ink/30">
               {progress.xp} XP

@@ -102,19 +102,21 @@ export function consumePlay(_restaurantId?: string): boolean {
 export const XP_PER_PLAY = 10;
 export const XP_PER_WIN = 25;
 
+// name = curto pro HUD; title = completo pras telas com espaço
 const LEVELS = [
-  { name: "Garfo de Bronze", min: 0 },
-  { name: "Garfo de Prata", min: 100 },
-  { name: "Garfo de Ouro", min: 250 },
-  { name: "Chef da Casa", min: 500 },
-  { name: "Lenda de Natal", min: 1000 },
+  { name: "Bronze", title: "Garfo de Bronze", min: 0 },
+  { name: "Prata", title: "Garfo de Prata", min: 100 },
+  { name: "Ouro", title: "Garfo de Ouro", min: 250 },
+  { name: "Chef", title: "Chef da Casa", min: 500 },
+  { name: "Lenda", title: "Lenda de Natal", min: 1000 },
 ];
 
 export interface Progress {
   xp: number;
   streak: number;
   level: number; // 1-based
-  levelName: string;
+  levelName: string; // curto (HUD)
+  levelTitle: string; // completo
   levelFloor: number; // xp onde o nível atual começa
   levelCeil: number | null; // xp do próximo nível (null no último)
 }
@@ -139,6 +141,7 @@ export function getProgress(): Progress {
     streak: db.streak ?? 0,
     level: idx + 1,
     levelName: LEVELS[idx].name,
+    levelTitle: LEVELS[idx].title,
     levelFloor: LEVELS[idx].min,
     levelCeil: idx + 1 < LEVELS.length ? LEVELS[idx + 1].min : null,
   };

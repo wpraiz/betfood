@@ -3,10 +3,33 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import confetti from "canvas-confetti";
 import { getGame } from "../games";
 import type { GameResult } from "../lib/types";
-import { awardCoupon, consumePlay, drawPrize, getRestaurant } from "../lib/store";
-import { play } from "../lib/sound";
+import {
+  awardCoupon,
+  consumePlay,
+  drawPrize,
+  getChips,
+  getRestaurant,
+  XP_PER_PLAY,
+  XP_PER_WIN,
+} from "../lib/store";
+import { play, stop } from "../lib/sound";
 
 const CONFETTI_COLORS = ["#ea1d2c", "#f5a623", "#ffffff"];
+
+/** Selo de XP que sobe e some, celebrando o ganho da rodada. */
+function XpBadge({ amount }: { amount: number }) {
+  return (
+    <>
+      <style>{`@keyframes xp-float{0%{opacity:0;transform:translateY(10px) scale(.8)}25%{opacity:1;transform:translateY(0) scale(1.08)}75%{opacity:1;transform:translateY(-4px) scale(1)}100%{opacity:0;transform:translateY(-22px) scale(.95)}}`}</style>
+      <span
+        className="inline-block rounded-full bg-accent2/15 px-3 py-1 text-xs font-black tabular-nums text-accent2"
+        style={{ animation: "xp-float 2.4s cubic-bezier(0.16,1,0.3,1) 0.5s both" }}
+      >
+        +{amount} XP
+      </span>
+    </>
+  );
+}
 
 /** Foto com skeleton shimmer enquanto carrega. */
 function Photo({ src, alt, className }: { src: string; alt: string; className: string }) {
@@ -47,6 +70,16 @@ export default function GamePlay() {
     setAllowed(restaurant ? consumePlay(restaurant.id) : false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Ambiente sonoro discreto durante a partida (para ao sair ou ao terminar).
+  useEffect(() => {
+    if (allowed && !result) {
+      play("shimmer", { loop: true, volume: 0.12 });
+    } else {
+      stop("shimmer");
+    }
+    return () => stop("shimmer");
+  }, [allowed, result]);
 
   // Celebração (ou lamento) quando o resultado chega.
   useEffect(() => {
@@ -154,6 +187,9 @@ export default function GamePlay() {
           >
             Deu prêmio!
           </h1>
+          <div className="mt-2">
+            <XpBadge amount={XP_PER_PLAY + XP_PER_WIN} />
+          </div>
 
           {/* Ticket do cupom */}
           <div
@@ -234,6 +270,9 @@ export default function GamePlay() {
         >
           Não foi dessa vez
         </h1>
+        <div className="mt-2">
+          <XpBadge amount={XP_PER_PLAY} />
+        </div>
         <p
           className="anim-fade-up mx-auto mt-3 max-w-[30ch] text-sm leading-relaxed text-ink/60"
           style={{ animationDelay: "140ms" }}
@@ -252,28 +291,46 @@ export default function GamePlay() {
     );
   }
 
-  // --- Jogo em andamento ---------------------------------------------------
+  // --- Jogo em andamento (modo imersivo) -----------------------------------
   const GameComponent = game.component;
   return (
-    <div>
-      <div className="flex items-center justify-between border-b border-ink/10 px-5 py-4">
+    <div className="relative min-h-dvh">
+      {/* Ambiente da casa: foto desfocada ao fundo, quase imperceptível */}
+      <div
+        className="pointer-events-none fixed inset-0 -z-10 bg-cover bg-center opacity-[0.13] blur-2xl saturate-150"
+        style={{ backgroundImage: `url(${restaurant.photo})` }}
+      />
+      <div className="pointer-events-none fixed inset-0 -z-10 bg-gradient-to-b from-paper/60 via-paper/85 to-paper" />
+
+      {/* Barra do jogo: sair + nome + fichas (o resto do app sai de cena) */}
+      <div className="flex items-center justify-between px-4 py-3">
         <Link
           to={`/r/${restaurant.id}`}
-          className="press inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-ink/40"
+          onClick={() => play("tap")}
+          className="press flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur"
+          aria-label="Sair do jogo"
         >
           <svg
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
-            strokeWidth="1.8"
+            strokeWidth="2"
             strokeLinecap="round"
-            className="h-3.5 w-3.5"
+            className="h-4 w-4 text-ink/70"
           >
             <path d="m15 6-6 6 6 6" />
           </svg>
-          Sair
         </Link>
-        <div className="font-display text-sm font-semibold">{game.name}</div>
+        <div className="font-display text-[13px] font-bold uppercase tracking-[0.18em] text-ink/45">
+          {game.name}
+        </div>
+        <div className="flex items-center gap-1 rounded-full bg-ink px-2.5 py-1.5">
+          <svg viewBox="0 0 24 24" className="h-3.5 w-3.5">
+            <circle cx="12" cy="12" r="10" fill="#f5a623" />
+            <circle cx="12" cy="12" r="6" fill="#fff3d6" />
+          </svg>
+          <span className="text-[11px] font-black tabular-nums text-white">{getChips()}</span>
+        </div>
       </div>
       <GameComponent
         restaurant={restaurant}

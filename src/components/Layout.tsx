@@ -81,19 +81,24 @@ export default function Layout() {
       </Link>
     );
   };
+  // Dentro do jogo o app sai de cena: sem HUD, sem tab bar — só a partida.
+  const immersive = pathname.includes("/jogar/");
+
   return (
     <div className="mx-auto flex min-h-dvh max-w-md flex-col bg-paper text-ink">
-      <Hud />
-      <main className="flex-1 pb-24">
+      {!immersive && <Hud />}
+      <main className={`flex-1 ${immersive ? "" : "pb-24"}`}>
         <Outlet />
       </main>
-      <nav className="fixed bottom-0 left-1/2 w-full max-w-md -translate-x-1/2 border-t border-ink/10 bg-white pb-[env(safe-area-inset-bottom)]">
-        <div className="flex">
-          {tab("/", "Início", "restaurantes")}
-          {tab("/cupons", "Cupons", "cupons")}
-          {tab("/parceiro", "Parceiro", "parceiro")}
-        </div>
-      </nav>
+      {!immersive && (
+        <nav className="fixed bottom-0 left-1/2 w-full max-w-md -translate-x-1/2 border-t border-ink/10 bg-white pb-[env(safe-area-inset-bottom)]">
+          <div className="flex">
+            {tab("/", "Início", "restaurantes")}
+            {tab("/cupons", "Cupons", "cupons")}
+            {tab("/parceiro", "Parceiro", "parceiro")}
+          </div>
+        </nav>
+      )}
     </div>
   );
 }

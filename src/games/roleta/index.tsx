@@ -95,11 +95,24 @@ function Roleta({ restaurant, drawPrize, onFinish }: GameProps) {
     const candidates = slices
       .map((p, i) => (p.id === drawn.id ? i : -1))
       .filter((i) => i >= 0);
-    const target = candidates[Math.floor(Math.random() * candidates.length)];
+    // Near-miss: quando não ganhou, prefere uma fatia vizinha a um prêmio grande
+    // — o giro para "por pouco". O resultado continua sendo o de drawPrize().
+    const bigIdx = slices.map((p, i) => (p.tier === "big" ? i : -1)).filter((i) => i >= 0);
+    const nearMiss =
+      drawn.tier === "none" && bigIdx.length > 0
+        ? candidates.filter((i) =>
+            bigIdx.some((b) => Math.abs(b - i) === 1 || Math.abs(b - i) === SLICES - 1)
+          )
+        : [];
+    const pool = nearMiss.length > 0 ? nearMiss : candidates;
+    const target = pool[Math.floor(Math.random() * pool.length)];
 
-    // Gira 5 voltas + o necessário pra fatia alvo parar sob o ponteiro (topo),
-    // com um jitter pra não parar sempre no centro exato da fatia.
-    const jitter = (Math.random() - 0.5) * (SLICE_ANGLE * 0.7);
+    // Gira 5 voltas + o necessário pra fatia alvo parar sob o ponteiro (topo).
+    // No near-miss o jitter puxa pra beirada da fatia, colando no prêmio grande.
+    const jitter =
+      nearMiss.length > 0
+        ? (Math.random() * 0.18 + 0.3) * SLICE_ANGLE * (Math.random() < 0.5 ? 1 : -1)
+        : (Math.random() - 0.5) * (SLICE_ANGLE * 0.7);
     const targetAngle = 5 * 360 + (360 - (target * SLICE_ANGLE + SLICE_ANGLE / 2)) + jitter;
     setRotation((r) => r + targetAngle - (r % 360));
 

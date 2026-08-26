@@ -109,15 +109,95 @@ const TIME_PER_QUESTION = 15_000; // ms
 const TICK = 100; // ms
 const FEEDBACK_DELAY = 1_800; // ms
 const COUNTUP_STEP = 380; // ms entre pontos na contagem final
+const FLY_MS = 620; // duração do "+1" voando até o placar
 
-// Verde vibrante de acerto; o erro usa o próprio brand-500
+// Verde de acerto / vermelho terroso de erro (feedback, não ação)
 const OK = "#22a06b";
+const BAD = "#a85751";
 const CONFETTI_COLORS = ["#ea1d2c", "#f5a623", "#ffffff"];
 
 type Phase = "intro" | "question" | "feedback" | "end";
 
 // ---------------------------------------------------------------------------
-// Ícones (linha stroke 1.8; preenchidos quando ativos)
+// Keyframes locais (palco game-show)
+// ---------------------------------------------------------------------------
+
+const localCss = `
+  /* "+1" parte da opção certa e voa até o placar (deltas via CSS vars) */
+  @keyframes quiz-fly {
+    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+    14% { transform: translate(-50%, -50%) scale(1.35); opacity: 1; }
+    28% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+    100% {
+      transform: translate(calc(-50% + var(--fly-dx)), calc(-50% + var(--fly-dy))) scale(0.45);
+      opacity: 0;
+    }
+  }
+  .quiz-fly { animation: quiz-fly ${FLY_MS}ms cubic-bezier(0.5, -0.15, 0.65, 1) both; }
+
+  /* placar "engole" o ponto e pulsa */
+  @keyframes quiz-score-pump {
+    0% { transform: scale(1); }
+    35% { transform: scale(1.5); color: ${OK}; }
+    100% { transform: scale(1); }
+  }
+  .quiz-score-pump { animation: quiz-score-pump 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+
+  /* pulso cardíaco do bloco do timer nos últimos 5s */
+  @keyframes quiz-heartbeat {
+    0%, 100% { transform: scale(1); }
+    14% { transform: scale(1.018); }
+    28% { transform: scale(1); }
+    42% { transform: scale(1.012); }
+    56% { transform: scale(1); }
+  }
+  .quiz-heartbeat { animation: quiz-heartbeat 1s ease-in-out infinite; transform-origin: 50% 50%; }
+
+  /* check / x desenhados por stroke */
+  @keyframes quiz-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+  .quiz-draw { stroke-dasharray: 1; animation: quiz-draw 0.45s ease-out 0.08s both; }
+
+  /* tremida curta na opção errada escolhida */
+  @keyframes quiz-shake {
+    10%, 90% { transform: translateX(-1px); }
+    20%, 80% { transform: translateX(2px); }
+    30%, 50%, 70% { transform: translateX(-3px); }
+    40%, 60% { transform: translateX(3px); }
+  }
+  .quiz-shake { animation: quiz-shake 0.45s ease both; }
+
+  /* respiro de vitória na opção certa */
+  @keyframes quiz-correct-pop {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.035); }
+    100% { transform: scale(1); }
+  }
+  .quiz-correct-pop { animation: quiz-correct-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .quiz-fly, .quiz-score-pump, .quiz-heartbeat, .quiz-draw, .quiz-shake, .quiz-correct-pop {
+      animation: none;
+    }
+    .quiz-fly { opacity: 0; }
+  }
+`;
+
+/** Vinheta radial sutil: escurece as bordas do palco sem sair do tema claro. */
+function Vignette() {
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none fixed inset-0 z-0"
+      style={{
+        background:
+          "radial-gradient(130% 100% at 50% 26%, transparent 50%, rgba(32,30,29,0.11) 100%)",
+      }}
+    />
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Ícones (linha stroke; check/x desenham o traço quando `draw`)
 // ---------------------------------------------------------------------------
 
 function StarIcon() {
@@ -163,7 +243,7 @@ function TargetIcon() {
   );
 }
 
-function CheckIcon() {
+function CheckIcon({ draw = false }: { draw?: boolean }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -175,12 +255,12 @@ function CheckIcon() {
       className="h-5 w-5 shrink-0"
       aria-hidden
     >
-      <path d="m5 12.5 4.5 4.5L19 7.5" />
+      <path d="m5 12.5 4.5 4.5L19 7.5" pathLength={1} className={draw ? "quiz-draw" : undefined} />
     </svg>
   );
 }
 
-function CrossIcon() {
+function CrossIcon({ draw = false }: { draw?: boolean }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -191,7 +271,11 @@ function CrossIcon() {
       className="h-5 w-5 shrink-0"
       aria-hidden
     >
-      <path d="M6.5 6.5l11 11M17.5 6.5l-11 11" />
+      <path
+        d="M6.5 6.5l11 11M17.5 6.5l-11 11"
+        pathLength={1}
+        className={draw ? "quiz-draw" : undefined}
+      />
     </svg>
   );
 }
@@ -199,6 +283,14 @@ function CrossIcon() {
 // ---------------------------------------------------------------------------
 // Componente
 // ---------------------------------------------------------------------------
+
+interface FlyPoint {
+  x: number;
+  y: number;
+  dx: number;
+  dy: number;
+  key: number;
+}
 
 function Quiz({ restaurant, drawPrize, onFinish }: GameProps) {
   const questions = useMemo(drawQuestions, []);
@@ -210,7 +302,11 @@ function Quiz({ restaurant, drawPrize, onFinish }: GameProps) {
   const [finalResult, setFinalResult] = useState<{ won: boolean; prize?: Prize } | null>(null);
   const [imgLoaded, setImgLoaded] = useState(false);
   const [displayScore, setDisplayScore] = useState(0);
+  const [headerScore, setHeaderScore] = useState(0); // placar visível (recebe o ponto DEPOIS do voo)
+  const [fly, setFly] = useState<FlyPoint | null>(null);
   const finishedRef = useRef(false);
+  const scoreRef = useRef<HTMLSpanElement>(null);
+  const lastTickSecondRef = useRef<number | null>(null);
 
   const current = questions[idx];
 
@@ -222,6 +318,21 @@ function Quiz({ restaurant, drawPrize, onFinish }: GameProps) {
     }, TICK);
     return () => clearInterval(interval);
   }, [phase, idx]);
+
+  // Som "tick" a cada segundo nos últimos 5s
+  useEffect(() => {
+    if (phase !== "question") {
+      lastTickSecondRef.current = null;
+      return;
+    }
+    if (timeLeft <= 5_000 && timeLeft > 0) {
+      const s = Math.ceil(timeLeft / 1000);
+      if (lastTickSecondRef.current !== s) {
+        lastTickSecondRef.current = s;
+        play("tick", { volume: 0.3 });
+      }
+    }
+  }, [timeLeft, phase]);
 
   // Tempo esgotado = erro
   useEffect(() => {
@@ -238,12 +349,13 @@ function Quiz({ restaurant, drawPrize, onFinish }: GameProps) {
     const interval = setInterval(() => {
       n += 1;
       setDisplayScore(n);
+      play("tick", { volume: 0.3 });
       if (n >= score) clearInterval(interval);
     }, COUNTUP_STEP);
     return () => clearInterval(interval);
   }, [phase, score]);
 
-  function answer(option: number | null) {
+  function answer(option: number | null, sourceEl?: HTMLElement | null) {
     if (phase !== "question") return;
     const hit = option !== null && option === current.correct;
     play(hit ? "correct" : "wrong");
@@ -251,6 +363,25 @@ function Quiz({ restaurant, drawPrize, onFinish }: GameProps) {
     setScore(newScore);
     setSelected(option);
     setPhase("feedback");
+
+    // Ponto voando: "+1" parte da opção certa e voa até o placar no topo
+    if (hit && sourceEl && scoreRef.current) {
+      const from = sourceEl.getBoundingClientRect();
+      const to = scoreRef.current.getBoundingClientRect();
+      setFly({
+        x: from.left + from.width / 2,
+        y: from.top + from.height / 2,
+        dx: to.left + to.width / 2 - (from.left + from.width / 2),
+        dy: to.top + to.height / 2 - (from.top + from.height / 2),
+        key: Date.now(),
+      });
+      setTimeout(() => {
+        setFly(null);
+        setHeaderScore(newScore); // o placar "recebe" o ponto e pulsa
+      }, FLY_MS);
+    } else if (hit) {
+      setHeaderScore(newScore);
+    }
 
     setTimeout(() => {
       if (idx + 1 < TOTAL_QUESTIONS) {
@@ -297,8 +428,10 @@ function Quiz({ restaurant, drawPrize, onFinish }: GameProps) {
 
   if (phase === "intro") {
     return (
-      <div className="px-5 py-6">
-        <div className="anim-fade-up overflow-hidden rounded-card bg-white shadow-lg shadow-ink/10">
+      <div className="relative px-5 py-6">
+        <style>{localCss}</style>
+        <Vignette />
+        <div className="anim-fade-up relative z-10 overflow-hidden rounded-card bg-white shadow-lg shadow-ink/10">
           {/* Hero com a foto do prato da casa */}
           <div className="relative h-44 overflow-hidden">
             {!imgLoaded && <div className="absolute inset-0 animate-pulse bg-surface" />}
@@ -368,16 +501,20 @@ function Quiz({ restaurant, drawPrize, onFinish }: GameProps) {
   if (phase === "end" && finalResult) {
     const won = finalResult.won;
     return (
-      <div className="px-5 py-8">
-        <div className="anim-pop rounded-card bg-white p-6 text-center shadow-lg shadow-ink/10">
+      <div className="relative px-5 py-8">
+        <style>{localCss}</style>
+        <Vignette />
+        <div className="anim-pop relative z-10 rounded-card bg-white p-6 text-center shadow-lg shadow-ink/10">
           <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-ink/40">
             Fim de jogo
           </p>
           <p
             className="mt-4 font-display text-[64px] font-bold leading-none tracking-tight"
-            style={{ color: won ? OK : "var(--color-brand-500)" }}
+            style={{ color: won ? OK : BAD }}
           >
-            {displayScore}
+            <span key={displayScore} className="anim-pop inline-block">
+              {displayScore}
+            </span>
             <span className="text-2xl text-ink/25"> /{TOTAL_QUESTIONS}</span>
           </p>
           <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.2em] text-ink/40">
@@ -418,106 +555,165 @@ function Quiz({ restaurant, drawPrize, onFinish }: GameProps) {
   const secondsLeft = Math.ceil(timeLeft / 1000);
 
   return (
-    <div className="px-5 py-5">
-      {/* Cabeçalho: número grande + contagem regressiva */}
-      <div className="mb-3 flex items-end justify-between">
-        <p className="font-display text-4xl font-bold leading-none tracking-tight">
-          {idx + 1}
-          <span className="text-xl font-bold text-ink/30">/{TOTAL_QUESTIONS}</span>
-        </p>
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-ink/40">
-            Acertos <span className="font-display text-sm text-ink">{score}</span>
-          </span>
-          <span
-            className={`flex h-9 min-w-9 items-center justify-center rounded-full px-2 font-display text-base font-bold shadow-sm transition-colors ${
-              urgent ? "animate-pulse bg-brand-500 text-white" : "bg-white text-ink"
-            }`}
-          >
-            {secondsLeft}
-          </span>
-        </div>
-      </div>
+    <div className="relative px-5 py-5">
+      <style>{localCss}</style>
+      <Vignette />
 
-      {/* Barra de tempo grossa */}
-      <div className="mb-4 h-2.5 overflow-hidden rounded-full bg-ink/10">
-        <div
-          className={`h-full rounded-full bg-brand-500 transition-[width] duration-100 ease-linear ${
-            urgent ? "animate-pulse" : ""
-          }`}
-          style={{ width: `${timePct}%` }}
-        />
-      </div>
-
-      {/* Pergunta */}
-      <div key={idx} className="anim-fade-up mb-4 rounded-card bg-white p-5 shadow-md shadow-ink/5">
-        <p className="font-display text-lg font-bold leading-snug">{current.question}</p>
-      </div>
-
-      {/* Opções */}
-      <div className="flex flex-col gap-2.5">
-        {current.options.map((opt, i) => {
-          const isCorrect = i === current.correct;
-          const isPicked = selected === i;
-          const base =
-            "press anim-fade-up flex items-center gap-3 rounded-card border-2 px-4 py-3.5 text-left text-sm font-semibold transition-colors";
-          let cls = `${base} border-transparent bg-white shadow-sm hover:border-brand-100 active:border-brand-500`;
-          let style: CSSProperties = { animationDelay: `${100 + i * 60}ms` };
-          let letterCls = "bg-surface text-ink/50";
-          if (phase === "feedback") {
-            if (isCorrect) {
-              cls = `${base} border-transparent text-white`;
-              style = { ...style, background: OK };
-              letterCls = "bg-white/20 text-white";
-            } else if (isPicked) {
-              cls = `${base} border-transparent bg-brand-500 text-white`;
-              letterCls = "bg-white/20 text-white";
-            } else {
-              cls = `${base} border-transparent bg-white opacity-40`;
-            }
+      {/* "+1" voando da opção certa até o placar */}
+      {fly && (
+        <span
+          key={fly.key}
+          aria-hidden
+          className="quiz-fly pointer-events-none fixed z-50 font-display text-2xl font-extrabold"
+          style={
+            {
+              left: fly.x,
+              top: fly.y,
+              color: OK,
+              textShadow: "0 2px 10px rgba(34,160,107,0.35)",
+              "--fly-dx": `${fly.dx}px`,
+              "--fly-dy": `${fly.dy}px`,
+            } as CSSProperties
           }
-          return (
-            <button
-              key={`${idx}-${i}`}
-              className={cls}
-              style={style}
-              disabled={phase === "feedback"}
-              onClick={() => answer(i)}
-            >
-              <span
-                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full font-display text-xs font-bold transition-colors ${letterCls}`}
-              >
-                {String.fromCharCode(65 + i)}
-              </span>
-              <span className="flex-1">{opt}</span>
-              {phase === "feedback" && isCorrect && (
-                <span className="anim-pop">
-                  <CheckIcon />
-                </span>
-              )}
-              {phase === "feedback" && isPicked && !isCorrect && (
-                <span className="anim-pop">
-                  <CrossIcon />
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Feedback textual */}
-      {phase === "feedback" && (
-        <p
-          className="anim-fade-up mt-4 text-center text-sm font-bold"
-          style={{ color: selected === current.correct ? OK : "var(--color-brand-500)" }}
         >
-          {selected === current.correct
-            ? "Na mosca."
-            : selected === null
-              ? "Tempo esgotado — a certa está em verde."
-              : "Não era essa — a certa está em verde."}
-        </p>
+          +1
+        </span>
       )}
+
+      <div className="relative z-10">
+        {/* Placar do palco: rótulo à esquerda, acertos + cronômetro à direita */}
+        <div className="mb-3 flex items-center justify-between">
+          <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-brand-500">
+            Quiz gastronômico
+          </p>
+          <div className="flex items-center gap-2">
+            <span
+              ref={scoreRef}
+              className="flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-ink/40 shadow-sm"
+            >
+              Acertos
+              <span
+                key={headerScore}
+                className={`font-display text-base leading-none tracking-normal text-ink ${
+                  headerScore > 0 ? "quiz-score-pump" : ""
+                }`}
+              >
+                {headerScore}
+              </span>
+            </span>
+          </div>
+        </div>
+
+        {/* Timer: barra grossa + pulso cardíaco nos últimos 5s */}
+        <div className={`mb-4 ${urgent && phase === "question" ? "quiz-heartbeat" : ""}`}>
+          <div className="flex items-center gap-2.5">
+            <span
+              className={`flex h-9 min-w-9 shrink-0 items-center justify-center rounded-full px-2 font-display text-base font-bold shadow-sm transition-colors ${
+                urgent ? "animate-pulse bg-brand-500 text-white" : "bg-white text-ink"
+              }`}
+            >
+              {secondsLeft}
+            </span>
+            <div className="h-3 flex-1 overflow-hidden rounded-full bg-ink/10">
+              <div
+                className={`h-full rounded-full bg-brand-500 transition-[width] duration-100 ease-linear ${
+                  urgent ? "animate-pulse" : ""
+                }`}
+                style={{ width: `${timePct}%` }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Palco da pergunta: número GIGANTE translúcido atrás do cartão */}
+        <div className="relative">
+          <p
+            key={`bg-${idx}`}
+            aria-hidden
+            className="anim-pop pointer-events-none absolute inset-x-0 -top-9 select-none text-center font-display text-[132px] font-extrabold leading-none tracking-tighter text-ink/[0.05]"
+          >
+            {idx + 1}
+            <span className="text-[64px]">/{TOTAL_QUESTIONS}</span>
+          </p>
+
+          {/* Pergunta */}
+          <div
+            key={idx}
+            className="anim-fade-up relative z-10 mb-4 mt-10 rounded-card bg-white p-5 shadow-md shadow-ink/5"
+          >
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-ink/35">
+              Pergunta {idx + 1} de {TOTAL_QUESTIONS}
+            </p>
+            <p className="mt-1.5 font-display text-lg font-bold leading-snug">{current.question}</p>
+          </div>
+
+          {/* Opções */}
+          <div className="relative z-10 flex flex-col gap-2.5">
+            {current.options.map((opt, i) => {
+              const isCorrect = i === current.correct;
+              const isPicked = selected === i;
+              const base =
+                "press anim-fade-up flex items-center gap-3 rounded-card border-2 px-4 py-3.5 text-left text-sm font-semibold transition-colors";
+              let cls = `${base} border-transparent bg-white shadow-sm hover:border-brand-100 active:border-brand-500`;
+              let style: CSSProperties = { animationDelay: `${100 + i * 60}ms` };
+              let letterCls = "bg-surface text-ink/50";
+              if (phase === "feedback") {
+                if (isCorrect) {
+                  cls = `${base} quiz-correct-pop border-transparent text-white shadow-lg`;
+                  style = { ...style, background: OK, boxShadow: "0 8px 22px -6px rgba(34,160,107,0.55)" };
+                  letterCls = "bg-white/20 text-white";
+                } else if (isPicked) {
+                  cls = `${base} quiz-shake border-transparent text-white`;
+                  style = { ...style, background: BAD };
+                  letterCls = "bg-white/20 text-white";
+                } else {
+                  cls = `${base} border-transparent bg-white opacity-40`;
+                }
+              }
+              return (
+                <button
+                  key={`${idx}-${i}`}
+                  className={cls}
+                  style={style}
+                  disabled={phase === "feedback"}
+                  onClick={(e) => answer(i, e.currentTarget)}
+                >
+                  <span
+                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full font-display text-xs font-bold transition-colors ${letterCls}`}
+                  >
+                    {String.fromCharCode(65 + i)}
+                  </span>
+                  <span className="flex-1">{opt}</span>
+                  {phase === "feedback" && isCorrect && (
+                    <span className="anim-pop">
+                      <CheckIcon draw />
+                    </span>
+                  )}
+                  {phase === "feedback" && isPicked && !isCorrect && (
+                    <span className="anim-pop">
+                      <CrossIcon draw />
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Feedback textual */}
+        {phase === "feedback" && (
+          <p
+            className="anim-fade-up mt-4 text-center text-sm font-bold"
+            style={{ color: selected === current.correct ? OK : BAD }}
+          >
+            {selected === current.correct
+              ? "Na mosca."
+              : selected === null
+                ? "Tempo esgotado — a certa está em verde."
+                : "Não era essa — a certa está em verde."}
+          </p>
+        )}
+      </div>
     </div>
   );
 }

@@ -34,7 +34,7 @@ export function setMuted(muted: boolean) {
 function get(name: SoundName): HTMLAudioElement {
   let a = cache.get(name);
   if (!a) {
-    a = new Audio(`/sounds/${name}.mp3`);
+    a = new Audio(`${import.meta.env.BASE_URL}sounds/${name}.mp3`);
     a.preload = "auto";
     cache.set(name, a);
   }

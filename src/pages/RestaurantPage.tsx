@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { GAMES } from "../games";
+import GameThumb from "../components/GameThumb";
 import { availablePlays, getRestaurant, redeemTableCode } from "../lib/store";
 import { play } from "../lib/sound";
 
@@ -194,14 +195,16 @@ export default function RestaurantPage() {
               key={g.id}
               to={`/r/${restaurant.id}/jogar/${g.id}`}
               onClick={() => play("tap")}
-              className="anim-fade-up press rounded-card bg-white p-4 shadow-md"
+              className="anim-fade-up press overflow-hidden rounded-card bg-white shadow-md"
               style={{ animationDelay: `${180 + i * 70}ms` }}
             >
-              <span className="mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-50 text-brand-500">
-                {GAME_ICONS[g.id] ?? GAME_ICONS.roleta}
-              </span>
-              <div className="font-display text-[15px] font-bold leading-snug">{g.name}</div>
-              <div className="mt-1 text-[11px] leading-relaxed text-ink/50">{g.tagline}</div>
+              <div className="h-24">
+                <GameThumb id={g.id} />
+              </div>
+              <div className="p-3">
+                <div className="font-display text-[15px] font-bold leading-snug">{g.name}</div>
+                <div className="mt-0.5 text-[11px] leading-relaxed text-ink/50">{g.tagline}</div>
+              </div>
             </Link>
           ))}
         </div>
