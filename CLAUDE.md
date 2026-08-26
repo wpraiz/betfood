@@ -23,11 +23,34 @@ editorial serifado Broadsheet ("não tem cara de app").
 - Som: `src/lib/sound.ts` — `play(name, {loop?, volume?})`/`stop(name)`; 13 SFX ElevenLabs em `public/sounds/` (spin, win, lose, scratch, coupon, tap, flip, correct, wrong, shimmer, levelup, tick, jackpot). Respeita mute, nunca lança.
 - Fotos: `restaurant.photo` (Unsplash) + `restaurant.rating` no seed; sempre com skeleton shimmer no carregamento.
 
+## Regras de UI aprendidas na auditoria (valem pra tudo que for novo)
+
+- **Contraste**: corpo `ink/70`, rótulos/metadados `ink/65`. Não usar `ink/30–50`
+  como texto. `accent2` (#f5a623) **nunca** como cor de texto sobre fundo claro —
+  use `#8a5a00`; accent2 fica em fundo, ícone e borda.
+- **Toque**: todo alvo interativo com ≥44x44px de área (padding conta).
+- **Safe-area**: topo com `pt-[env(safe-area-inset-top)]` (PWA no iPhone desenha
+  sob o notch), rodapé com `pb-[env(safe-area-inset-bottom)]`.
+- **Som**: nunca forçar `navigator.audioSession` — o app respeita o silencioso do
+  aparelho, e o mudo do app fica no HUD e na barra do jogo.
+- **Fotos**: sempre via `src/components/FoodPhoto.tsx` (trata erro e não deixa
+  skeleton infinito); miniaturas com o helper `thumb(url, w)`.
+- **Sem beco sem saída**: toda tela terminal precisa de pelo menos uma saída
+  clara; o shell (HUD + tab bar) só some durante a partida — ver
+  `ImmersiveContext` documentado em `src/components/Layout.tsx`.
+- **Copy honesta**: não prometer prêmio garantido (40% do peso é "não foi dessa
+  vez"); casas fictícias levam selo "Casa exemplo".
+
 ## Economia e progressão (store.ts)
 
 - **Fichas** (moeda global): boas-vindas 50, jogada custa `CHIP_COST` 10, bônus diário +30 (`claimDailyBonus`), código da mesa credita `credits × 10` fichas.
 - **XP/nível**: +10 por jogada, +25 por vitória; níveis Garfo de Bronze → Prata → Ouro → Chef da Casa → Lenda de Natal (`getProgress()`).
 - **Streak**: dias seguidos jogando (qualquer casa).
+- **Cupom** tem `expiresAt` (24h após o ganho).
+- **Dados de demonstração**: a primeira visita nasce com histórico fictício
+  (códigos e cupons marcados `demo: true`) pra o painel do parceiro não abrir
+  zerado no pitch. `clearDemoData()` limpa antes de uma demo ao vivo;
+  `hasDemoData()` diz se ainda existem.
 
 ## Arquitetura
 

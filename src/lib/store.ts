@@ -40,8 +40,9 @@ function load(): DB {
     /* estado corrompido: recomeça */
   }
   // Primeira visita: já nasce com histórico de demonstração, pra o painel do
-  // parceiro contar uma história em vez de abrir zerado no pitch.
-  return withDemoData({
+  // parceiro contar uma história em vez de abrir zerado no pitch. Grava na hora
+  // — senão cada leitura reconstruiria a semente e o estado só existiria em RAM.
+  const fresh = withDemoData({
     coupons: [],
     tableCodes: [],
     credits: {},
@@ -52,6 +53,8 @@ function load(): DB {
     chips: WELCOME_CHIPS,
     lastBonusDay: null,
   });
+  save(fresh);
+  return fresh;
 }
 
 function save(db: DB) {
