@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import confetti from "canvas-confetti";
 import { getGame } from "../games";
@@ -37,12 +37,16 @@ export default function GamePlay() {
   const [result, setResult] = useState<GameResult | null>(null);
   const [couponCode, setCouponCode] = useState<string | null>(null);
 
-  // Consome a jogada uma única vez, na montagem da tela.
-  const allowed = useMemo(
-    () => (restaurant ? consumePlay(restaurant.id) : false),
+  // Consome a jogada UMA única vez por montagem — o ref sobrevive ao
+  // double-mount do StrictMode em dev (useMemo cobraria duas vezes).
+  const [allowed, setAllowed] = useState<boolean | null>(null);
+  const chargedRef = useRef(false);
+  useEffect(() => {
+    if (chargedRef.current) return;
+    chargedRef.current = true;
+    setAllowed(restaurant ? consumePlay(restaurant.id) : false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [restaurantId, gameId]
-  );
+  }, []);
 
   // Celebração (ou lamento) quando o resultado chega.
   useEffect(() => {
@@ -83,6 +87,9 @@ export default function GamePlay() {
 
   if (!restaurant || !game)
     return <div className="p-5 text-sm text-ink/50">Jogo não encontrado.</div>;
+
+  // Ainda decidindo se a jogada foi cobrada (primeiro frame): não pisca tela.
+  if (allowed === null && !result) return null;
 
   // --- Jogadas esgotadas ---------------------------------------------------
   if (!allowed && !result)
