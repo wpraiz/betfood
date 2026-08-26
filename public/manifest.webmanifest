@@ -1,10 +1,22 @@
 {
   "name": "BetFood — Jogue e ganhe no seu restaurante",
   "short_name": "BetFood",
-  "start_url": "/",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#f3f2f2",
-  "theme_color": "#f3f2f2",
+  "orientation": "portrait",
+  "background_color": "#faf9f9",
+  "theme_color": "#faf9f9",
+  "lang": "pt-BR",
   "description": "Mini-games recompensadores em restaurantes parceiros de Natal/RN. Jogue, ganhe cupons, aproveite.",
-  "icons": []
+  "icons": [
+    { "src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "./icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    {
+      "src": "./icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
 }

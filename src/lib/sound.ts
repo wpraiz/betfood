@@ -22,6 +22,15 @@ export type SoundName = (typeof NAMES)[number];
 const MUTE_KEY = "betfood-mute";
 const cache = new Map<SoundName, HTMLAudioElement>();
 
+// iOS silencia <audio> quando a chave lateral está em mudo. A partir do
+// iOS 16.4 dá pra pedir a categoria "playback", que toca mesmo assim.
+try {
+  const session = (navigator as unknown as { audioSession?: { type: string } }).audioSession;
+  if (session) session.type = "playback";
+} catch {
+  /* navegador sem audioSession: segue no comportamento padrão */
+}
+
 export function isMuted(): boolean {
   return localStorage.getItem(MUTE_KEY) === "1";
 }
