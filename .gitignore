@@ -5,3 +5,4 @@ android/
 .env.*
 *.local
 .DS_Store
+.playwright-cli/

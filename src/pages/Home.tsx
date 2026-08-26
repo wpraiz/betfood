@@ -2,82 +2,67 @@ import { Link } from "react-router-dom";
 import { getRestaurants } from "../lib/store";
 
 export default function Home() {
+  const restaurants = getRestaurants();
   return (
     <div>
-      {/* Hero */}
-      <div className="relative overflow-hidden bg-gradient-to-b from-brand-900 via-brand-700/40 to-transparent px-4 pb-8 pt-10">
-        <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-brand-500/20 blur-3xl" />
-        <div className="pointer-events-none absolute -left-16 top-8 h-32 w-32 rounded-full bg-brand-600/20 blur-3xl" />
-        <div className="relative">
-          <div className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-brand-500/30 bg-brand-500/10 px-3 py-1 text-[11px] font-semibold tracking-wide text-brand-100">
-            🌴 Natal/RN
-          </div>
-          <h1 className="text-4xl font-black tracking-tight">
-            Bet<span className="text-brand-500">Food</span>
-          </h1>
-          <p className="mt-2 max-w-[28ch] text-sm leading-relaxed text-white/70">
-            Jogue na mesa, ganhe na hora.{" "}
-            <span className="font-semibold text-brand-100">Cupons de verdade</span> nos restaurantes
-            parceiros de Natal. 🎁
-          </p>
-        </div>
+      {/* Cabeçalho editorial */}
+      <div className="border-b border-ink/10 px-5 pb-8 pt-12">
+        <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.3em] text-brand-600">
+          Natal · Rio Grande do Norte
+        </p>
+        <h1 className="font-display text-4xl font-bold tracking-tight">
+          Bet<span className="text-brand-600">Food</span>
+        </h1>
+        <p className="mt-3 max-w-[34ch] font-display text-[15px] leading-relaxed text-ink/60">
+          Jogue enquanto espera e ganhe recompensas de verdade nas melhores casas da cidade.
+        </p>
       </div>
 
       {/* Lista de restaurantes */}
-      <div className="px-4 pb-4">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-bold uppercase tracking-wider text-white/50">
-            Restaurantes parceiros
+      <div className="px-5 pb-4 pt-7">
+        <div className="mb-4 flex items-baseline justify-between">
+          <h2 className="text-[11px] font-bold uppercase tracking-[0.2em] text-ink/40">
+            Casas parceiras
           </h2>
-          <span className="text-xs font-semibold text-brand-500">
-            {getRestaurants().length} casas
-          </span>
+          <span className="text-[11px] font-semibold text-ink/30">{restaurants.length}</span>
         </div>
         <div className="grid gap-3">
-          {getRestaurants().map((r) => (
+          {restaurants.map((r) => (
             <Link
               key={r.id}
               to={`/r/${r.id}`}
-              className="group relative flex items-center gap-4 overflow-hidden rounded-2xl border bg-white/5 p-4 transition-transform active:scale-[0.98]"
-              style={{
-                borderColor: `${r.accent}55`,
-                boxShadow: `0 0 24px -8px ${r.accent}40, inset 0 1px 0 rgba(255,255,255,0.06)`,
-              }}
+              className="group flex items-center gap-4 rounded-card border border-ink/10 bg-white p-4 shadow-sm transition-colors active:bg-surface"
             >
-              {/* faixa de accent */}
               <div
-                className="absolute inset-y-0 left-0 w-1 rounded-r"
-                style={{ background: r.accent }}
-              />
-              <div
-                className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-3xl"
-                style={{ background: `${r.accent}22` }}
+                className="flex h-12 w-12 shrink-0 items-center justify-center border font-display text-lg font-bold"
+                style={{ borderColor: `${r.accent}66`, color: r.accent }}
               >
-                {r.emoji}
+                {r.name.charAt(0)}
               </div>
               <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="truncate font-bold">{r.name}</span>
-                  <span className="shrink-0 rounded-full bg-brand-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-brand-500">
-                    parceiro
-                  </span>
+                <div className="truncate font-display text-[17px] font-semibold">{r.name}</div>
+                <div className="mt-0.5 text-xs text-ink/50">
+                  {r.cuisine} · {r.neighborhood}
                 </div>
-                <div className="mt-0.5 truncate text-xs text-white/50">
-                  {r.cuisine} · 📍 {r.neighborhood}
-                </div>
-                <div className="mt-1 line-clamp-1 text-xs text-white/40">{r.description}</div>
+                <div className="mt-1 line-clamp-1 text-xs text-ink/35">{r.description}</div>
               </div>
-              <span
-                className="shrink-0 text-lg transition-transform group-active:translate-x-0.5"
-                style={{ color: r.accent }}
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                className="h-4 w-4 shrink-0 text-ink/25 transition-transform group-active:translate-x-0.5"
               >
-                ›
-              </span>
+                <path d="m9 6 6 6-6 6" />
+              </svg>
             </Link>
           ))}
         </div>
-        <p className="mt-6 text-center text-xs text-white/30">
-          1 jogada grátis por dia em cada casa · códigos da mesa liberam extras 🎲
+        <p className="mt-7 text-center text-[11px] leading-relaxed text-ink/35">
+          Uma jogada de cortesia por dia em cada casa.
+          <br />
+          Códigos da mesa liberam jogadas extras.
         </p>
       </div>
     </div>

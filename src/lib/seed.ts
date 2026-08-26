@@ -12,11 +12,10 @@ export const RESTAURANTS: Restaurant[] = [
   {
     id: "camaroes-potiguar",
     name: "Camarões do Potengi",
-    emoji: "🦐",
     cuisine: "Frutos do mar",
     neighborhood: "Ponta Negra",
     description: "Casa de camarão à beira-mar, clássico das noites de Ponta Negra.",
-    accent: "#0ea5e9",
+    accent: "#5f8296",
     prizes: basePrizes(
       "Camarão empanado grátis pra mesa",
       "Sobremesa grátis",
@@ -26,11 +25,10 @@ export const RESTAURANTS: Restaurant[] = [
   {
     id: "tapiocaria-sol",
     name: "Tapiocaria Sol Potiguar",
-    emoji: "🫓",
     cuisine: "Regional",
     neighborhood: "Petrópolis",
     description: "Tapiocas e cafés regionais com receita de avó potiguar.",
-    accent: "#f59e0b",
+    accent: "#bd9b57",
     prizes: basePrizes(
       "Combo tapioca + suco grátis",
       "Café especial por nossa conta",
@@ -40,11 +38,10 @@ export const RESTAURANTS: Restaurant[] = [
   {
     id: "churrasco-dunas",
     name: "Churrascaria Dunas",
-    emoji: "🥩",
     cuisine: "Churrasco",
     neighborhood: "Lagoa Nova",
     description: "Rodízio completo com cortes nobres e buffet regional.",
-    accent: "#dc2626",
+    accent: "#a85751",
     prizes: basePrizes(
       "1 rodízio grátis na próxima visita",
       "Picanha extra pra mesa",
@@ -54,11 +51,10 @@ export const RESTAURANTS: Restaurant[] = [
   {
     id: "pizzaria-forte",
     name: "Pizzaria do Forte",
-    emoji: "🍕",
     cuisine: "Pizzaria",
     neighborhood: "Praia do Forte",
     description: "Pizza napolitana com vista pro Forte dos Reis Magos.",
-    accent: "#16a34a",
+    accent: "#6f8f6a",
     prizes: basePrizes(
       "Pizza broto grátis",
       "Borda recheada por nossa conta",

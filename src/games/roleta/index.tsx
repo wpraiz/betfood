@@ -7,11 +7,14 @@ const SLICE_ANGLE = 360 / SLICES;
 const SPIN_MS = 4200; // duração do giro
 const RESULT_DELAY = 1100; // pausa mostrando o resultado antes do onFinish
 
-const TIER_EMOJI: Record<Prize["tier"], string> = {
-  big: "💎",
-  medium: "🏅",
-  small: "🎁",
-  none: "🍀",
+const CONFETTI_COLORS = ["#0088b0", "#d6006c", "#201e1d", "#bd9b57"];
+
+/** Símbolos tipográficos sóbrios por tier (nada de emoji). */
+const TIER_MARK: Record<Prize["tier"], string> = {
+  big: "◆",
+  medium: "●",
+  small: "○",
+  none: "",
 };
 
 /** Ponto no círculo; ângulo em graus a partir do topo, sentido horário. */
@@ -32,13 +35,18 @@ function sliceFill(tier: Prize["tier"], accent: string, index: number) {
     case "big":
       return accent;
     case "medium":
-      return `${accent}cc`;
+      return `${accent}99`;
     case "small":
-      return `${accent}77`;
+      return `${accent}40`;
     default:
-      // "none": neutro escuro, alternando levemente pra dar textura
-      return index % 2 === 0 ? "#332014" : "#2a1a10";
+      // "none": neutros claros alternados (branco / surface) pra dar textura sutil
+      return index % 2 === 0 ? "#ffffff" : "#eae9e9";
   }
+}
+
+/** Cor do símbolo: claro sobre a fatia cheia de accent, ink/60 nas demais. */
+function markFill(tier: Prize["tier"]) {
+  return tier === "big" ? "rgba(255,255,255,0.9)" : "rgba(32,30,29,0.6)";
 }
 
 type Phase = "idle" | "spinning" | "done";
@@ -85,10 +93,10 @@ function Roleta({ restaurant, drawPrize, onFinish }: GameProps) {
       const won = drawn.tier !== "none";
       if (won) {
         confetti({
-          particleCount: 140,
-          spread: 75,
+          particleCount: 70,
+          spread: 55,
           origin: { y: 0.6 },
-          colors: [restaurant.accent, "#f97316", "#ffedd5", "#ffffff"],
+          colors: CONFETTI_COLORS,
         });
       }
       if (typeof navigator !== "undefined" && "vibrate" in navigator) {
@@ -107,18 +115,18 @@ function Roleta({ restaurant, drawPrize, onFinish }: GameProps) {
   const r = 144;
 
   return (
-    <div className="flex flex-col items-center gap-5 p-4 text-white">
-      <p className="text-sm text-white/70">
-        Toque na roleta e boa sorte no {restaurant.emoji}{" "}
-        <span className="font-bold">{restaurant.name}</span>!
+    <div className="flex flex-col items-center gap-5 p-4 text-ink">
+      <p className="text-sm text-ink/50">
+        Toque na roleta e boa sorte no{" "}
+        <span className="font-display font-semibold text-ink">{restaurant.name}</span>.
       </p>
 
       <div className="relative w-full max-w-xs">
         {/* Ponteiro */}
         <div className="absolute left-1/2 top-0 z-10 -translate-x-1/2 -translate-y-1">
           <div
-            className="h-0 w-0 border-l-[12px] border-r-[12px] border-t-[20px] border-l-transparent border-r-transparent drop-shadow"
-            style={{ borderTopColor: "#ffffff" }}
+            className="h-0 w-0 border-l-[10px] border-r-[10px] border-t-[18px] border-l-transparent border-r-transparent"
+            style={{ borderTopColor: "#201e1d" }}
           />
         </div>
 
@@ -130,8 +138,8 @@ function Roleta({ restaurant, drawPrize, onFinish }: GameProps) {
           className="block w-full active:scale-[0.99]"
         >
           <svg viewBox="0 0 300 300" className="w-full">
-            {/* Aro externo */}
-            <circle cx={cx} cy={cy} r={r + 4} fill="none" stroke={restaurant.accent} strokeWidth="6" />
+            {/* Aro externo: filete fino na cor da casa + contorno em ink suave */}
+            <circle cx={cx} cy={cy} r={r + 3} fill="#ffffff" stroke={restaurant.accent} strokeWidth="2" />
             <g
               style={{
                 transform: `rotate(${rotation}deg)`,
@@ -145,32 +153,45 @@ function Roleta({ restaurant, drawPrize, onFinish }: GameProps) {
               {slices.map((p, i) => {
                 const start = i * SLICE_ANGLE;
                 const end = start + SLICE_ANGLE;
-                const mid = polar(cx, cy, r * 0.68, start + SLICE_ANGLE / 2);
+                const mid = polar(cx, cy, r * 0.72, start + SLICE_ANGLE / 2);
                 return (
                   <g key={i}>
                     <path
                       d={slicePath(cx, cy, r, start, end)}
                       fill={sliceFill(p.tier, restaurant.accent, i)}
-                      stroke="#1c0a04"
-                      strokeWidth="2"
+                      stroke="#201e1d"
+                      strokeOpacity="0.1"
+                      strokeWidth="1"
                     />
-                    <text
-                      x={mid.x}
-                      y={mid.y}
-                      fontSize="26"
-                      textAnchor="middle"
-                      dominantBaseline="central"
-                    >
-                      {TIER_EMOJI[p.tier]}
-                    </text>
+                    {TIER_MARK[p.tier] && (
+                      <text
+                        x={mid.x}
+                        y={mid.y}
+                        fontSize="13"
+                        textAnchor="middle"
+                        dominantBaseline="central"
+                        fill={markFill(p.tier)}
+                      >
+                        {TIER_MARK[p.tier]}
+                      </text>
+                    )}
                   </g>
                 );
               })}
             </g>
-            {/* Miolo */}
-            <circle cx={cx} cy={cy} r="34" fill="#1c0a04" stroke={restaurant.accent} strokeWidth="3" />
-            <text x={cx} y={cy} fontSize="28" textAnchor="middle" dominantBaseline="central">
-              {phase === "spinning" ? "🤞" : restaurant.emoji}
+            {/* Miolo: monograma serifado da casa */}
+            <circle cx={cx} cy={cy} r="32" fill="#ffffff" stroke={restaurant.accent} strokeWidth="1.5" />
+            <text
+              x={cx}
+              y={cy + 1}
+              fontSize="26"
+              fontWeight="600"
+              textAnchor="middle"
+              dominantBaseline="central"
+              fill="#201e1d"
+              style={{ fontFamily: '"Source Serif 4", Georgia, "Times New Roman", serif' }}
+            >
+              {restaurant.name.charAt(0)}
             </text>
           </svg>
         </button>
@@ -182,27 +203,29 @@ function Roleta({ restaurant, drawPrize, onFinish }: GameProps) {
           <button
             type="button"
             onClick={spin}
-            className="rounded-xl bg-brand-600 px-8 py-3 font-bold transition hover:bg-brand-500 active:scale-95"
+            className="rounded-card bg-brand-600 px-8 py-3 text-sm font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-brand-700 active:scale-95"
           >
-            Girar! 🎡
+            Girar
           </button>
         )}
         {phase === "spinning" && (
-          <p className="animate-pulse text-sm font-bold text-white/80">Girando… 🤞</p>
+          <p className="animate-pulse text-sm font-medium text-ink/50">Girando…</p>
         )}
         {phase === "done" && prize && (
           <div>
             {prize.tier !== "none" ? (
               <>
-                <p className="text-lg font-black" style={{ color: restaurant.accent }}>
-                  🎉 {prize.label}
+                <p className="font-display text-lg font-semibold" style={{ color: restaurant.accent }}>
+                  {prize.label}
                 </p>
-                <p className="text-xs text-white/60">A roleta gostou de você!</p>
+                <p className="mt-1 text-xs text-ink/50">A casa preparou isso pra você.</p>
               </>
             ) : (
               <>
-                <p className="text-lg font-black">🍀 Não foi dessa vez…</p>
-                <p className="text-xs text-white/60">A próxima volta pode ser a sua!</p>
+                <p className="font-display text-lg font-semibold text-ink/60">
+                  Não foi dessa vez.
+                </p>
+                <p className="mt-1 text-xs text-ink/50">A próxima volta pode ser a sua.</p>
               </>
             )}
           </div>
@@ -210,11 +233,11 @@ function Roleta({ restaurant, drawPrize, onFinish }: GameProps) {
       </div>
 
       {/* Legenda das fatias */}
-      <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-[11px] text-white/50">
-        <span>💎 prêmio top</span>
-        <span>🏅 prêmio médio</span>
-        <span>🎁 mimo</span>
-        <span>🍀 tenta de novo</span>
+      <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-[11px] text-ink/40">
+        <span>◆ Prêmio maior</span>
+        <span>● Prêmio médio</span>
+        <span>○ Mimo da casa</span>
+        <span>Fatia clara · tente de novo</span>
       </div>
     </div>
   );
@@ -224,6 +247,5 @@ export const roleta: GameDefinition = {
   id: "roleta",
   name: "Roleta de Prêmios",
   tagline: "Gire e ganhe na hora",
-  emoji: "🎡",
   component: Roleta,
 };

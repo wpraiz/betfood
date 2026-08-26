@@ -7,6 +7,8 @@ const REVEAL_THRESHOLD = 0.55; // >55% raspado => revela tudo
 const SAMPLE_EVERY_N_EVENTS = 8; // amostra alpha a cada N pointermoves
 const SAMPLE_STRIDE = 6; // amostra 1 pixel a cada 6 (nas duas direções)
 
+const CONFETTI_COLORS = ["#0088b0", "#d6006c", "#201e1d", "#bd9b57"];
+
 function Raspadinha({ restaurant, drawPrize, onFinish }: GameProps) {
   // Sorteia uma única vez, na montagem.
   const [prize] = useState<Prize>(() => drawPrize());
@@ -70,10 +72,10 @@ function Raspadinha({ restaurant, drawPrize, onFinish }: GameProps) {
 
     // Texto convite.
     ctx.fillStyle = "#5b6068";
-    ctx.font = "700 18px system-ui, -apple-system, sans-serif";
+    ctx.font = "600 16px system-ui, -apple-system, sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText("RASPE AQUI ✨", w / 2, h / 2 - 12);
+    ctx.fillText("RASPE AQUI", w / 2, h / 2 - 12);
     ctx.font = "500 12px system-ui, -apple-system, sans-serif";
     ctx.fillStyle = "#71767e";
     ctx.fillText("use o dedo e descubra seu prêmio", w / 2, h / 2 + 12);
@@ -91,7 +93,7 @@ function Raspadinha({ restaurant, drawPrize, onFinish }: GameProps) {
     setRevealed(true);
     setProgress(100);
     if (won) {
-      confetti({ particleCount: 140, spread: 75, origin: { y: 0.6 } });
+      confetti({ particleCount: 70, spread: 55, origin: { y: 0.6 }, colors: CONFETTI_COLORS });
     }
     window.setTimeout(finish, 1100);
   }, [won, finish]);
@@ -173,31 +175,24 @@ function Raspadinha({ restaurant, drawPrize, onFinish }: GameProps) {
   };
 
   return (
-    <div className="flex flex-col items-center gap-4 p-4">
+    <div className="flex flex-col items-center gap-4 p-4 text-ink">
       {/* Bilhete */}
       <div
-        className="relative w-full max-w-sm overflow-hidden rounded-3xl border-2 border-dashed bg-brand-50 shadow-xl"
+        className="relative w-full max-w-sm overflow-hidden rounded-card border bg-white shadow-sm"
         style={{ borderColor: restaurant.accent }}
       >
         {/* Furos laterais estilo bilhete */}
-        <div className="absolute -left-3 top-1/2 z-10 h-6 w-6 -translate-y-1/2 rounded-full bg-ink" />
-        <div className="absolute -right-3 top-1/2 z-10 h-6 w-6 -translate-y-1/2 rounded-full bg-ink" />
+        <div className="absolute -left-3 top-1/2 z-10 h-6 w-6 -translate-y-1/2 rounded-full bg-paper" />
+        <div className="absolute -right-3 top-1/2 z-10 h-6 w-6 -translate-y-1/2 rounded-full bg-paper" />
 
-        {/* Cabeçalho */}
-        <div
-          className="flex items-center justify-between px-5 py-3"
-          style={{ backgroundColor: restaurant.accent }}
-        >
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">{restaurant.emoji}</span>
-            <div className="leading-tight">
-              <p className="text-sm font-extrabold uppercase tracking-wide text-white">
-                Raspadinha
-              </p>
-              <p className="text-xs text-white/80">{restaurant.name}</p>
-            </div>
-          </div>
-          <span className="text-xl">🪙</span>
+        {/* Cabeçalho tipográfico */}
+        <div className="border-b border-ink/10 px-5 py-4">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-ink/40">
+            Raspadinha
+          </p>
+          <p className="mt-1 font-display text-lg font-semibold leading-tight text-ink">
+            {restaurant.name}
+          </p>
         </div>
 
         {/* Área raspável */}
@@ -206,25 +201,23 @@ function Raspadinha({ restaurant, drawPrize, onFinish }: GameProps) {
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 px-6 text-center">
             {won ? (
               <>
-                <span className="text-3xl">🎉</span>
                 <p
-                  className="text-lg font-extrabold leading-snug"
+                  className="font-display text-xl font-semibold leading-snug"
                   style={{ color: restaurant.accent }}
                 >
                   {prize.label}
                 </p>
-                <p className="text-xs font-medium text-brand-900/70">
-                  Você ganhou! Mostre o cupom ao garçom.
+                <p className="text-xs text-ink/50">
+                  Você ganhou. Apresente o cupom ao garçom.
                 </p>
               </>
             ) : (
               <>
-                <span className="text-3xl">🍀</span>
-                <p className="text-lg font-extrabold leading-snug text-brand-900">
-                  Não foi dessa vez…
+                <p className="font-display text-xl font-semibold leading-snug text-ink/60">
+                  Não foi dessa vez.
                 </p>
-                <p className="text-xs font-medium text-brand-900/70">
-                  Mas a próxima raspadinha pode ser a sua!
+                <p className="text-xs text-ink/50">
+                  A próxima raspadinha pode ser a sua.
                 </p>
               </>
             )}
@@ -245,20 +238,20 @@ function Raspadinha({ restaurant, drawPrize, onFinish }: GameProps) {
         </div>
 
         {/* Rodapé do bilhete */}
-        <div className="border-t border-dashed border-brand-900/20 px-5 py-2 text-center">
-          <p className="text-[10px] font-medium uppercase tracking-widest text-brand-900/50">
-            BetFood • prêmio válido só hoje, só aqui
+        <div className="border-t border-dashed border-ink/15 px-5 py-2 text-center">
+          <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-ink/35">
+            BetFood · Prêmio válido só hoje, só aqui
           </p>
         </div>
       </div>
 
       {/* Progresso */}
-      <p className="text-xs text-white/50">
+      <p className="text-xs text-ink/40">
         {revealed
-          ? "Revelado! ✨"
+          ? "Revelado."
           : progress > 0
             ? `Raspado: ${Math.min(progress, 100)}%`
-            : "Raspe a área prateada pra revelar"}
+            : "Raspe a área prateada para revelar"}
       </p>
     </div>
   );
@@ -268,6 +261,5 @@ export const raspadinha: GameDefinition = {
   id: "raspadinha",
   name: "Raspadinha",
   tagline: "Raspe e descubra seu prêmio",
-  emoji: "🪙",
   component: Raspadinha,
 };

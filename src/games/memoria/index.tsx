@@ -2,13 +2,23 @@ import { useEffect, useRef, useState } from "react";
 import confetti from "canvas-confetti";
 import type { GameDefinition, GameProps, GameResult } from "../../lib/types";
 
-const FOOD_EMOJIS = ["🍤", "🍕", "🥩", "🫓", "🍹", "🍰", "🦐", "🌽"];
+// Pares tipográficos: nomes curtos de ingredientes/pratos da casa
+const FOOD_WORDS = [
+  "Camarão",
+  "Tapioca",
+  "Picanha",
+  "Caju",
+  "Coalho",
+  "Cuscuz",
+  "Pimenta",
+  "Manjericão",
+];
 const MAX_MOVES = 20;
 const MISMATCH_DELAY = 800;
 
 interface Card {
   key: number;
-  emoji: string;
+  word: string;
 }
 
 function shuffle<T>(source: T[]): T[] {
@@ -21,8 +31,8 @@ function shuffle<T>(source: T[]): T[] {
 }
 
 function buildDeck(): Card[] {
-  const doubled = [...FOOD_EMOJIS, ...FOOD_EMOJIS];
-  return shuffle(doubled).map((emoji, key) => ({ key, emoji }));
+  const doubled = [...FOOD_WORDS, ...FOOD_WORDS];
+  return shuffle(doubled).map((word, key) => ({ key, word }));
 }
 
 function formatTime(totalSeconds: number): string {
@@ -73,10 +83,10 @@ function Memoria({ restaurant, drawPrize, onFinish }: GameProps) {
     const won = prize.tier !== "none";
     if (won) {
       confetti({
-        particleCount: 120,
-        spread: 75,
+        particleCount: 70,
+        spread: 55,
         origin: { y: 0.6 },
-        colors: [restaurant.accent, "#f97316", "#ffedd5", "#ffffff"],
+        colors: ["#0088b0", "#d6006c", "#201e1d", "#bd9b57"],
       });
     }
     later(() => finish({ won, prize }), 1400);
@@ -101,7 +111,7 @@ function Memoria({ restaurant, drawPrize, onFinish }: GameProps) {
     setLocked(true);
 
     const [a, b] = nextFlipped;
-    const isMatch = deck[a].emoji === deck[b].emoji;
+    const isMatch = deck[a].word === deck[b].word;
 
     if (isMatch) {
       const nextMatched = new Set(matched);
@@ -128,18 +138,21 @@ function Memoria({ restaurant, drawPrize, onFinish }: GameProps) {
   };
 
   const movesLeft = MAX_MOVES - moves;
+  const monogram = restaurant.name.charAt(0);
 
   return (
-    <div className="p-4 text-white">
+    <div className="px-5 py-4">
       {/* Placar */}
-      <div className="mb-4 flex items-center justify-between rounded-xl bg-white/5 px-4 py-2 text-sm">
-        <span>
-          Jogadas:{" "}
-          <strong className={movesLeft <= 5 ? "text-brand-500" : ""}>
+      <div className="mb-4 flex items-center justify-between rounded-card border border-ink/10 bg-white px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.2em] shadow-sm">
+        <span className="text-ink/40">
+          Jogadas{" "}
+          <span style={{ color: movesLeft <= 5 ? "#a85751" : "var(--color-ink)" }}>
             {moves}/{MAX_MOVES}
-          </strong>
+          </span>
         </span>
-        <span className="text-white/60">⏱️ {formatTime(seconds)}</span>
+        <span className="text-ink/40">
+          Tempo <span className="text-ink">{formatTime(seconds)}</span>
+        </span>
       </div>
 
       {/* Grade 4x4 */}
@@ -152,7 +165,7 @@ function Memoria({ restaurant, drawPrize, onFinish }: GameProps) {
             <button
               key={card.key}
               type="button"
-              aria-label={isUp ? card.emoji : "Carta virada"}
+              aria-label={isUp ? card.word : "Carta virada"}
               onClick={() => handleFlip(index)}
               disabled={isUp || locked || status !== "playing"}
               className="aspect-square w-full"
@@ -166,30 +179,29 @@ function Memoria({ restaurant, drawPrize, onFinish }: GameProps) {
                   transition: "transform 0.4s",
                 }}
               >
-                {/* Verso (emoji do restaurante) */}
+                {/* Verso (monograma da casa) */}
                 <div
-                  className="absolute inset-0 flex items-center justify-center rounded-xl border border-white/10 text-2xl"
+                  className="absolute inset-0 flex items-center justify-center rounded-card border border-ink/10 bg-surface font-display text-xl font-bold"
                   style={{
                     backfaceVisibility: "hidden",
-                    background: `linear-gradient(135deg, ${restaurant.accent}33, #ffffff0d)`,
+                    color: restaurant.accent,
                   }}
                 >
-                  {restaurant.emoji}
+                  {monogram}
                 </div>
-                {/* Frente (prato) */}
+                {/* Frente (ingrediente/prato) */}
                 <div
-                  className={`absolute inset-0 flex items-center justify-center rounded-xl text-3xl ${
+                  className={`absolute inset-0 flex items-center justify-center overflow-hidden rounded-card bg-white px-0.5 font-display text-[11px] font-semibold leading-tight text-ink ${
                     isPulsing ? "animate-pulse" : ""
                   }`}
                   style={{
                     backfaceVisibility: "hidden",
                     transform: "rotateY(180deg)",
-                    background: isMatched ? `${restaurant.accent}40` : "#ffffff1a",
-                    border: `2px solid ${isMatched ? restaurant.accent : "#ffffff26"}`,
-                    boxShadow: isPulsing ? `0 0 16px ${restaurant.accent}` : "none",
+                    border: `1px solid ${isMatched ? restaurant.accent : "rgba(32,30,29,0.15)"}`,
+                    background: isMatched ? `${restaurant.accent}14` : undefined,
                   }}
                 >
-                  {card.emoji}
+                  {card.word}
                 </div>
               </div>
             </button>
@@ -198,17 +210,16 @@ function Memoria({ restaurant, drawPrize, onFinish }: GameProps) {
       </div>
 
       {/* Mensagem de fim */}
-      <div className="mt-4 min-h-6 text-center text-sm text-white/80">
+      <div className="mt-5 min-h-6 text-center text-sm leading-relaxed text-ink/60">
         {status === "won" && (
-          <p>🎉 Todos os pares em {moves} jogadas! Vamos ver o que saiu...</p>
+          <p>Todos os pares em {moves} jogadas. Vamos ver o que saiu.</p>
         )}
         {status === "lost" && (
-          <p>Não foi dessa vez... os pares se esconderam bem! 😄</p>
+          <p>Não foi dessa vez — os pares se esconderam bem.</p>
         )}
         {status === "playing" && movesLeft <= 5 && (
           <p>
-            Só mais {movesLeft} {movesLeft === 1 ? "jogada" : "jogadas"} —
-            capricha na memória!
+            Só mais {movesLeft} {movesLeft === 1 ? "jogada" : "jogadas"} — atenção aos pares.
           </p>
         )}
       </div>
@@ -220,6 +231,5 @@ export const memoria: GameDefinition = {
   id: "memoria",
   name: "Jogo da Memória",
   tagline: "Encontre os pares do cardápio",
-  emoji: "🃏",
   component: Memoria,
 };

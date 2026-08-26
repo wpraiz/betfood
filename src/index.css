@@ -1,18 +1,72 @@
 @import "tailwindcss";
 
+/* Tema claro com linguagem de app de consumo. Paleta derivada do design system
+   "Broadsheet" do José (claude.ai/design): magenta #d6006c como cor de ação,
+   petróleo #0088b0 como acento secundário, neutros quentes. */
 @theme {
-  --color-brand-50: #fff7ed;
-  --color-brand-100: #ffedd5;
-  --color-brand-500: #f97316;
-  --color-brand-600: #ea580c;
-  --color-brand-700: #c2410c;
-  --color-brand-900: #7c2d12;
-  --color-ink: #1c0a04;
+  --color-brand-50: #fdeef5;
+  --color-brand-100: #fad2e4;
+  --color-brand-500: #d6006c;
+  --color-brand-600: #b8005d;
+  --color-brand-700: #94004b;
+  --color-brand-900: #4d0227;
+  --color-accent2: #0088b0;
+  --color-ink: #201e1d; /* texto principal */
+  --color-paper: #faf9f9; /* fundo da página */
+  --color-surface: #f1efef; /* superfícies rebaixadas */
+  --font-display: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+  --radius-card: 1.25rem;
 }
 
 html,
 body {
   height: 100%;
-  background: var(--color-ink);
+  background: var(--color-paper);
+  color: var(--color-ink);
   -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* --- Motion ------------------------------------------------------------ */
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  70% {
+    transform: scale(1.04);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.anim-fade-up {
+  animation: fade-up 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.anim-pop {
+  animation: pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* aplica atraso em cascata via style={{ animationDelay }} nos itens de lista */
+
+.press {
+  transition: transform 0.12s ease;
+}
+.press:active {
+  transform: scale(0.97);
 }

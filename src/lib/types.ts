@@ -1,7 +1,6 @@
 export interface Restaurant {
   id: string;
   name: string;
-  emoji: string;
   cuisine: string;
   neighborhood: string; // bairro de Natal/RN
   description: string;
@@ -51,6 +50,5 @@ export interface GameDefinition {
   id: string;
   name: string;
   tagline: string;
-  emoji: string;
   component: React.ComponentType<GameProps>;
 }

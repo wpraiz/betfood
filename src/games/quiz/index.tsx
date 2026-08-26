@@ -107,7 +107,48 @@ const TIME_PER_QUESTION = 15_000; // ms
 const TICK = 100; // ms
 const FEEDBACK_DELAY = 1_800; // ms
 
+// Cores sóbrias de feedback (fora da paleta Tailwind de propósito)
+const OK = "#6f8f6a"; // verde sóbrio
+const ERR = "#a85751"; // vermelho sóbrio
+
 type Phase = "intro" | "question" | "feedback" | "end";
+
+// ---------------------------------------------------------------------------
+// Ícones (linha, stroke 1.6)
+// ---------------------------------------------------------------------------
+
+function CheckIcon({ color }: { color: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color}
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-4 w-4 shrink-0"
+      aria-hidden
+    >
+      <path d="m5 12.5 4.5 4.5L19 7.5" />
+    </svg>
+  );
+}
+
+function CrossIcon({ color }: { color: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color}
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      className="h-4 w-4 shrink-0"
+      aria-hidden
+    >
+      <path d="M6.5 6.5l11 11M17.5 6.5l-11 11" />
+    </svg>
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Componente
@@ -169,7 +210,12 @@ function Quiz({ restaurant, drawPrize, onFinish }: GameProps) {
       result = { won: false };
     }
     if (result.won) {
-      confetti({ particleCount: 120, spread: 75, origin: { y: 0.6 } });
+      confetti({
+        particleCount: 70,
+        spread: 55,
+        origin: { y: 0.6 },
+        colors: ["#0088b0", "#d6006c", "#201e1d", "#bd9b57"],
+      });
     }
     setFinalResult(result);
     setPhase("end");
@@ -185,53 +231,67 @@ function Quiz({ restaurant, drawPrize, onFinish }: GameProps) {
 
   if (phase === "intro") {
     return (
-      <div className="p-6 text-center text-white">
-        <div className="mb-3 text-5xl">🧠</div>
-        <h2 className="mb-2 text-xl font-black">Quiz Gastronômico</h2>
-        <p className="mb-1 text-sm text-white/80">
-          3 perguntas sobre a boa comida daqui, no clima do {restaurant.emoji}{" "}
-          <span className="font-bold">{restaurant.name}</span>.
-        </p>
-        <p className="mb-6 text-sm text-white/60">
-          Você tem 15 segundos por pergunta. Acertando 2 ou mais, vale prêmio!
-        </p>
-        <button
-          className="rounded-xl bg-brand-600 px-8 py-3 font-bold transition hover:bg-brand-500 active:scale-95"
-          onClick={() => setPhase("question")}
-        >
-          Valendo!
-        </button>
+      <div className="px-5 py-8">
+        <div className="rounded-card border border-ink/10 bg-white p-6 shadow-sm">
+          <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-ink/40">
+            Quiz gastronômico
+          </p>
+          <h2 className="mb-3 font-display text-2xl font-bold tracking-tight">
+            Três perguntas, um prêmio
+          </h2>
+          <p className="mb-2 text-sm leading-relaxed text-ink/60">
+            Perguntas sobre a boa comida daqui, no clima do{" "}
+            <span className="font-semibold text-ink">{restaurant.name}</span>.
+          </p>
+          <p className="mb-6 text-sm leading-relaxed text-ink/50">
+            Você tem 15 segundos por pergunta. Acertando duas ou mais, concorre ao prêmio.
+          </p>
+          <button
+            className="w-full rounded-card bg-brand-600 px-8 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-700 active:bg-brand-700"
+            onClick={() => setPhase("question")}
+          >
+            Começar
+          </button>
+        </div>
       </div>
     );
   }
 
   if (phase === "end" && finalResult) {
     return (
-      <div className="p-6 text-center text-white">
-        <div className="mb-3 text-5xl">{finalResult.won ? "🎉" : score >= 2 ? "🍀" : "😋"}</div>
-        <h2 className="mb-2 text-xl font-black">
-          {finalResult.won
-            ? "Mandou bem demais!"
-            : score >= 2
-              ? "Quase! A sorte não ajudou dessa vez"
-              : "Não foi dessa vez!"}
-        </h2>
-        <p className="mb-1 font-bold" style={{ color: restaurant.accent }}>
-          Você acertou {score} de {TOTAL_QUESTIONS}
-        </p>
-        <p className="mb-6 text-sm text-white/70">
-          {finalResult.won
-            ? "Seu conhecimento gastronômico rendeu prêmio. Bom apetite!"
-            : score >= 2
-              ? "Você jogou muito — na próxima o prêmio vem!"
-              : "Sem crise: agora você já sabe as respostas. Bora tentar de novo?"}
-        </p>
-        <button
-          className="rounded-xl bg-brand-600 px-8 py-3 font-bold transition hover:bg-brand-500 active:scale-95"
-          onClick={finish}
-        >
-          Ver resultado
-        </button>
+      <div className="px-5 py-8">
+        <div className="rounded-card border border-ink/10 bg-white p-6 text-center shadow-sm">
+          <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.2em] text-ink/40">
+            Fim de jogo
+          </p>
+          <h2 className="mb-4 font-display text-2xl font-bold tracking-tight">
+            {finalResult.won
+              ? "Muito bem jogado"
+              : score >= 2
+                ? "Quase — a sorte não ajudou"
+                : "Não foi dessa vez"}
+          </h2>
+          <p className="mb-1 font-display text-4xl font-bold" style={{ color: restaurant.accent }}>
+            {score}
+            <span className="text-ink/30"> / {TOTAL_QUESTIONS}</span>
+          </p>
+          <p className="mb-6 mt-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-ink/40">
+            Respostas certas
+          </p>
+          <p className="mb-6 text-sm leading-relaxed text-ink/60">
+            {finalResult.won
+              ? "Seu conhecimento gastronômico rendeu prêmio. Bom apetite."
+              : score >= 2
+                ? "Você jogou bem — na próxima o prêmio vem."
+                : "Sem pressa: agora você já conhece as respostas. Vale tentar de novo."}
+          </p>
+          <button
+            className="w-full rounded-card bg-brand-600 px-8 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-700 active:bg-brand-700"
+            onClick={finish}
+          >
+            Ver resultado
+          </button>
+        </div>
       </div>
     );
   }
@@ -241,33 +301,31 @@ function Quiz({ restaurant, drawPrize, onFinish }: GameProps) {
   const urgent = timeLeft <= 5_000;
 
   return (
-    <div className="p-4 text-white">
+    <div className="px-5 py-4">
       {/* Progresso + placar */}
-      <div className="mb-2 flex items-center justify-between text-xs font-bold text-white/70">
+      <div className="mb-2 flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.2em] text-ink/40">
         <span>
           Pergunta {idx + 1} de {TOTAL_QUESTIONS}
         </span>
         <span>
-          Acertos: <span style={{ color: restaurant.accent }}>{score}</span>
+          Acertos <span className="text-ink">{score}</span>
         </span>
       </div>
 
       {/* Barra de tempo */}
-      <div className="mb-4 h-2 overflow-hidden rounded-full bg-white/10">
+      <div className="mb-5 h-1 overflow-hidden bg-ink/10">
         <div
-          className={`h-full rounded-full transition-[width] duration-100 ease-linear ${
-            urgent ? "bg-red-500" : "bg-brand-500"
-          }`}
-          style={{ width: `${timePct}%` }}
+          className="h-full transition-[width] duration-100 ease-linear"
+          style={{
+            width: `${timePct}%`,
+            background: urgent ? ERR : "var(--color-brand-500)",
+          }}
         />
       </div>
 
       {/* Pergunta */}
-      <div
-        className="mb-4 rounded-2xl border bg-white/5 p-4"
-        style={{ borderColor: `${restaurant.accent}55` }}
-      >
-        <p className="font-bold leading-snug">{current.question}</p>
+      <div className="mb-4 rounded-card border border-ink/10 bg-white p-5 shadow-sm">
+        <p className="font-display text-lg font-semibold leading-snug">{current.question}</p>
       </div>
 
       {/* Opções */}
@@ -275,33 +333,35 @@ function Quiz({ restaurant, drawPrize, onFinish }: GameProps) {
         {current.options.map((opt, i) => {
           const isCorrect = i === current.correct;
           const isPicked = selected === i;
-          let cls =
-            "rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-left text-sm font-semibold transition active:scale-[0.98]";
+          const base =
+            "flex items-center gap-3 rounded-card border px-4 py-3 text-left text-sm transition-colors";
+          let cls = `${base} border-ink/15 bg-white hover:bg-brand-50 active:bg-brand-50`;
+          let style: React.CSSProperties | undefined;
           if (phase === "feedback") {
             if (isCorrect) {
-              cls =
-                "rounded-xl border border-green-400 bg-green-500/25 px-4 py-3 text-left text-sm font-semibold";
+              cls = `${base} font-semibold`;
+              style = { borderColor: OK, background: `${OK}14`, color: "#3f5a3b" };
             } else if (isPicked) {
-              cls =
-                "rounded-xl border border-red-400 bg-red-500/25 px-4 py-3 text-left text-sm font-semibold";
+              cls = `${base} font-semibold`;
+              style = { borderColor: ERR, background: `${ERR}14`, color: "#7a3c37" };
             } else {
-              cls =
-                "rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-left text-sm font-semibold opacity-50";
+              cls = `${base} border-ink/10 bg-white opacity-45`;
             }
           }
           return (
             <button
               key={i}
               className={cls}
+              style={style}
               disabled={phase === "feedback"}
               onClick={() => answer(i)}
             >
-              <span className="mr-2 text-white/50">{String.fromCharCode(65 + i)}.</span>
-              {opt}
-              {phase === "feedback" && isCorrect && <span className="float-right">✅</span>}
-              {phase === "feedback" && isPicked && !isCorrect && (
-                <span className="float-right">❌</span>
-              )}
+              <span className="w-4 shrink-0 font-display text-sm font-semibold text-ink/35">
+                {String.fromCharCode(65 + i)}
+              </span>
+              <span className="flex-1">{opt}</span>
+              {phase === "feedback" && isCorrect && <CheckIcon color={OK} />}
+              {phase === "feedback" && isPicked && !isCorrect && <CrossIcon color={ERR} />}
             </button>
           );
         })}
@@ -309,14 +369,15 @@ function Quiz({ restaurant, drawPrize, onFinish }: GameProps) {
 
       {/* Feedback textual */}
       {phase === "feedback" && (
-        <p className="mt-3 text-center text-sm font-bold">
-          {selected === current.correct ? (
-            <span className="text-green-400">Acertou! 🤩</span>
-          ) : selected === null ? (
-            <span className="text-red-400">Tempo esgotado! ⏰ A certa está em verde.</span>
-          ) : (
-            <span className="text-red-400">Opa, era a verde! 😅</span>
-          )}
+        <p
+          className="mt-4 text-center text-sm font-semibold"
+          style={{ color: selected === current.correct ? OK : ERR }}
+        >
+          {selected === current.correct
+            ? "Resposta certa."
+            : selected === null
+              ? "Tempo esgotado — a correta está destacada."
+              : "Não era essa — a correta está destacada."}
         </p>
       )}
     </div>
@@ -327,6 +388,5 @@ export const quiz: GameDefinition = {
   id: "quiz",
   name: "Quiz Gastronômico",
   tagline: "Acerte e leve o prêmio",
-  emoji: "🧠",
   component: Quiz,
 };
