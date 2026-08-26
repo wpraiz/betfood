@@ -1,18 +1,14 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { GAMES } from "../games";
 import { getRestaurants } from "../lib/store";
 import { play } from "../lib/sound";
+import type { Restaurant } from "../lib/types";
+
+const LAST_CASA_KEY = "betfood-last-casa";
 
 /** Foto com skeleton shimmer enquanto carrega. */
-function FoodPhoto({
-  src,
-  alt,
-  className = "",
-}: {
-  src: string;
-  alt: string;
-  className?: string;
-}) {
+function FoodPhoto({ src, alt, className = "" }: { src: string; alt: string; className?: string }) {
   const [loaded, setLoaded] = useState(false);
   return (
     <div className={`relative overflow-hidden bg-surface ${className}`}>
@@ -37,93 +33,189 @@ function Star({ className = "h-3 w-3" }: { className?: string }) {
   );
 }
 
-function GiftIcon({ className = "h-4 w-4" }: { className?: string }) {
+/* --- Roleta-herói: roda viva com luzes de marquee ------------------------ */
+
+const WHEEL_GRADIENT = `conic-gradient(
+  #f5a623 0deg 45deg, #ffffff 45deg 90deg,
+  #ea1d2c 90deg 135deg, #fbd6d8 135deg 180deg,
+  #f5a623 180deg 225deg, #ffffff 225deg 270deg,
+  #ea1d2c 270deg 315deg, #fbd6d8 315deg 360deg
+)`;
+
+function HeroWheel() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <rect x="4" y="9.5" width="16" height="4" rx="1" />
-      <path d="M6 13.5V19a1.5 1.5 0 0 0 1.5 1.5h9A1.5 1.5 0 0 0 18 19v-5.5M12 9.5v11" />
-      <path d="M12 9.5c-2 0-4.2-.7-4.2-2.6 0-1.3 1-2.1 2.1-2.1 1.6 0 2.1 2 2.1 4.7 0-2.7.5-4.7 2.1-4.7 1.1 0 2.1.8 2.1 2.1 0 1.9-2.2 2.6-4.2 2.6Z" />
-    </svg>
+    <div className="relative mx-auto h-44 w-44">
+      {/* luzes de marquee piscando em volta */}
+      {Array.from({ length: 12 }, (_, i) => {
+        const a = (i * Math.PI) / 6;
+        return (
+          <span
+            key={i}
+            className="absolute h-2.5 w-2.5 rounded-full bg-accent2"
+            style={{
+              left: `calc(50% + ${Math.sin(a) * 88}px - 5px)`,
+              top: `calc(50% - ${Math.cos(a) * 88}px - 5px)`,
+              animation: `marquee-blink 0.9s ease-in-out infinite`,
+              animationDelay: `${(i % 2) * 0.45}s`,
+            }}
+          />
+        );
+      })}
+      {/* aro + roda girando devagar */}
+      <div className="anim-glow absolute inset-2 rounded-full border-4 border-ink/90">
+        <div
+          className="anim-spin-slow h-full w-full rounded-full"
+          style={{ background: WHEEL_GRADIENT }}
+        />
+      </div>
+      {/* miolo */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full border-4 border-white bg-brand-500 shadow-lg">
+          <span className="font-display text-lg font-black text-white">B</span>
+        </div>
+      </div>
+      {/* ponteiro */}
+      <div className="absolute left-1/2 top-0 -translate-x-1/2">
+        <div className="h-0 w-0 border-l-8 border-r-8 border-t-[14px] border-l-transparent border-r-transparent border-t-ink drop-shadow" />
+      </div>
+    </div>
   );
 }
 
-function RatingPill({ rating }: { rating: number }) {
+/* --- Thumbnails dos jogos (arte CSS por jogo) ---------------------------- */
+
+function GameThumb({ id }: { id: string }) {
+  if (id === "roleta")
+    return (
+      <div className="relative flex h-full items-center justify-center bg-gradient-to-br from-brand-500 to-brand-700">
+        <div
+          className="anim-spin-slow h-16 w-16 rounded-full border-2 border-white/80"
+          style={{ background: WHEEL_GRADIENT }}
+        />
+        <span className="absolute bottom-1.5 right-2 text-[10px] font-black uppercase tracking-wider text-white/70">
+          Gire
+        </span>
+      </div>
+    );
+  if (id === "raspadinha")
+    return (
+      <div className="relative flex h-full items-center justify-center bg-gradient-to-br from-accent2 to-[#c77f00]">
+        <div className="h-14 w-20 -rotate-6 rounded-lg bg-white shadow-md">
+          <div className="mx-2 mt-2 h-4 rounded bg-surface" />
+          <div className="relative mx-2 mt-1.5 h-5 overflow-hidden rounded bg-[#c9ccd4]">
+            <div className="absolute -left-1 top-1 h-8 w-10 rotate-[-20deg] bg-accent2/70" />
+          </div>
+        </div>
+        <span className="absolute bottom-1.5 right-2 text-[10px] font-black uppercase tracking-wider text-white/70">
+          Raspe
+        </span>
+      </div>
+    );
+  if (id === "quiz")
+    return (
+      <div className="relative flex h-full items-center justify-center bg-gradient-to-br from-ink to-[#4a4644]">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-md">
+          <span className="font-display text-2xl font-black text-brand-500">?</span>
+        </div>
+        <span className="absolute bottom-1.5 right-2 text-[10px] font-black uppercase tracking-wider text-white/60">
+          Responda
+        </span>
+      </div>
+    );
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-1 text-xs font-bold text-ink shadow-md">
-      <Star className="h-3 w-3 text-accent2" />
-      {rating.toFixed(1)}
-    </span>
+    <div className="relative flex h-full items-center justify-center gap-1.5 bg-gradient-to-br from-brand-100 to-accent2/60">
+      <div className="h-14 w-10 -rotate-6 rounded-lg border-2 border-white bg-brand-500 shadow" />
+      <div className="flex h-14 w-10 rotate-6 items-center justify-center rounded-lg border-2 border-white bg-white shadow">
+        <span className="font-display text-lg font-black text-brand-500">B</span>
+      </div>
+      <span className="absolute bottom-1.5 right-2 text-[10px] font-black uppercase tracking-wider text-ink/50">
+        Combine
+      </span>
+    </div>
   );
 }
+
+/* --- Página -------------------------------------------------------------- */
 
 export default function Home() {
+  const navigate = useNavigate();
   const restaurants = getRestaurants();
-  const featured = restaurants[0];
+  const [pickerGame, setPickerGame] = useState<string | null>(null);
+
+  function playGame(gameId: string) {
+    play("tap");
+    const last = localStorage.getItem(LAST_CASA_KEY);
+    if (last && restaurants.some((r) => r.id === last)) {
+      navigate(`/r/${last}/jogar/${gameId}`);
+    } else {
+      setPickerGame(gameId);
+    }
+  }
+
+  function pickCasa(r: Restaurant) {
+    if (!pickerGame) return;
+    play("tap");
+    localStorage.setItem(LAST_CASA_KEY, r.id);
+    navigate(`/r/${r.id}/jogar/${pickerGame}`);
+  }
+
+  const lastCasa = restaurants.find((r) => r.id === localStorage.getItem(LAST_CASA_KEY));
 
   return (
     <div>
-      {/* Header compacto */}
-      <div className="anim-fade-up flex items-baseline justify-between px-5 pb-4 pt-7">
-        <h1 className="font-display text-[26px] font-bold tracking-tight text-brand-500">
-          BetFood
+      {/* HERÓI: roleta viva */}
+      <button
+        onClick={() => playGame("roleta")}
+        className="anim-fade-up press block w-full bg-gradient-to-b from-brand-50 via-paper to-paper px-5 pb-6 pt-5 text-center"
+      >
+        <HeroWheel />
+        <h1 className="mt-4 font-display text-3xl font-black leading-none tracking-tight">
+          Roleta <span className="text-brand-500">BetFood</span>
         </h1>
-        <p className="text-xs font-semibold text-ink/45">Jogue na mesa, ganhe no prato</p>
+        <p className="mt-1.5 text-sm font-medium text-ink/50">
+          Prêmios de verdade a cada giro · 10 fichas
+        </p>
+        <span className="anim-glow mt-4 inline-block rounded-full bg-brand-500 px-10 py-3.5 font-display text-base font-black uppercase tracking-wide text-white">
+          Girar agora
+        </span>
+      </button>
+
+      {/* JOGOS */}
+      <div className="px-5 pt-4">
+        <div className="anim-fade-up mb-3 flex items-baseline justify-between" style={{ animationDelay: "80ms" }}>
+          <h2 className="font-display text-lg font-bold tracking-tight">Jogos</h2>
+          {lastCasa && (
+            <span className="text-[11px] font-semibold text-ink/35">
+              jogando em {lastCasa.name}
+            </span>
+          )}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {GAMES.map((g, i) => (
+            <button
+              key={g.id}
+              onClick={() => playGame(g.id)}
+              className="anim-fade-up press overflow-hidden rounded-card bg-white text-left shadow-md"
+              style={{ animationDelay: `${120 + i * 60}ms` }}
+            >
+              <div className="h-24">
+                <GameThumb id={g.id} />
+              </div>
+              <div className="p-3">
+                <div className="font-display text-[15px] font-bold leading-tight">{g.name}</div>
+                <div className="mt-0.5 text-[11px] text-ink/45">{g.tagline}</div>
+              </div>
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Banner-herói */}
-      {featured && (
-        <div className="anim-fade-up px-5" style={{ animationDelay: "60ms" }}>
-          <Link
-            to={`/r/${featured.id}`}
-            onClick={() => play("tap")}
-            className="press relative block h-52 overflow-hidden rounded-card shadow-lg"
-          >
-            <FoodPhoto src={featured.photo} alt={featured.name} className="absolute inset-0" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-black/5" />
-            <div className="absolute inset-x-0 bottom-0 p-5">
-              <h2 className="font-display text-3xl font-bold leading-none text-white">
-                Jogou, ganhou.
-              </h2>
-              <p className="mt-1.5 text-sm font-medium text-white/85">
-                Prêmios de verdade nas melhores casas de Natal.
-              </p>
-              <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-brand-500 px-4 py-2 text-sm font-bold text-white">
-                Jogar agora
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="h-3.5 w-3.5"
-                >
-                  <path d="m9 6 6 6-6 6" />
-                </svg>
-              </span>
-            </div>
-          </Link>
-        </div>
-      )}
-
-      {/* Lista de restaurantes */}
+      {/* CASAS PARCEIRAS */}
       <div className="px-5 pb-4 pt-7">
-        <div
-          className="anim-fade-up mb-3 flex items-baseline justify-between"
-          style={{ animationDelay: "120ms" }}
-        >
-          <h2 className="font-display text-lg font-bold tracking-tight">Casas parceiras</h2>
-          <span className="text-xs font-semibold text-ink/35">{restaurants.length} em Natal</span>
+        <div className="anim-fade-up mb-3 flex items-baseline justify-between" style={{ animationDelay: "300ms" }}>
+          <h2 className="font-display text-lg font-bold tracking-tight">Onde resgatar</h2>
+          <span className="text-xs font-semibold text-ink/35">{restaurants.length} casas em Natal</span>
         </div>
-
         <div className="grid gap-4">
           {restaurants.map((r, i) => {
             const big = r.prizes.find((p) => p.tier === "big");
@@ -133,30 +225,28 @@ export default function Home() {
                 to={`/r/${r.id}`}
                 onClick={() => play("tap")}
                 className="anim-fade-up press block overflow-hidden rounded-card bg-white shadow-md"
-                style={{ animationDelay: `${160 + i * 70}ms` }}
+                style={{ animationDelay: `${340 + i * 70}ms` }}
               >
                 <div className="relative">
-                  <FoodPhoto src={r.photo} alt={r.name} className="h-40" />
+                  <FoodPhoto src={r.photo} alt={r.name} className="h-36" />
                   <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/55 to-transparent" />
-                  <div className="absolute right-3 top-3">
-                    <RatingPill rating={r.rating} />
-                  </div>
+                  <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-white px-2 py-1 text-xs font-bold text-ink shadow-md">
+                    <Star className="h-3 w-3 text-accent2" />
+                    {r.rating.toFixed(1)}
+                  </span>
                   <span className="absolute bottom-3 left-3 rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-bold text-ink">
                     {r.cuisine}
                   </span>
                 </div>
                 <div className="p-4">
                   <div className="flex items-baseline justify-between gap-3">
-                    <h3 className="truncate font-display text-[17px] font-bold">{r.name}</h3>
-                    <span className="shrink-0 text-xs font-medium text-ink/45">
-                      {r.neighborhood}
-                    </span>
+                    <h3 className="truncate font-display text-[16px] font-bold">{r.name}</h3>
+                    <span className="shrink-0 text-xs font-medium text-ink/45">{r.neighborhood}</span>
                   </div>
                   {big && (
-                    <div className="mt-2 flex items-center gap-1.5 text-[13px]">
-                      <GiftIcon className="h-4 w-4 shrink-0 text-accent2" />
-                      <span className="text-ink/50">Prêmios até:</span>
-                      <span className="truncate font-bold text-brand-600">{big.label}</span>
+                    <div className="mt-1.5 text-[13px]">
+                      <span className="text-ink/50">Prêmio máximo: </span>
+                      <span className="font-bold text-brand-600">{big.label}</span>
                     </div>
                   )}
                 </div>
@@ -164,16 +254,39 @@ export default function Home() {
             );
           })}
         </div>
-
-        <p
-          className="anim-fade-up mt-7 text-center text-xs leading-relaxed text-ink/40"
-          style={{ animationDelay: `${160 + restaurants.length * 70}ms` }}
-        >
-          Uma jogada grátis por dia em cada casa.
-          <br />
-          Código da mesa libera jogadas extras.
-        </p>
       </div>
+
+      {/* Picker de casa (bottom sheet) */}
+      {pickerGame && (
+        <div className="fixed inset-0 z-40 flex items-end justify-center bg-ink/50" onClick={() => setPickerGame(null)}>
+          <div
+            className="anim-fade-up w-full max-w-md rounded-t-3xl bg-white p-5 pb-8"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-ink/15" />
+            <h3 className="mb-3 font-display text-lg font-bold">Jogar em qual casa?</h3>
+            <div className="grid gap-2">
+              {restaurants.map((r) => (
+                <button
+                  key={r.id}
+                  onClick={() => pickCasa(r)}
+                  className="press flex items-center gap-3 rounded-card border border-ink/10 p-2.5 text-left"
+                >
+                  <FoodPhoto src={r.photo} alt={r.name} className="h-11 w-11 shrink-0 rounded-xl" />
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-bold">{r.name}</div>
+                    <div className="text-[11px] text-ink/45">{r.neighborhood}</div>
+                  </div>
+                  <span className="inline-flex items-center gap-1 text-xs font-bold text-ink/60">
+                    <Star className="h-3 w-3 text-accent2" />
+                    {r.rating.toFixed(1)}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

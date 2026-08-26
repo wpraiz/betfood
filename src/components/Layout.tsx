@@ -1,4 +1,5 @@
 import { Link, Outlet, useLocation } from "react-router-dom";
+import Hud from "./Hud";
 
 const lineProps = {
   viewBox: "0 0 24 24",
@@ -82,6 +83,7 @@ export default function Layout() {
   };
   return (
     <div className="mx-auto flex min-h-dvh max-w-md flex-col bg-paper text-ink">
+      <Hud />
       <main className="flex-1 pb-24">
         <Outlet />
       </main>

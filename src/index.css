@@ -69,3 +69,38 @@ body {
 .press:active {
   transform: scale(0.97);
 }
+
+@keyframes spin-slow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.anim-spin-slow {
+  animation: spin-slow 14s linear infinite;
+}
+
+@keyframes marquee-blink {
+  0%,
+  45% {
+    opacity: 1;
+    filter: drop-shadow(0 0 4px #f5a623);
+  }
+  55%,
+  100% {
+    opacity: 0.25;
+    filter: none;
+  }
+}
+
+@keyframes glow-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 24px -4px rgba(245, 166, 35, 0.65);
+  }
+  50% {
+    box-shadow: 0 0 48px 2px rgba(234, 29, 44, 0.55);
+  }
+}
+.anim-glow {
+  animation: glow-pulse 2.2s ease-in-out infinite;
+}
