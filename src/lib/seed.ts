@@ -1,10 +1,14 @@
 // Restaurantes parceiros fictícios de Natal/RN para a POC.
 import type { Restaurant } from "./types";
 
-const basePrizes = (big: string, medium: string, small: string) => [
+// Dois prêmios pequenos em vez de um: quem ganha várias vezes na mesma casa não
+// recebe sempre a mesma frase. Os pesos totais por faixa continuam os mesmos
+// (grande 5, médio 15, pequenos 40 somados, nada 40).
+const basePrizes = (big: string, medium: string, small: string, small2: string) => [
   { id: "p-big", label: big, weight: 5, tier: "big" as const },
   { id: "p-med", label: medium, weight: 15, tier: "medium" as const },
-  { id: "p-small", label: small, weight: 40, tier: "small" as const },
+  { id: "p-small", label: small, weight: 20, tier: "small" as const },
+  { id: "p-small2", label: small2, weight: 20, tier: "small" as const },
   { id: "p-none", label: "Não foi dessa vez", weight: 40, tier: "none" as const },
 ];
 
@@ -21,7 +25,8 @@ export const RESTAURANTS: Restaurant[] = [
     prizes: basePrizes(
       "Camarão empanado grátis pra mesa",
       "Sobremesa grátis",
-      "10% de desconto na conta"
+      "10% de desconto na conta",
+      "Suco natural por nossa conta"
     ),
   },
   {
@@ -36,7 +41,8 @@ export const RESTAURANTS: Restaurant[] = [
     prizes: basePrizes(
       "Combo tapioca + suco grátis",
       "Café especial por nossa conta",
-      "Tapioca doce em dobro"
+      "Tapioca doce em dobro",
+      "Café coado grátis"
     ),
   },
   {
@@ -51,7 +57,8 @@ export const RESTAURANTS: Restaurant[] = [
     prizes: basePrizes(
       "1 rodízio grátis na próxima visita",
       "Picanha extra pra mesa",
-      "Refrigerante em dobro"
+      "Refrigerante em dobro",
+      "Farofa especial pra mesa"
     ),
   },
   {
@@ -66,7 +73,8 @@ export const RESTAURANTS: Restaurant[] = [
     prizes: basePrizes(
       "Pizza broto grátis",
       "Borda recheada por nossa conta",
-      "15% de desconto em qualquer pizza"
+      "15% de desconto em qualquer pizza",
+      "Refrigerante 1L grátis"
     ),
   },
 ];

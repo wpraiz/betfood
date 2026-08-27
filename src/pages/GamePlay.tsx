@@ -23,7 +23,20 @@ import {
 import { formatCountdown } from "../components/Hud";
 import { isMuted, play, setMuted, stop } from "../lib/sound";
 
-const CONFETTI_COLORS = ["#ea1d2c", "#f5a623", "#ffffff"];
+const CONFETTI_COLORS = ["#e31b28", "#f5a623", "#ffffff"];
+
+// Quem joga várias rodadas seguidas ouve a mesma frase toda vez e o app começa
+// a soar automático. Sorteadas por rodada; a derrota nunca cobra nem provoca.
+const MANCHETES_VITORIA = ["Deu prêmio!", "É seu!", "Ganhou agora", "Boa, saiu prêmio"];
+const MANCHETES_DERROTA = ["Não foi dessa vez", "Passou perto", "Ficou pra próxima"];
+const CONSOLOS = [
+  "A sorte muda rápido por aqui. Respira e vem de novo.",
+  "Tem mais ficha chegando — daqui a pouco você tenta outra.",
+  "Quem joga de novo costuma sair com alguma coisa.",
+  "Sem drama: a próxima rodada é logo ali.",
+];
+
+const sorteia = (lista: string[]) => lista[Math.floor(Math.random() * lista.length)];
 
 /** Selo de XP que sobe e some, celebrando o ganho da rodada. */
 function XpBadge({ amount }: { amount: number }) {
@@ -81,6 +94,12 @@ export default function GamePlay() {
   const { setImmersive } = useContext(ImmersiveContext);
   const [result, setResult] = useState<GameResult | null>(null);
   const [couponCode, setCouponCode] = useState<string | null>(null);
+  // Sorteadas uma vez por montagem: a frase não pode trocar a cada re-render.
+  const [frases] = useState(() => ({
+    vitoria: sorteia(MANCHETES_VITORIA),
+    derrota: sorteia(MANCHETES_DERROTA),
+    consolo: sorteia(CONSOLOS),
+  }));
   const [muted, setMutedState] = useState(() => isMuted());
 
   // Cobrança justa: abrir o jogo é de graça. A ficha só sai quando o jogo chama
@@ -295,6 +314,8 @@ export default function GamePlay() {
   // --- Resultado -----------------------------------------------------------
   if (result) {
     const won = result.won && result.prize && result.prize.tier !== "none";
+    const manchete = won ? frases.vitoria : frases.derrota;
+    const consolo = frases.consolo;
 
     if (won && result.prize)
       return (
@@ -306,7 +327,7 @@ export default function GamePlay() {
             className="anim-fade-up mt-2 font-display text-4xl font-bold tracking-tight"
             style={{ animationDelay: "60ms" }}
           >
-            Deu prêmio!
+            {manchete}
           </h1>
           <div className="mt-2">
             <XpBadge amount={XP_PER_PLAY + XP_PER_WIN} />
@@ -389,7 +410,7 @@ export default function GamePlay() {
           className="anim-fade-up mt-6 font-display text-3xl font-bold tracking-tight"
           style={{ animationDelay: "80ms" }}
         >
-          Não foi dessa vez
+          {manchete}
         </h1>
         <div className="mt-2">
           <XpBadge amount={XP_PER_PLAY} />
@@ -398,7 +419,7 @@ export default function GamePlay() {
           className="anim-fade-up mx-auto mt-3 max-w-[30ch] text-sm leading-relaxed text-ink/70"
           style={{ animationDelay: "140ms" }}
         >
-          A sorte muda rápido por aqui. Respira e vem de novo.
+          {consolo}
         </p>
         <div className="anim-fade-up mt-8" style={{ animationDelay: "220ms" }}>
           <button

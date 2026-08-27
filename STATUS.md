@@ -493,6 +493,22 @@ Pensando em quem vai jogar seguidas vezes hoje:
 Validação feita no **preview local** (`npx vite preview --port 5188`), sem
 martelar a produção — regra do ciclo 16.
 
+## Ciclo 18 — o laço emocional deixa de soar automático
+
+Quem joga várias rodadas via sempre as mesmas palavras: "Deu prêmio!" ou
+"Não foi dessa vez / A sorte muda rápido por aqui". Na terceira repetição o app
+soa robótico — o oposto do que o José pediu desde o começo.
+
+- **Frases de resultado sorteadas por rodada**: 4 manchetes de vitória, 3 de
+  derrota e 4 consolos. Sorteadas na montagem (não a cada re-render, senão o
+  texto trocaria sozinho na tela). A derrota nunca cobra nem provoca — continua
+  leve, com o lembrete de que a ficha volta sozinha. Verificado em 4 rodadas
+  seguidas: "Ganhou agora", "Passou perto", "Deu prêmio!", "É seu!".
+- **Quarto prêmio por casa**: cada restaurante ganhou um segundo prêmio pequeno
+  (suco natural, café coado, farofa especial, refrigerante 1L). Os pesos por
+  faixa continuam iguais — grande 5, médio 15, pequenos 40 somados, nada 40 —,
+  então a chance de ganhar não mudou, só a variedade do que sai.
+
 ## Backlog priorizado (pedido do José, 26/ago à noite)
 
 1. **Subir o nível dos games além da roleta** — "memória e demais tão muito low
