@@ -1,6 +1,6 @@
 # STATUS — BetFood POC
 
-Atualizado: 2026-08-27 (ciclo 37 do loop de melhoria contínua)
+Atualizado: 2026-08-27 (ciclo 38 do loop de melhoria contínua)
 
 ## Onde está
 
@@ -50,6 +50,22 @@ acessibilidade (axe-core, zero violações nas telas principais).
 ---
 
 # Histórico dos ciclos
+
+## Ciclo 38 — quem pede menos movimento esperava 4s olhando uma roda parada
+
+Primeiro, verifiquei se a descoberta do ciclo 37 (vermelho vivo reprova como
+texto no fundo papel) valia pro resto do app: **não** — os outros usos de
+`brand-500` são texto grande (limite 3:1) ou ícone, e passam. Correção do ciclo
+anterior estava no lugar certo.
+
+Aí testei algo nunca verificado: o app com `prefers-reduced-motion: reduce`
+ligado. O CSS zera as animações, então a roleta **não gira** — mas o código
+continuava esperando os 4,2s do giro. Resultado: 4,4 segundos encarando uma roda
+imóvel, sem retorno nenhum, justamente pra quem pediu menos movimento.
+
+Agora a roleta lê a preferência e encolhe os tempos (giro 700ms, resultado
+600ms). Medido: **4,5s no modo normal** (o teatro continua inteiro) e **0,8s com
+movimento reduzido**. Mesmo resultado, sem a espera vazia.
 
 ## Ciclo 37 — os jogos nunca tinham sido auditados
 

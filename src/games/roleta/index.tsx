@@ -7,6 +7,19 @@ const SLICES = 8;
 const SLICE_ANGLE = 360 / SLICES;
 const SPIN_MS = 4200; // duração do giro
 const RESULT_DELAY = 1600; // pausa mostrando o resultado antes do onFinish
+
+/**
+ * Quem pede menos movimento não vê a roda girar (o CSS zera a transição) — mas
+ * continuava esperando os 4,2s do giro olhando uma roda parada, sem retorno
+ * nenhum. Com a preferência ligada, o tempo encolhe: o resultado é o mesmo, só
+ * sem o teatro.
+ */
+function tempos() {
+  const reduz =
+    typeof window !== "undefined" &&
+    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  return reduz ? { giro: 700, resultado: 600 } : { giro: SPIN_MS, resultado: RESULT_DELAY };
+}
 const LIGHTS = 16; // "lâmpadas" do aro
 
 const CONFETTI_COLORS = ["#ea1d2c", "#f5a623", "#ffffff"];
@@ -85,6 +98,7 @@ function Roleta({ restaurant, drawPrize, startPlay, onFinish }: GameProps) {
 
   const spin = () => {
     if (phase !== "idle") return;
+    const t = tempos();
     // A rodada começa AQUI: é este clique que cobra a ficha. Sem saldo, não gira
     // (o GamePlay já troca pra tela de reposição).
     if (!startPlay()) return;
@@ -155,8 +169,8 @@ function Roleta({ restaurant, drawPrize, startPlay, onFinish }: GameProps) {
         if (finishedRef.current) return;
         finishedRef.current = true;
         onFinish({ won, prize: drawn });
-      }, RESULT_DELAY);
-    }, SPIN_MS + 100);
+      }, t.resultado);
+    }, t.giro + 100);
   };
 
   const cx = 160;
