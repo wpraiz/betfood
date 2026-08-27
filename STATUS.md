@@ -1,6 +1,6 @@
 # STATUS — BetFood POC
 
-Atualizado: 2026-08-27 (ciclo 44 do loop de melhoria contínua)
+Atualizado: 2026-08-27 (ciclo 45 do loop de melhoria contínua)
 
 ## Onde está
 
@@ -50,6 +50,21 @@ acessibilidade (axe-core, zero violações nas telas principais).
 ---
 
 # Histórico dos ciclos
+
+## Ciclo 45 — o jogador passa a ver o próprio histórico
+
+Complemento do ciclo 44: mostrar a chance antes de jogar é metade; a outra
+metade é mostrar **como foi de fato**. O app contava XP e nível (só os momentos
+bons) e nunca dizia quantas partidas a pessoa jogou nem quantas renderam prêmio.
+
+Agora o store conta `totalPlays`/`totalWins` (na cobrança da ficha e na entrega
+do cupom) e a carteira mostra, abaixo dos cupons: **"Você jogou 3 vezes e ganhou
+2 prêmios"** — com a porcentagem a partir da 5ª partida, quando o número começa
+a significar alguma coisa. Verificado: joguei 3 rodadas e o texto bateu com o
+estado (`plays=3 wins=2`).
+
+Só aparece depois da primeira partida, e quem já jogava antes começa a contagem
+do zero (o dado não existia).
 
 ## Ciclo 44 — o jogador agora vê a mesma chance que o dono vê
 

@@ -18,6 +18,8 @@ interface DB {
   lastRegenAt: number | null; // epoch ms do último crédito automático de fichas
   seenLevel?: number; // último nível já comemorado na tela
   prizeLabels?: Record<string, Record<string, string>>; // casa → prêmio → rótulo da casa
+  totalPlays?: number; // partidas pagas (histórico do jogador)
+  totalWins?: number; // partidas que renderam cupom
 }
 
 function load(): DB {
@@ -41,6 +43,8 @@ function load(): DB {
         seenLevel: typeof db.seenLevel === "number" ? db.seenLevel : undefined,
         prizeLabels:
           db.prizeLabels && typeof db.prizeLabels === "object" ? db.prizeLabels : undefined,
+        totalPlays: typeof db.totalPlays === "number" ? db.totalPlays : undefined,
+        totalWins: typeof db.totalWins === "number" ? db.totalWins : undefined,
       };
     }
   } catch {
@@ -282,6 +286,7 @@ export function consumePlay(_restaurantId?: string): boolean {
     return false;
   }
   db.chips -= CHIP_COST;
+  db.totalPlays = (db.totalPlays ?? 0) + 1;
   touchProgress(db, new Date().toISOString().slice(0, 10));
   save(db);
   return true;
@@ -348,6 +353,17 @@ export function takeLevelUp(): { level: number; name: string; title: string } | 
     : null;
 }
 
+/**
+ * Histórico do próprio jogador. Existe pelo mesmo motivo que a tabela de chances
+ * aparece na página da casa (ciclo 44): quem joga tem direito de ver a própria
+ * realidade, não só os momentos bons. Contabiliza a partir do ciclo 45 — quem
+ * já jogava antes começa do zero, e a tela diz isso.
+ */
+export function getPlayerStats(): { plays: number; wins: number } {
+  const db = load();
+  return { plays: db.totalPlays ?? 0, wins: db.totalWins ?? 0 };
+}
+
 export function getProgress(): Progress {
   const db = load();
   const xp = db.xp ?? 0;
@@ -408,6 +424,7 @@ export function awardCoupon(restaurantId: string, gameId: string, prizeLabel: st
     redeemedAt: null,
   };
   db.coupons.unshift(coupon);
+  db.totalWins = (db.totalWins ?? 0) + 1;
   db.xp = (db.xp ?? 0) + XP_PER_WIN;
   save(db);
   return coupon;

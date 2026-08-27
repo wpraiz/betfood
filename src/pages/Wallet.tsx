@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getCoupons, getRestaurant, redeemCoupon } from "../lib/store";
+import { getCoupons, getPlayerStats, getRestaurant, redeemCoupon } from "../lib/store";
 import type { Coupon } from "../lib/types";
 import { play } from "../lib/sound";
 import FoodPhoto, { thumb } from "../components/FoodPhoto";
@@ -79,6 +79,7 @@ export default function Wallet() {
   }, []);
 
   const coupons = getCoupons();
+  const stats = getPlayerStats();
   const estaValido = (c: Coupon) => !c.redeemedAt && !expiryInfo(c.expiresAt, now)?.expired;
   const active = coupons.filter(estaValido).length;
 
@@ -318,6 +319,33 @@ export default function Wallet() {
           </button>
         )}
       </div>
+
+      {/* Seu histórico: mesma lógica de mostrar a chance antes de jogar
+          (ciclo 44) — quem joga tem direito de ver a própria realidade, não só
+          os momentos bons. Aparece só depois da primeira partida. */}
+      {stats.plays > 0 && (
+        <div className="px-5">
+          <div className="anim-fade-up rounded-card bg-white p-4 shadow-sm">
+            <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-ink/70">
+              Seu histórico
+            </div>
+            <p className="mt-1.5 text-[13px] leading-relaxed text-ink/70">
+              Você jogou{" "}
+              <strong className="font-bold text-ink">
+                {stats.plays} {stats.plays === 1 ? "vez" : "vezes"}
+              </strong>{" "}
+              e ganhou{" "}
+              <strong className="font-bold text-ink">
+                {stats.wins} {stats.wins === 1 ? "prêmio" : "prêmios"}
+              </strong>
+              {stats.plays >= 5 && (
+                <> — {Math.round((stats.wins / stats.plays) * 100)}% das partidas</>
+              )}
+              .
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Rodapé: regra do cupom sempre a um toque, sem beco sem saída */}
       <div className="px-5 pb-8">
