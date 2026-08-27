@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getCoupons, getRestaurant, redeemCoupon } from "../lib/store";
+import type { Coupon } from "../lib/types";
 import { play } from "../lib/sound";
 import FoodPhoto, { thumb } from "../components/FoodPhoto";
 import HowItWorks from "../components/HowItWorks";
@@ -65,6 +66,7 @@ function expiryInfo(expiresAt: string | undefined, now: number) {
 export default function Wallet() {
   const [, forceUpdate] = useState(0);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [historicoAberto, setHistoricoAberto] = useState(false);
   // Cupom vence em 24h: sem este tick a tela mostraria "Vale até" pra sempre em
   // quem deixou o app aberto.
   const [now, setNow] = useState(() => Date.now());
@@ -74,9 +76,14 @@ export default function Wallet() {
   }, []);
 
   const coupons = getCoupons();
-  const active = coupons.filter(
-    (c) => !c.redeemedAt && !expiryInfo(c.expiresAt, now)?.expired
-  ).length;
+  const estaValido = (c: Coupon) => !c.redeemedAt && !expiryInfo(c.expiresAt, now)?.expired;
+  const active = coupons.filter(estaValido).length;
+
+  // O cliente abre esta tela na frente do garçom: o cupom que vale tem que
+  // estar na primeira dobra. Usados e vencidos viram histórico recolhido.
+  const validos = coupons.filter(estaValido);
+  const historico = coupons.filter((c) => !estaValido(c));
+  const visiveis = historicoAberto ? [...validos, ...historico] : validos;
 
   return (
     <div>
@@ -138,7 +145,7 @@ export default function Wallet() {
         )}
 
         <div className="grid gap-4">
-          {coupons.map((c, i) => {
+          {visiveis.map((c, i) => {
             const r = getRestaurant(c.restaurantId);
             const used = Boolean(c.redeemedAt);
             const info = expiryInfo(c.expiresAt, now);
@@ -250,6 +257,52 @@ export default function Wallet() {
             );
           })}
         </div>
+
+        {/* Só histórico: a lista de válidos fica vazia e a tela pareceria
+            quebrada sem uma linha explicando e um caminho de volta. */}
+        {validos.length === 0 && historico.length > 0 && !historicoAberto && (
+          <div className="anim-fade-up rounded-card border border-dashed border-ink/20 bg-white px-6 py-8 text-center">
+            <p className="font-display text-base font-bold">Nenhum cupom válido agora</p>
+            <p className="mx-auto mt-1 max-w-[30ch] text-xs leading-relaxed text-ink/70">
+              Os anteriores já foram usados ou venceram. Joga de novo pra ganhar outro.
+            </p>
+            <Link
+              to="/"
+              className="press mt-5 inline-block rounded-full bg-brand-500 px-7 py-3 text-sm font-bold text-white transition-colors active:bg-brand-600"
+            >
+              Ir jogar
+            </Link>
+          </div>
+        )}
+
+        {/* Histórico: usados e vencidos ficam fora do caminho, mas acessíveis */}
+        {historico.length > 0 && (
+          <button
+            type="button"
+            onClick={() => {
+              play("tap");
+              setHistoricoAberto((v) => !v);
+            }}
+            aria-expanded={historicoAberto}
+            className="press mt-5 flex min-h-11 w-full items-center justify-center gap-2 rounded-full border border-ink/15 text-[13px] font-bold text-ink/70"
+          >
+            {historicoAberto
+              ? "Esconder usados e vencidos"
+              : `Ver usados e vencidos (${historico.length})`}
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+              className={`h-4 w-4 transition-transform ${historicoAberto ? "rotate-180" : ""}`}
+            >
+              <path d="m6 9 6 6 6-6" />
+            </svg>
+          </button>
+        )}
       </div>
 
       {/* Rodapé: regra do cupom sempre a um toque, sem beco sem saída */}
