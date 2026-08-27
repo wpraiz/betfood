@@ -5,7 +5,10 @@
 @theme {
   --color-brand-50: #fdeeee;
   --color-brand-100: #fbd6d8;
-  --color-brand-500: #ea1d2c;
+  /* #e31b28 e não #ea1d2c: o vermelho anterior dava 4,46 de contraste sobre
+     branco e reprovava AA (mínimo 4,5) tanto como texto quanto como fundo de
+     botão. Este passa (4,72) e é visualmente indistinguível. */
+  --color-brand-500: #e31b28;
   --color-brand-600: #cf1626;
   --color-brand-700: #a81220;
   --color-brand-900: #5c0a12;
