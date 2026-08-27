@@ -23,7 +23,9 @@ function Star({ className = "h-3 w-3" }: { className?: string }) {
 
 function HeroWheel() {
   return (
-    <div className="relative mx-auto h-44 w-44">
+    // As luzes são posicionadas em pixels a partir do centro, então encolher a
+    // caixa desalinharia tudo: em tela baixa escalamos o conjunto inteiro.
+    <div className="relative mx-auto h-44 w-44 origin-center [@media(max-height:560px)]:scale-[0.6]">
       {/* luzes de marquee piscando em volta */}
       {Array.from({ length: 12 }, (_, i) => {
         const a = (i * Math.PI) / 6;

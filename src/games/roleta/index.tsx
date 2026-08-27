@@ -169,7 +169,7 @@ function Roleta({ restaurant, drawPrize, startPlay, onFinish }: GameProps) {
   });
 
   return (
-    <div className="flex flex-col items-center gap-5 p-4 text-ink">
+    <div className="flex flex-col items-center gap-5 p-4 text-ink [@media(max-height:560px)]:gap-2 [@media(max-height:560px)]:p-2">
       {/* Keyframes locais: luzes do aro + bounce do ponteiro */}
       <style>{`
         @keyframes roleta-blink-a { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0.25; } }
@@ -199,7 +199,12 @@ function Roleta({ restaurant, drawPrize, startPlay, onFinish }: GameProps) {
         </p>
       </div>
 
-      <div className="anim-pop relative w-full max-w-[340px]" style={{ animationDelay: "80ms" }}>
+      {/* Em tela baixa (celular deitado, ~390px de altura) a roda de 340px
+          empurrava o botão "Girar agora" pra fora da tela. Encolhe pra caber. */}
+      <div
+        className="anim-pop relative w-full max-w-[340px] [@media(max-height:560px)]:max-w-[190px]"
+        style={{ animationDelay: "80ms" }}
+      >
         {/* Ponteiro */}
         <div className="absolute left-1/2 top-0 z-10 -translate-x-1/2 translate-y-[6px]">
           <div
