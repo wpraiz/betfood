@@ -592,6 +592,48 @@ export default function Partner() {
           </p>
         )}
 
+        {/* Sua tabela de prêmios: o painel afirma que a tabela é do dono, então
+            ela precisa estar VISÍVEL — é a primeira pergunta que ele faz. A
+            chance sai dos pesos, não é escrita à mão. */}
+        <div
+          className="anim-fade-up mb-6 rounded-card border border-ink/10 bg-white p-4 shadow-sm"
+          style={{ animationDelay: "310ms" }}
+        >
+          <div className="font-display text-base font-bold">Sua tabela de prêmios</div>
+          <p className="mt-1 text-xs leading-relaxed text-ink/70">
+            É daqui que sai todo prêmio desta casa — e só daqui. A chance de cada
+            um é o peso dele no sorteio.
+          </p>
+          <ul className="mt-3 divide-y divide-ink/10">
+            {(casaAtual?.prizes ?? []).map((p) => {
+              const chance = pesoTotal > 0 ? Math.round((p.weight / pesoTotal) * 100) : 0;
+              const semPremio = p.tier === "none";
+              return (
+                <li key={p.id} className="flex items-center justify-between gap-3 py-2.5">
+                  <span
+                    className={`min-w-0 flex-1 truncate text-[13px] ${
+                      semPremio ? "text-ink/65" : "font-semibold text-ink"
+                    }`}
+                  >
+                    {p.label}
+                  </span>
+                  <span
+                    className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold tabular-nums ${
+                      semPremio
+                        ? "bg-surface text-ink/65"
+                        : p.tier === "big"
+                          ? "bg-accent2/15 text-[#8a5a00]"
+                          : "bg-brand-50 text-brand-700"
+                    }`}
+                  >
+                    {chance}%
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+
         {/* Link direto da casa: é o que vira QR na mesa ou vai pro Instagram.
             Agora funciona até pra quem nunca abriu o app — o onboarding devolve
             a pessoa nesta casa em vez de despejar na Home (ciclo 29). */}

@@ -1,6 +1,6 @@
 # STATUS — BetFood POC
 
-Atualizado: 2026-08-27 (ciclo 30 do loop de melhoria contínua)
+Atualizado: 2026-08-27 (ciclo 31 do loop de melhoria contínua)
 
 ## Onde está
 
@@ -50,6 +50,19 @@ acessibilidade (axe-core, zero violações nas telas principais).
 ---
 
 # Histórico dos ciclos
+
+## Ciclo 31 — a tabela de prêmios do dono agora aparece
+
+O ciclo 30 reescreveu o argumento pra dizer "a tabela de prêmios é sua: nada sai
+dela sem você ter posto lá". Só que **a tabela não estava em lugar nenhum da
+tela** — e "quais são os meus prêmios?" é a primeira pergunta que o dono faz
+depois de ouvir isso.
+
+Agora o painel mostra a tabela da casa selecionada com a **chance real de cada
+prêmio**, calculada dos pesos (5% camarão grátis, 15% sobremesa, 20% + 20% os
+dois pequenos, 40% "não foi dessa vez"). Sem número escrito à mão, seguindo a
+regra dos ciclos 25-27; se os pesos mudarem, a tela acompanha. A linha de "não
+foi dessa vez" aparece apagada, sem destaque — é informação, não promessa.
 
 ## Ciclo 30 — o painel afirmava ao dono algo que o app não cumpre
 
