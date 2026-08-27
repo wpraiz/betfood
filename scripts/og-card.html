@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        width: 1200px; height: 630px; overflow: hidden;
+        font-family: "Segoe UI", system-ui, sans-serif;
+        background: #faf9f9; color: #201e1d;
+        display: flex; align-items: center; gap: 56px; padding: 0 72px;
+      }
+      .wheel-wrap { position: relative; width: 340px; height: 340px; flex: 0 0 340px; }
+      .ring {
+        position: absolute; inset: 0; border-radius: 50%;
+        background: #b0121e; padding: 16px;
+        box-shadow: 0 24px 60px -12px rgba(234,29,44,.45);
+      }
+      .wheel {
+        width: 100%; height: 100%; border-radius: 50%;
+        background: conic-gradient(
+          #f5a623 0deg 45deg, #ffffff 45deg 90deg,
+          #ea1d2c 90deg 135deg, #fbd6d8 135deg 180deg,
+          #f5a623 180deg 225deg, #ffffff 225deg 270deg,
+          #ea1d2c 270deg 315deg, #fbd6d8 315deg 360deg
+        );
+      }
+      .light {
+        position: absolute; width: 14px; height: 14px; border-radius: 50%;
+        background: #f5a623; box-shadow: 0 0 10px rgba(245,166,35,.9);
+      }
+      .hub {
+        position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
+        width: 104px; height: 104px; border-radius: 50%;
+        background: #ea1d2c; border: 7px solid #fff;
+        display: flex; align-items: center; justify-content: center;
+        color: #fff; font-size: 44px; font-weight: 900;
+        box-shadow: 0 8px 24px rgba(0,0,0,.2);
+      }
+      .pointer {
+        position: absolute; left: 50%; top: -6px; transform: translateX(-50%);
+        width: 0; height: 0;
+        border-left: 15px solid transparent; border-right: 15px solid transparent;
+        border-top: 26px solid #201e1d;
+      }
+      .kicker {
+        font-size: 21px; font-weight: 800; letter-spacing: .22em;
+        text-transform: uppercase; color: #ea1d2c; margin-bottom: 18px;
+      }
+      h1 { font-size: 88px; font-weight: 900; line-height: .98; letter-spacing: -.03em; }
+      h1 span { color: #ea1d2c; }
+      p { font-size: 31px; line-height: 1.35; color: rgba(32,30,29,.72); margin-top: 22px; max-width: 20ch; }
+      .chips { display: flex; gap: 14px; margin-top: 34px; }
+      .chip {
+        font-size: 20px; font-weight: 800; padding: 13px 24px; border-radius: 999px;
+        background: #fff; border: 1px solid rgba(32,30,29,.12);
+      }
+      .chip.amber { background: rgba(245,166,35,.16); border-color: rgba(245,166,35,.45); color: #8a5a00; }
+    </style>
+  </head>
+  <body>
+    <div class="wheel-wrap">
+      <div class="ring"><div class="wheel"></div></div>
+      <div class="hub">B</div>
+      <div class="pointer"></div>
+    </div>
+    <div>
+      <div class="kicker">Natal · Rio Grande do Norte</div>
+      <h1>Bet<span>Food</span></h1>
+      <p>Jogue enquanto espera e ganhe prêmios de verdade no restaurante.</p>
+      <div class="chips">
+        <span class="chip amber">Roleta · Raspadinha</span>
+        <span class="chip">Quiz · Memória</span>
+        <span class="chip">Sem custo</span>
+      </div>
+    </div>
+    <script>
+      const w = document.querySelector(".wheel-wrap");
+      for (let i = 0; i < 16; i++) {
+        const a = (i * Math.PI * 2) / 16;
+        const el = document.createElement("div");
+        el.className = "light";
+        el.style.left = `calc(50% + ${Math.sin(a) * 162}px - 7px)`;
+        el.style.top = `calc(50% - ${Math.cos(a) * 162}px - 7px)`;
+        if (i % 2) el.style.opacity = ".45";
+        w.appendChild(el);
+      }
+    </script>
+  </body>
+</html>

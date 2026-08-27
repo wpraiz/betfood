@@ -104,6 +104,16 @@ editorial serifado Broadsheet ("não tem cara de app").
   `dist/index.html` local após `npm run build`.
 - GitHub Pages foi um plano B abandonado (branch `gh-pages` apagada). Ignorar.
 
+## Compartilhamento (o link é o funil)
+
+O José divulga colando a URL no WhatsApp. `index.html` tem as tags Open
+Graph/Twitter com **URL absoluta** (robôs de preview não resolvem caminho
+relativo) apontando pra `public/og.png` (1200x630). Pra regerar a imagem:
+sirva `scripts/og-card.html` pelo dev server (copie pra `public/`, abra
+`http://localhost:5199/<arquivo>.html`), tire screenshot em 1200x630 e salve
+como `public/og.png` — o protocolo `file:` é bloqueado no playwright-cli.
+Mudou nome, cor ou proposta do app? Regere a imagem.
+
 ## Skills de design instaladas (.claude/skills)
 
 `frontend-design` (Anthropic — ler antes de qualquer redesign), `ui-ux-pro-max`

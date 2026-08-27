@@ -7,3 +7,6 @@ android/
 .DS_Store
 .playwright-cli/
 .claude/scheduled_tasks.lock
+
+# artefatos de build do TypeScript
+*.tsbuildinfo
