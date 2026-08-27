@@ -1,6 +1,6 @@
 # STATUS — BetFood POC
 
-Atualizado: 2026-08-27 (ciclo 36 do loop de melhoria contínua)
+Atualizado: 2026-08-27 (ciclo 37 do loop de melhoria contínua)
 
 ## Onde está
 
@@ -50,6 +50,24 @@ acessibilidade (axe-core, zero violações nas telas principais).
 ---
 
 # Histórico dos ciclos
+
+## Ciclo 37 — os jogos nunca tinham sido auditados
+
+Seguindo a lição do ciclo 36 (auditar além do estado inicial): rodei o axe nas
+**quatro telas de jogo**, que nunca tinham passado por auditoria nenhuma. Achou
+duas classes de problema:
+
+1. **`brand-500` como texto reprova sobre o papel.** Meu vermelho passa sobre
+   branco (4,72) mas o fundo do app é `#faf9f9`, e ali dá **4,49** — reprova por
+   um fio. Corrigi para `brand-600` (5,26) em todo texto vermelho dos jogos e
+   registrei a regra: *brand-500 é preenchimento; texto vermelho é brand-600*.
+   O erro de origem foi meu, no ciclo 13: medi contraste só contra branco.
+2. **Nenhuma tela de jogo tinha `h1`** — quem usa leitor de tela não sabia onde
+   estava. O nome do jogo na barra virou cabeçalho de verdade.
+
+Também subi os cinzas dos jogos (`ink/40`, `/50`, `/55`, `/60`) para `ink/70`;
+o placar da memória chegava a 2,45 de contraste. Reauditado: **os quatro jogos
+sem violação**.
 
 ## Ciclo 36 — auditoria de regressão em acessibilidade
 

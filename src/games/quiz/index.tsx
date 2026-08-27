@@ -617,7 +617,7 @@ function Quiz({ restaurant, drawPrize, startPlay, onFinish }: GameProps) {
             <span key={displayScore} className="anim-pop inline-block">
               {displayScore}
             </span>
-            <span className="text-2xl text-ink/50"> /{TOTAL_QUESTIONS}</span>
+            <span className="text-2xl text-ink/70"> /{TOTAL_QUESTIONS}</span>
           </p>
           <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.2em] text-ink/65">
             Respostas certas
@@ -685,7 +685,7 @@ function Quiz({ restaurant, drawPrize, startPlay, onFinish }: GameProps) {
       <div className="relative z-10">
         {/* Placar do palco: rótulo à esquerda, acertos + cronômetro à direita */}
         <div className="mb-3 flex items-center justify-between">
-          <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-brand-500">
+          <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-brand-600">
             Quiz gastronômico
           </p>
           <div className="flex items-center gap-2">

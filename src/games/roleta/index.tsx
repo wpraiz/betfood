@@ -190,10 +190,10 @@ function Roleta({ restaurant, drawPrize, startPlay, onFinish }: GameProps) {
       `}</style>
 
       <div className="anim-fade-up text-center">
-        <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-brand-500">
+        <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-brand-600">
           Roleta de prêmios
         </p>
-        <p className="mt-1 text-sm text-ink/60">
+        <p className="mt-1 text-sm text-ink/70">
           Uma volta, um prêmio no{" "}
           <span className="font-display font-semibold text-ink">{restaurant.name}</span>.
         </p>
@@ -319,7 +319,7 @@ function Roleta({ restaurant, drawPrize, startPlay, onFinish }: GameProps) {
           </button>
         )}
         {phase === "spinning" && (
-          <p className="animate-pulse text-sm font-semibold text-ink/50">Girando…</p>
+          <p className="animate-pulse text-sm font-semibold text-ink/70">Girando…</p>
         )}
         {phase === "done" && prize && (
           <div className="anim-pop">
@@ -333,14 +333,14 @@ function Roleta({ restaurant, drawPrize, startPlay, onFinish }: GameProps) {
                 <p className="font-display text-2xl font-extrabold leading-tight text-brand-600">
                   {prize.label}
                 </p>
-                <p className="mt-1.5 text-xs font-medium text-ink/50">
+                <p className="mt-1.5 text-xs font-medium text-ink/70">
                   Girou, ganhou. Mostra pro garçom e pronto.
                 </p>
               </>
             ) : (
               <>
                 <p className="font-display text-xl font-bold text-ink/45">Não foi dessa vez.</p>
-                <p className="mt-1 text-xs text-ink/50">A próxima volta pode ser a sua.</p>
+                <p className="mt-1 text-xs text-ink/70">A próxima volta pode ser a sua.</p>
               </>
             )}
           </div>
@@ -360,7 +360,7 @@ function Roleta({ restaurant, drawPrize, startPlay, onFinish }: GameProps) {
         ].map((it) => (
           <span
             key={it.label}
-            className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-[11px] font-medium text-ink/60 shadow-sm"
+            className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-[11px] font-medium text-ink/70 shadow-sm"
           >
             <span className="h-2.5 w-2.5 rounded-full" style={{ background: it.color }} />
             {it.label}

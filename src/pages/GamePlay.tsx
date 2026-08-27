@@ -464,9 +464,12 @@ export default function GamePlay() {
             <path d="m15 6-6 6 6 6" />
           </svg>
         </Link>
-        <div className="min-w-0 truncate font-display text-[13px] font-bold uppercase tracking-[0.18em] text-ink/65">
+        {/* h1 de verdade: toda tela precisa de um cabeçalho principal pra quem
+            navega por leitor de tela saber onde está (as telas de jogo não
+            tinham nenhum — axe: page-has-heading-one). */}
+        <h1 className="min-w-0 truncate font-display text-[13px] font-bold uppercase tracking-[0.18em] text-ink/70">
           {game.name}
-        </div>
+        </h1>
         <div className="flex shrink-0 items-center gap-1.5">
           <button
             type="button"

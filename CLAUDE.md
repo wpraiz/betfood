@@ -35,9 +35,12 @@ editorial serifado Broadsheet ("não tem cara de app").
 
 ## Regras de UI aprendidas na auditoria (valem pra tudo que for novo)
 
-- **Contraste**: corpo `ink/70`, rótulos/metadados `ink/65`. Não usar `ink/30–50`
-  como texto. `accent2` (#f5a623) **nunca** como cor de texto sobre fundo claro —
-  use `#8a5a00`; accent2 fica em fundo, ícone e borda.
+- **Contraste**: corpo e rótulos em `ink/70` (mede 5,97 no papel). `ink/65` passa
+  raspando; abaixo disso reprova. **`brand-500` é preenchimento, não texto**: sobre
+  o papel (#faf9f9) dá 4,49 e reprova — texto vermelho usa `brand-600` (5,26).
+  `accent2` (#f5a623) **nunca** como texto sobre claro — use `#8a5a00`.
+  Atenção: contraste medido sobre BRANCO engana; o fundo do app é papel, mais
+  escuro (descoberto no ciclo 37).
 - **Toque**: todo alvo interativo com ≥44x44px de área (padding conta).
 - **Safe-area**: topo com `pt-[env(safe-area-inset-top)]` (PWA no iPhone desenha
   sob o notch), rodapé com `pb-[env(safe-area-inset-bottom)]`.
