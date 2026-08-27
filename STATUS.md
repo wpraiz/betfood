@@ -1,6 +1,6 @@
 # STATUS — BetFood POC
 
-Atualizado: 2026-08-27 (ciclo 35 do loop de melhoria contínua)
+Atualizado: 2026-08-27 (ciclo 36 do loop de melhoria contínua)
 
 ## Onde está
 
@@ -50,6 +50,23 @@ acessibilidade (axe-core, zero violações nas telas principais).
 ---
 
 # Histórico dos ciclos
+
+## Ciclo 36 — auditoria de regressão em acessibilidade
+
+Muita interface entrou depois do ciclo 13 (edição de prêmios, código em tela
+cheia, botões novos no painel). Rodei o axe-core de novo, **incluindo os estados
+sobrepostos** que a auditoria anterior não cobriu: código ampliado e o sheet
+"Como funciona" aberto.
+
+Resultado: as quatro telas principais e o código em tela cheia seguem **sem
+violação**. Uma regressão encontrada e corrigida: a área rolável do sheet não
+era focável por teclado (`scrollable-region-focusable`, impacto sério) — quem
+navega sem mouse não conseguia rolar pra ler o final, justamente onde está o
+selo "sem dinheiro real, sem aposta". Recebeu `tabIndex={0}` e contorno visível
+de foco. Reauditado: sem violações.
+
+Lição de método: auditar só o estado inicial das telas deixa passar tudo que é
+diálogo, sheet e overlay — que é onde mora boa parte da interface hoje.
 
 ## Ciclo 35 — o teclado do cliente estava atrapalhando
 

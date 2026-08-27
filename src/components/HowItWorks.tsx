@@ -255,7 +255,12 @@ export default function HowItWorks({ open, onClose }: { open: boolean; onClose: 
         </div>
 
         {/* Corpo rolável */}
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-5 pt-4">
+        {/* tabIndex=0: a área rola, então precisa receber foco — sem isso quem
+            navega por teclado não consegue ler o conteúdo que passa da tela. */}
+        <div
+          tabIndex={0}
+          className="min-h-0 flex-1 overflow-y-auto px-5 pb-5 pt-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500"
+        >
           <ul className="grid gap-3.5">
             {STEPS.map((s, i) => {
               const Icon = s.icon;
