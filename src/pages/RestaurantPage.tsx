@@ -208,6 +208,53 @@ export default function RestaurantPage() {
           )}
         </div>
 
+        {/* Onde fica. O cupom só vale nesta casa e dura 24h — quem ganha jogando
+            de casa precisa saber pra onde ir. O link abre o mapa do aparelho. */}
+        <a
+          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+            `${restaurant.name}, ${restaurant.address}, ${restaurant.neighborhood}, Natal RN`
+          )}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() => play("tap")}
+          className="press anim-fade-up mt-3 flex items-center gap-3 rounded-card bg-white p-4 shadow-sm"
+          style={{ animationDelay: "100ms" }}
+        >
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-600">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+              className="h-[18px] w-[18px]"
+            >
+              <path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11Z" />
+              <circle cx="12" cy="10" r="2.5" />
+            </svg>
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[13px] font-semibold text-ink">{restaurant.address}</span>
+            <span className="mt-0.5 block text-[11px] text-ink/70">
+              {restaurant.neighborhood} · toque pra abrir no mapa
+            </span>
+          </span>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+            className="h-4 w-4 shrink-0 text-ink/65"
+          >
+            <path d="M7 17 17 7M9 7h8v8" />
+          </svg>
+        </a>
+
         {/* Prêmios e chances, do lado do JOGADOR. O painel do parceiro já
             mostrava isso ao dono; esconder do cliente seria a lógica de
             cassino, e o app se apresenta como o contrário disso. Mesmos

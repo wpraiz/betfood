@@ -369,6 +369,19 @@ export default function GamePlay() {
                 </div>
               )}
               <p className="mt-2 text-xs font-semibold text-ink/70">Mostra pro garçom e pronto.</p>
+              {/* O cupom vale 24h e só nesta casa: dizer onde ela fica é parte
+                  do prêmio, não detalhe. Abre o mapa do aparelho. */}
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                  `${restaurant.name}, ${restaurant.address}, ${restaurant.neighborhood}, Natal RN`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => play("tap")}
+                className="press mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-brand-600 underline underline-offset-4"
+              >
+                {restaurant.address} · como chegar
+              </a>
             </div>
           </div>
 

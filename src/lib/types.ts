@@ -3,6 +3,7 @@ export interface Restaurant {
   name: string;
   cuisine: string;
   neighborhood: string; // bairro de Natal/RN
+  address: string; // rua e número — o cupom só vale aqui, então o app precisa dizer onde é
   description: string;
   accent: string; // cor tailwind-friendly em hex
   photo: string; // foto do prato-assinatura (URL)

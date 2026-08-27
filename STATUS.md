@@ -1,6 +1,6 @@
 # STATUS — BetFood POC
 
-Atualizado: 2026-08-27 (ciclo 48 do loop de melhoria contínua)
+Atualizado: 2026-08-27 (ciclo 49 do loop de melhoria contínua)
 
 ## Onde está
 
@@ -52,6 +52,22 @@ acessibilidade (axe-core, zero violações nas telas principais).
 ---
 
 # Histórico dos ciclos
+
+## Ciclo 49 — o cupom só vale numa casa, e o app não dizia onde ela fica
+
+Buraco de produto que passou 48 ciclos despercebido: o app repete que o cupom
+vale **24h e só na casa que emitiu** — e nunca informava o endereço. Quem joga
+de casa (premissa do produto desde o primeiro dia) ganhava um prêmio sem saber
+pra onde ir.
+
+Agora cada casa tem endereço no cadastro, e ele aparece em dois lugares:
+- **Página da casa**: cartão com pino, endereço e bairro — toque abre o mapa do
+  aparelho já com o nome da casa na busca.
+- **Tela de vitória**: logo abaixo de "Mostra pro garçom e pronto", o link
+  "endereço · como chegar" — o momento exato em que a informação vale mais.
+
+Endereços são ruas reais de Natal com números fictícios, coerentes com as casas
+serem marcadas como "Casa exemplo".
 
 ## Ciclo 48 — conferência em produção do que ficou 18h engavetado
 
