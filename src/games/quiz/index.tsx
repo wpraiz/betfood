@@ -191,7 +191,16 @@ function drawQuestions(): QuizQuestion[] {
 }
 
 const TOTAL_QUESTIONS = 3;
-const TIME_PER_QUESTION = 15_000; // ms
+/**
+ * Tempo proporcional ao texto: 15s fixos puniam quem lê mais devagar (e as
+ * perguntas variam de 14 a 39 palavras contando as alternativas). Base de 9s
+ * mais 0,35s por palavra dá ~14s nas curtas e ~23s nas longas — a tensão
+ * continua, mas ninguém perde a ficha por não conseguir ler a tempo.
+ */
+function tempoDaPergunta(q: QuizQuestion): number {
+  const palavras = (q.question + " " + q.options.join(" ")).trim().split(/\s+/).length;
+  return Math.round(9_000 + palavras * 350);
+}
 const TICK = 100; // ms
 const FEEDBACK_DELAY = 1_800; // ms
 const COUNTUP_STEP = 380; // ms entre pontos na contagem final
@@ -385,7 +394,8 @@ function Quiz({ restaurant, drawPrize, startPlay, onFinish }: GameProps) {
   const [idx, setIdx] = useState(0);
   const [score, setScore] = useState(0);
   const [selected, setSelected] = useState<number | null>(null); // null = tempo esgotado
-  const [timeLeft, setTimeLeft] = useState(TIME_PER_QUESTION);
+  const [timeLeft, setTimeLeft] = useState(() => tempoDaPergunta(questions[0]));
+  const [tempoTotal, setTempoTotal] = useState(() => tempoDaPergunta(questions[0]));
   const [finalResult, setFinalResult] = useState<{ won: boolean; prize?: Prize } | null>(null);
   const [imgLoaded, setImgLoaded] = useState(false);
   const [displayScore, setDisplayScore] = useState(0);
@@ -493,7 +503,9 @@ function Quiz({ restaurant, drawPrize, startPlay, onFinish }: GameProps) {
       if (idx + 1 < TOTAL_QUESTIONS) {
         setIdx(idx + 1);
         setSelected(null);
-        setTimeLeft(TIME_PER_QUESTION);
+        const t = tempoDaPergunta(questions[idx + 1]);
+        setTempoTotal(t);
+        setTimeLeft(t);
         setPhase("question");
       } else {
         endGame(newScore);
@@ -659,7 +671,7 @@ function Quiz({ restaurant, drawPrize, startPlay, onFinish }: GameProps) {
   }
 
   // Fases "question" e "feedback"
-  const timePct = (timeLeft / TIME_PER_QUESTION) * 100;
+  const timePct = (timeLeft / tempoTotal) * 100;
   const urgent = timeLeft <= 5_000;
   const secondsLeft = Math.ceil(timeLeft / 1000);
 

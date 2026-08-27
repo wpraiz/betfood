@@ -1,6 +1,6 @@
 # STATUS — BetFood POC
 
-Atualizado: 2026-08-27 (ciclo 40 do loop de melhoria contínua)
+Atualizado: 2026-08-27 (ciclo 41 do loop de melhoria contínua)
 
 ## Onde está
 
@@ -50,6 +50,20 @@ acessibilidade (axe-core, zero violações nas telas principais).
 ---
 
 # Histórico dos ciclos
+
+## Ciclo 41 — o quiz dava 15 segundos pra qualquer pergunta
+
+As perguntas variam de **14 a 39 palavras** (contando as alternativas), e todas
+tinham os mesmos 15 segundos. Quem lê mais devagar — por baixa visão, dislexia,
+idade ou só por não ter o português como primeira língua — perdia a ficha sem
+chance de responder, e as perguntas longas eram injustas até pra leitor rápido.
+
+Agora o tempo é proporcional ao texto: 9s de base + 0,35s por palavra. Medido no
+app: **21s numa pergunta de 35 palavras, 18s numa de 26, 17s numa de 21**. A
+tensão continua (a barra e o tique-taque dos últimos 5 segundos seguem iguais),
+mas o relógio passou a medir leitura em vez de sorte.
+
+Mesma família do ciclo 40: o jogo não pode excluir quem tem outro ritmo.
 
 ## Ciclo 40 — a raspadinha era injogável pra quem tem limitação motora
 
