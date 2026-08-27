@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import confetti from "canvas-confetti";
-import { getRestaurants } from "../lib/store";
+import { CHIP_COST, getRestaurants, WELCOME_CHIPS } from "../lib/store";
 import { play } from "../lib/sound";
 import FoodPhoto, { thumb } from "../components/FoodPhoto";
 
@@ -289,6 +289,35 @@ export default function Welcome() {
             >
               Casas de exemplo pra você conhecer o BetFood, de Ponta Negra à Praia do Forte.
             </p>
+
+            {/* A palavra "fichas" não aparecia em lugar nenhum do onboarding: a
+                pessoa chegava na Home e via uma moeda com "50" sem saber o que
+                era. Aqui ela já entra sabendo — e sabendo que é presente. */}
+            <div
+              className={`mt-5 inline-flex items-center gap-2.5 rounded-full bg-white px-4 py-2.5 shadow-sm ${on(idx === 2, "anim-pop")}`}
+              style={{ animationDelay: "540ms" }}
+            >
+              <svg viewBox="0 0 24 24" className="h-6 w-6 shrink-0" aria-hidden="true">
+                <circle cx="12" cy="12" r="10" fill="#f5a623" />
+                <circle cx="12" cy="12" r="6.5" fill="#fff3d6" />
+                <text
+                  x="12"
+                  y="15.5"
+                  textAnchor="middle"
+                  fontSize="9"
+                  fontWeight="900"
+                  fill="#b8860b"
+                  fontFamily="system-ui"
+                >
+                  $
+                </text>
+              </svg>
+              <span className="text-[13px] leading-snug text-ink/70">
+                Você começa com{" "}
+                <strong className="font-bold text-ink">{WELCOME_CHIPS} fichas</strong> —{" "}
+                {WELCOME_CHIPS / CHIP_COST} jogadas por nossa conta.
+              </span>
+            </div>
           </div>
         </section>
       </div>

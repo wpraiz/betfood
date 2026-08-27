@@ -51,6 +51,24 @@ acessibilidade (axe-core, zero violações nas telas principais).
 
 # Histórico dos ciclos
 
+## Ciclo 27 — o onboarding não dizia o que é uma ficha
+
+Busca simples no `Welcome.tsx`: a palavra "ficha" aparecia **zero vez**. Ou
+seja, a pessoa terminava a apresentação, chegava na Home e via uma moeda dourada
+com "50" sem nenhuma pista do que aquilo era — sendo que ficha é a moeda que
+move o app inteiro.
+
+Agora o último slide, logo acima do "Começar", traz o selo: "Você começa com **50
+fichas** — 5 jogadas por nossa conta". Enquadra como presente (que é o que é) e
+faz o número do topo já chegar com significado. Valores vindos das constantes,
+seguindo a regra dos ciclos 25-26 — inclusive a conta das 5 jogadas.
+
+Regra registrada no CLAUDE.md: **número que o app afirma é derivado, nunca
+digitado** — vale pra copy de produto e, principalmente, pras afirmações feitas
+ao dono do restaurante.
+
+
+
 ## Ciclo 26 — o que o app afirma ao dono do restaurante agora é calculado
 
 Continuação do ciclo 25, num lugar onde errar custa mais: o bloco "Por que ter o

@@ -170,6 +170,15 @@ você audita o app errado.
   `dist/index.html` local após `npm run build`.
 - GitHub Pages foi um plano B abandonado (branch `gh-pages` apagada). Ignorar.
 
+## Número que o app afirma é derivado, nunca digitado
+
+Qualquer número exibido — custo da jogada, fichas de boas-vindas, bônus, teto e
+intervalo da recarga, chance de não premiar — sai da fonte (`store.ts` ou a
+tabela de prêmios do restaurante), nunca escrito no texto. Motivo: a regra muda
+e o texto fica, virando afirmação falsa — inclusive no painel do parceiro, onde
+o app faz afirmações **ao dono do restaurante sobre o custo dele** (ciclos 25 e
+26). Ao escrever copy com número, importe a constante e interpole.
+
 ## Compartilhamento (o link é o funil)
 
 O José divulga colando a URL no WhatsApp. `index.html` tem as tags Open
