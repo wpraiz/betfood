@@ -1,38 +1,209 @@
 # STATUS — BetFood POC
 
-Atualizado: 2026-08-27 (madrugada — fim do ciclo 4 do loop de melhoria)
+Atualizado: 2026-08-27 (ciclo 23 do loop de melhoria contínua)
 
-## O que estávamos fazendo
+## Onde está
 
-POC completa pra apresentação de hoje com o Allan: app de mini-games
-recompensadores pra restaurantes de Natal. Dia inteiro de iteração de design
-guiada pelo José até travar em: **iFood épico, claro, sem emoji, games-first,
-dopaminérgico** (fichas, XP, streak, som, motion).
+**No ar e pronto pra demonstrar: https://betfood.vercel.app**
+Todo push em `main` vira deploy automático (GitHub `wpraiz/betfood`, público).
 
-## Pronto (commitado em main, GitHub wpraiz/betfood)
+O app está completo e verificado ponta a ponta em produção: onboarding, Home
+games-first, os quatro jogos (roleta, raspadinha, quiz, memória) com som e
+animação, economia de fichas com recarga automática, XP/níveis/sequência,
+carteira de cupons com validade, e painel do parceiro que **valida o cupom no
+caixa** — o momento que fecha o argumento com o dono do restaurante.
 
-- App completo: onboarding /welcome, Home com fotos, 4 games (roleta, raspadinha, quiz, memória), carteira de cupons, painel do parceiro.
-- 13 SFX ElevenLabs em public/sounds + src/lib/sound.ts.
-- Economia de fichas + XP/níveis + streak em src/lib/store.ts.
-- 6 skills em .claude/skills (frontend-design, ui-ux-pro-max, web-design-guidelines, react-best-practices, new-game, release-apk, demo-poc).
-- CLAUDE.md atualizado com a direção visual e as regras.
+Instala no iPhone pela tela de início (é PWA), funciona offline depois da
+primeira visita, respeita o silencioso do aparelho e passa em auditoria de
+acessibilidade (axe-core, zero violações nas telas principais).
 
-## Em andamento / próxima ação
+## Próxima ação (o que realmente falta)
 
-1. Ciclo 4 commitado e empurrado pra `main` → deploy automático na Vercel.
-   **Conferir o deploy**: `curl -s https://betfood.vercel.app | grep -o
-   'assets/[^"]*\.js'` deve bater com o `dist/index.html` local.
-2. **Primeira visita depois do deploy instala o service worker.** Abrir
-   betfood.vercel.app uma vez antes de qualquer demo — é o que garante a POC
-   funcionando com wi-fi ruim.
-3. Próximo ciclo: ver "Backlog restante" do ciclo 4 (iPhone real, offline no
-   celular, near-miss/ritmo dos jogos).
+1. **Teste em iPhone real** — o único item que não dá pra fazer daqui. Safe-area
+   (notch), dica de instalação, compartilhamento nativo e som no iOS só existem
+   no aparelho. É o próximo passo do José.
+2. **Decisão comercial com o Allan** — valor e formato da sociedade. Resumo da
+   conversa e dos números discutidos está no histórico da sessão; a régua é:
+   participação em **receita ou societária, nunca "do lucro"**, e a fase
+   seguinte (servidor, contas, cadastro real) orçada à parte.
+3. **Ciclos de melhoria** seguem: escolher o de maior impacto, validar no preview
+   local, publicar e registrar aqui.
 
-## No ar
+## Como trabalhar neste repo
 
-**https://betfood.vercel.app** (deploy automático a cada push em main).
-Games repaginados, modo imersivo, HUD de fichas/XP/streak, near-miss na roleta —
-tudo publicado e verificado sem erro de console.
+- `CLAUDE.md` é a fonte: direção visual, regras de UI (contraste, toque,
+  safe-area, unidade "ficha"), contrato dos mini-games, deploy e — importante —
+  **as armadilhas de teste já descobertas** (dev server que não sobrevive em
+  background, `&&` entre build e push, partida inteira num único `eval`, não
+  martelar a produção com polling).
+- Skills em `.claude/skills`: `demo-poc` (roteiro da apresentação), `new-game`,
+  `release-apk`, mais as de design (`frontend-design`, `ui-ux-pro-max`,
+  `web-design-guidelines`, `react-best-practices`).
+
+## Bloqueios / atenção
+
+- Repositório está **público** (foi preciso pro GitHub Pages, que depois virou
+  plano B abandonado). A Vercel funciona com repo privado — dá pra reverter.
+- Disco C: chegou a 0 bytes em 26/ago; ~35 GB livres depois das limpezas.
+- A wiki `jibcl-wiki` não conhece este projeto (nasceu em 26/ago).
+
+---
+
+# Histórico dos ciclos
+
+Cada entrada registra o que mudou e **por quê** — inclusive os erros cometidos,
+que são o que evita repeti-los.
+
+
+## Ciclo 1 (loop de melhoria) — 26/ago, noite
+
+Auditoria da POC → 3 agentes corrigindo em paralelo + verificação final
+(build limpo, teste real em Chrome 390x844, console sem erro nem warning).
+
+### O que mudou
+
+**Robustez de navegação**
+- `src/App.tsx`: rota `*` → `<Navigate to="/" replace />`. Hash desconhecido
+  nunca mais vira tela branca (verificado: `/#/pagina-que-nao-existe-123` → Home).
+- `src/App.tsx`: `KeyedGamePlay` remonta o GamePlay por `restaurantId/gameId`.
+  Sem isso, ir de um jogo para outro reaproveitava a instância — o resultado da
+  rodada anterior ficava na tela e a nova jogada não era cobrada.
+
+**Modo imersivo (fim do beco sem saída)**
+- `src/components/Layout.tsx`: `ImmersiveContext` com override carimbado por
+  rota (expira sozinho na troca de pathname, sem effect no pai).
+- `src/pages/GamePlay.tsx`: consome o contexto — shell some durante a partida,
+  volta nas telas de resultado e de fichas esgotadas.
+- Tela "Suas fichas acabaram" com três saídas: resgatar bônus (+30, começa a
+  partida na hora), gerar código no painel do parceiro, voltar ao início.
+
+**iPhone / PWA**
+- `pt-[env(safe-area-inset-top)]` no HUD e na barra do jogo (notch / Dynamic Island).
+- Botão de mudo (44x44, `aria-pressed`) no HUD e na barra do jogo.
+- Removido o `navigator.audioSession.type = "playback"` de `src/lib/sound.ts` —
+  o app volta a respeitar o silencioso do aparelho.
+- Alvos de toque a 44px: sair do jogo, mudo, bônus, dots do onboarding, "Pular",
+  "Marcar usado", steppers e chips do painel do parceiro, resgate de código.
+
+**Acessibilidade e contraste (AA)**
+- Corpo `ink/60` → `ink/70`; rótulos e metadados `ink/30–45` → `ink/65`.
+- `accent2` (#f5a623) nunca mais como cor de texto sobre fundo claro — virou
+  âmbar escuro `#8a5a00`; accent2 fica só em fundo, ícone e borda.
+- Verde de acerto do quiz #22a06b → #1a7f52 (reprovava AA como texto e como
+  fundo de texto branco).
+- `@media (prefers-reduced-motion: reduce)` em `src/index.css` zerando as
+  animações próprias e os `animate-pulse` infinitos.
+
+**Performance e vazamentos**
+- `src/components/FoodPhoto.tsx` (novo): componente único de foto com
+  loading/ok/error — o skeleton para de pulsar quando a imagem falha e cai num
+  bloco estático com a inicial da casa. Substituiu 5 cópias espalhadas.
+  Atributo emitido como `fetchpriority` minúsculo (React 18 não conhece a prop
+  camelCase e jogava erro no console).
+- Fotos do seed de `w=900&q=80` → `w=600&q=70&fm=webp`, miniaturas via
+  `thumb(url, w)`, `preconnect` para images.unsplash.com no `index.html`.
+- Timers com `timeoutsRef` + cleanup no quiz e na raspadinha — rodada
+  abandonada não credita mais cupom.
+- Raspadinha: `getImageData` num offscreen 96x52 (era o canvas inteiro) e DPR
+  limitado a 2.
+
+**Copy honesta (a POC vai ser mostrada a donos de restaurante)**
+- "Gire por prêmios de verdade · 10 fichas"; selo "Casa exemplo" nos cards;
+  "{n} casas de exemplo"; "Casas de exemplo · Natal/RN" no onboarding.
+- Seed: "Camarões do Potengi" → "Potengi Camaroeira" (id preservado, sem reset
+  de estado nas instalações existentes).
+
+### Verificação
+
+`npm run build` limpo. Chrome 390x844, console com 0 erro e 0 warning.
+Screenshots: `C:\tmp\c1-1-rota-inexistente-home.png`,
+`C:\tmp\c1-2-partida-sem-shell.png`, `C:\tmp\c1-3-resultado-com-shell.png`,
+`C:\tmp\c1-4-sem-fichas.png`.
+
+Não validado em iPhone real — safe-area e toque de 44px seguem sendo aposta de
+código até o playtest com os amigos.
+
+### Backlog do ciclo 1 (achados não implementados)
+
+1. **Validar cupom no painel do parceiro** — hoje o dono não tem como conferir
+   nem baixar um código apresentado pelo cliente.
+2. **Tela "Como funciona"** — explicação curta do fluxo fichas → jogo → cupom.
+3. **Dados de demonstração no painel do parceiro** — números zerados não vendem
+   a ideia na apresentação.
+4. **Lazy-load dos games** — bundle único de 294 kB; cada jogo devia entrar por
+   `React.lazy`.
+5. **Service worker** — PWA instalada não abre offline. (Os *cache headers* já
+   entraram neste ciclo, em `vercel.json`: assets imutáveis por 1 ano, sons e
+   ícones por 7 dias.)
+6. **Cobrar ficha só no início real da partida** — hoje a ficha sai na montagem
+   da tela; sair antes de jogar queima ficha.
+7. **Validade do cupom** — cupom nasce sem prazo; falta data e estado de expirado.
+
+## Ciclo 3 (loop de melhoria) — 26/ago, noite
+
+Dois agentes em paralelo + verificação final. Fecha os itens 1, 2 e 7 do backlog
+do ciclo 1 (validar cupom no painel, tela "Como funciona", validade do cupom).
+
+### O que mudou
+
+**Validação de cupom no caixa (`src/lib/store.ts`, `src/pages/Partner.tsx`)**
+- `findCouponByCode`, `redeemCouponByCode`, `getPendingCoupons`,
+  `couponExpiresAt`, `isCouponExpired` — regra de prazo (24h, com fallback
+  `wonAt + 24h` pra cupom antigo) mora só no store; a página não recalcula nada.
+- `redeemCouponByCode` devolve `ok` | `nao-encontrado` | `ja-usado` | `expirado`
+  **com o cupom junto**, pra tela dizer *quando* foi usado ou expirou. Só o
+  caminho `ok` grava `redeemedAt`.
+- Painel: bloco "Validar cupom" acima das métricas (input em maiúsculas, Enter
+  valida), card verde com prêmio + som + confetti no sucesso, card vermelho com
+  motivo e saída no erro, lista "Cupons pendentes desta casa" (toque preenche o
+  código), "Limpar dados de demonstração" com confirmação inline.
+- Semente de demonstração passou a gerar 4 cupons por casa (1 pendente, 2
+  resgatados, 1 expirado) — antes nenhum cupom nascia pendente e não havia como
+  demonstrar uma validação bem-sucedida no pitch.
+
+**Tela "Como funciona" (`src/components/HowItWorks.tsx`, novo)**
+- Bottom sheet com 6 passos explicando a economia de FICHAS (custo da jogada,
+  50 de boas-vindas, +30 diário, código da mesa, cupom na carteira, prazo de
+  24h) e selo âmbar "Sem dinheiro real, sem aposta" — o app se chama BetFood e
+  isso precisa estar dito na primeira tela de dúvida.
+- Fecha no X (44px), no toque fora, no Esc e no "Entendi"; trava o scroll do
+  body; foco vai pro X ao abrir. Renderizado **fora** do `<header>` sticky do
+  HUD (o header cria contexto de empilhamento e prenderia o overlay).
+- Entradas: botão "?" no HUD e card no fim da Home.
+- Correção da verificação: o "Entendi" ficava abaixo da dobra a 390x844 (cortado
+  pela borda da tela). Virou rodapé fixo do sheet, fora da área rolável.
+
+**Validade visível na carteira (`src/pages/Wallet.tsx`)**
+- Chip "Vale até HH:MM de hoje / de amanhã / de DD/MM"; estado **Expirado** com
+  visual próprio (carimbo em tinta, faixa cinza distinta do "Usado", sem botão
+  "Marcar usado"). Contador de ativos exclui expirados; tick de 30s reavalia o
+  vencimento sem recarregar.
+
+### Verificação
+
+`npm run build` limpo. Chrome 390x844 com estado zerado: painel do parceiro
+mostra o bloco de validação e 1 cupom pendente; toque no pendente preenche o
+código → **Validar** dá sucesso (métrica "Cupons resgatados" 2 → 3, cupom vira
+"Usado" na carteira); o mesmo código de novo → "Esse cupom já foi usado em
+26/08/2026 às 20:44"; `XXXXXX` → "Código não encontrado nesta casa". Sheet abre
+pelo HUD e pela Home, fecha no X, no toque fora e no Esc, com o selo visível.
+Console: 0 erro, 0 warning.
+Screenshots: `C:\tmp\c3-validacao-ok.png`, `C:\tmp\c3-validacao-erro.png`,
+`C:\tmp\c3-sheet-aberto.png`.
+
+### Backlog restante
+
+1. **Lazy-load dos games** — bundle único de 313 kB; cada jogo devia entrar por
+   `React.lazy`.
+2. **Service worker / offline** — PWA instalada ainda não abre sem rede (cache
+   headers já estão no `vercel.json`).
+3. **Cobrar ficha só no início real da partida** — hoje a ficha sai na montagem
+   da tela; sair antes de jogar queima ficha.
+4. **Validar em iPhone real** — safe-area, alvos de 44px e o input de código com
+   `tracking` largo a 375px seguem sendo aposta de código.
+5. Elevar o nível visual dos games além da roleta (item 1 do backlog do José).
+6. Cupom expirado nunca sai da carteira — bom pro pitch (mostra a regra de 24h),
+   ruim em uso longo. Decisão de produto.
 
 ## Ciclo 4 (loop de melhoria) — 26/ago, madrugada
 
@@ -124,156 +295,6 @@ Screenshots: `C:\tmp\c4-roleta-aberta.png`, `C:\tmp\c4-roleta-resultado.png`,
 6. Cupom expirado nunca sai da carteira — decisão de produto.
 7. Som ambiente (`shimmer`) ainda começa ao ABRIR o jogo, não ao iniciar a
    rodada. Mantido de propósito; amarrar ao `startPlay` é opcional.
-
-## Ciclo 3 (loop de melhoria) — 26/ago, noite
-
-Dois agentes em paralelo + verificação final. Fecha os itens 1, 2 e 7 do backlog
-do ciclo 1 (validar cupom no painel, tela "Como funciona", validade do cupom).
-
-### O que mudou
-
-**Validação de cupom no caixa (`src/lib/store.ts`, `src/pages/Partner.tsx`)**
-- `findCouponByCode`, `redeemCouponByCode`, `getPendingCoupons`,
-  `couponExpiresAt`, `isCouponExpired` — regra de prazo (24h, com fallback
-  `wonAt + 24h` pra cupom antigo) mora só no store; a página não recalcula nada.
-- `redeemCouponByCode` devolve `ok` | `nao-encontrado` | `ja-usado` | `expirado`
-  **com o cupom junto**, pra tela dizer *quando* foi usado ou expirou. Só o
-  caminho `ok` grava `redeemedAt`.
-- Painel: bloco "Validar cupom" acima das métricas (input em maiúsculas, Enter
-  valida), card verde com prêmio + som + confetti no sucesso, card vermelho com
-  motivo e saída no erro, lista "Cupons pendentes desta casa" (toque preenche o
-  código), "Limpar dados de demonstração" com confirmação inline.
-- Semente de demonstração passou a gerar 4 cupons por casa (1 pendente, 2
-  resgatados, 1 expirado) — antes nenhum cupom nascia pendente e não havia como
-  demonstrar uma validação bem-sucedida no pitch.
-
-**Tela "Como funciona" (`src/components/HowItWorks.tsx`, novo)**
-- Bottom sheet com 6 passos explicando a economia de FICHAS (custo da jogada,
-  50 de boas-vindas, +30 diário, código da mesa, cupom na carteira, prazo de
-  24h) e selo âmbar "Sem dinheiro real, sem aposta" — o app se chama BetFood e
-  isso precisa estar dito na primeira tela de dúvida.
-- Fecha no X (44px), no toque fora, no Esc e no "Entendi"; trava o scroll do
-  body; foco vai pro X ao abrir. Renderizado **fora** do `<header>` sticky do
-  HUD (o header cria contexto de empilhamento e prenderia o overlay).
-- Entradas: botão "?" no HUD e card no fim da Home.
-- Correção da verificação: o "Entendi" ficava abaixo da dobra a 390x844 (cortado
-  pela borda da tela). Virou rodapé fixo do sheet, fora da área rolável.
-
-**Validade visível na carteira (`src/pages/Wallet.tsx`)**
-- Chip "Vale até HH:MM de hoje / de amanhã / de DD/MM"; estado **Expirado** com
-  visual próprio (carimbo em tinta, faixa cinza distinta do "Usado", sem botão
-  "Marcar usado"). Contador de ativos exclui expirados; tick de 30s reavalia o
-  vencimento sem recarregar.
-
-### Verificação
-
-`npm run build` limpo. Chrome 390x844 com estado zerado: painel do parceiro
-mostra o bloco de validação e 1 cupom pendente; toque no pendente preenche o
-código → **Validar** dá sucesso (métrica "Cupons resgatados" 2 → 3, cupom vira
-"Usado" na carteira); o mesmo código de novo → "Esse cupom já foi usado em
-26/08/2026 às 20:44"; `XXXXXX` → "Código não encontrado nesta casa". Sheet abre
-pelo HUD e pela Home, fecha no X, no toque fora e no Esc, com o selo visível.
-Console: 0 erro, 0 warning.
-Screenshots: `C:\tmp\c3-validacao-ok.png`, `C:\tmp\c3-validacao-erro.png`,
-`C:\tmp\c3-sheet-aberto.png`.
-
-### Backlog restante
-
-1. **Lazy-load dos games** — bundle único de 313 kB; cada jogo devia entrar por
-   `React.lazy`.
-2. **Service worker / offline** — PWA instalada ainda não abre sem rede (cache
-   headers já estão no `vercel.json`).
-3. **Cobrar ficha só no início real da partida** — hoje a ficha sai na montagem
-   da tela; sair antes de jogar queima ficha.
-4. **Validar em iPhone real** — safe-area, alvos de 44px e o input de código com
-   `tracking` largo a 375px seguem sendo aposta de código.
-5. Elevar o nível visual dos games além da roleta (item 1 do backlog do José).
-6. Cupom expirado nunca sai da carteira — bom pro pitch (mostra a regra de 24h),
-   ruim em uso longo. Decisão de produto.
-
-## Ciclo 1 (loop de melhoria) — 26/ago, noite
-
-Auditoria da POC → 3 agentes corrigindo em paralelo + verificação final
-(build limpo, teste real em Chrome 390x844, console sem erro nem warning).
-
-### O que mudou
-
-**Robustez de navegação**
-- `src/App.tsx`: rota `*` → `<Navigate to="/" replace />`. Hash desconhecido
-  nunca mais vira tela branca (verificado: `/#/pagina-que-nao-existe-123` → Home).
-- `src/App.tsx`: `KeyedGamePlay` remonta o GamePlay por `restaurantId/gameId`.
-  Sem isso, ir de um jogo para outro reaproveitava a instância — o resultado da
-  rodada anterior ficava na tela e a nova jogada não era cobrada.
-
-**Modo imersivo (fim do beco sem saída)**
-- `src/components/Layout.tsx`: `ImmersiveContext` com override carimbado por
-  rota (expira sozinho na troca de pathname, sem effect no pai).
-- `src/pages/GamePlay.tsx`: consome o contexto — shell some durante a partida,
-  volta nas telas de resultado e de fichas esgotadas.
-- Tela "Suas fichas acabaram" com três saídas: resgatar bônus (+30, começa a
-  partida na hora), gerar código no painel do parceiro, voltar ao início.
-
-**iPhone / PWA**
-- `pt-[env(safe-area-inset-top)]` no HUD e na barra do jogo (notch / Dynamic Island).
-- Botão de mudo (44x44, `aria-pressed`) no HUD e na barra do jogo.
-- Removido o `navigator.audioSession.type = "playback"` de `src/lib/sound.ts` —
-  o app volta a respeitar o silencioso do aparelho.
-- Alvos de toque a 44px: sair do jogo, mudo, bônus, dots do onboarding, "Pular",
-  "Marcar usado", steppers e chips do painel do parceiro, resgate de código.
-
-**Acessibilidade e contraste (AA)**
-- Corpo `ink/60` → `ink/70`; rótulos e metadados `ink/30–45` → `ink/65`.
-- `accent2` (#f5a623) nunca mais como cor de texto sobre fundo claro — virou
-  âmbar escuro `#8a5a00`; accent2 fica só em fundo, ícone e borda.
-- Verde de acerto do quiz #22a06b → #1a7f52 (reprovava AA como texto e como
-  fundo de texto branco).
-- `@media (prefers-reduced-motion: reduce)` em `src/index.css` zerando as
-  animações próprias e os `animate-pulse` infinitos.
-
-**Performance e vazamentos**
-- `src/components/FoodPhoto.tsx` (novo): componente único de foto com
-  loading/ok/error — o skeleton para de pulsar quando a imagem falha e cai num
-  bloco estático com a inicial da casa. Substituiu 5 cópias espalhadas.
-  Atributo emitido como `fetchpriority` minúsculo (React 18 não conhece a prop
-  camelCase e jogava erro no console).
-- Fotos do seed de `w=900&q=80` → `w=600&q=70&fm=webp`, miniaturas via
-  `thumb(url, w)`, `preconnect` para images.unsplash.com no `index.html`.
-- Timers com `timeoutsRef` + cleanup no quiz e na raspadinha — rodada
-  abandonada não credita mais cupom.
-- Raspadinha: `getImageData` num offscreen 96x52 (era o canvas inteiro) e DPR
-  limitado a 2.
-
-**Copy honesta (a POC vai ser mostrada a donos de restaurante)**
-- "Gire por prêmios de verdade · 10 fichas"; selo "Casa exemplo" nos cards;
-  "{n} casas de exemplo"; "Casas de exemplo · Natal/RN" no onboarding.
-- Seed: "Camarões do Potengi" → "Potengi Camaroeira" (id preservado, sem reset
-  de estado nas instalações existentes).
-
-### Verificação
-
-`npm run build` limpo. Chrome 390x844, console com 0 erro e 0 warning.
-Screenshots: `C:\tmp\c1-1-rota-inexistente-home.png`,
-`C:\tmp\c1-2-partida-sem-shell.png`, `C:\tmp\c1-3-resultado-com-shell.png`,
-`C:\tmp\c1-4-sem-fichas.png`.
-
-Não validado em iPhone real — safe-area e toque de 44px seguem sendo aposta de
-código até o playtest com os amigos.
-
-### Backlog do ciclo 1 (achados não implementados)
-
-1. **Validar cupom no painel do parceiro** — hoje o dono não tem como conferir
-   nem baixar um código apresentado pelo cliente.
-2. **Tela "Como funciona"** — explicação curta do fluxo fichas → jogo → cupom.
-3. **Dados de demonstração no painel do parceiro** — números zerados não vendem
-   a ideia na apresentação.
-4. **Lazy-load dos games** — bundle único de 294 kB; cada jogo devia entrar por
-   `React.lazy`.
-5. **Service worker** — PWA instalada não abre offline. (Os *cache headers* já
-   entraram neste ciclo, em `vercel.json`: assets imutáveis por 1 ano, sons e
-   ícones por 7 dias.)
-6. **Cobrar ficha só no início real da partida** — hoje a ficha sai na montagem
-   da tela; sair antes de jogar queima ficha.
-7. **Validade do cupom** — cupom nasce sem prazo; falta data e estado de expirado.
 
 ## Ciclo 5 — o link é o funil (26/ago, noite)
 
@@ -561,21 +582,16 @@ arquivos de entrada estavam parados no começo do dia:
 
 Nada disso muda o app — muda o que uma pessoa entende ao chegar nele.
 
-## Backlog priorizado (pedido do José, 26/ago à noite)
 
-1. **Subir o nível dos games além da roleta** — "memória e demais tão muito low
-   level". A roleta é a régua (luzes, som, glow, resultado teatral). Elevar:
-   - Memória: cartas com arte/foto de pratos em vez de texto puro, animação de
-     par mais gorda, celebração em camadas, fundo menos cru.
-   - Raspadinha: textura/brilho premium na camada, partículas ao raspar,
-     revelação mais teatral.
-   - Quiz: visual game-show (palco, pontos voando, tensão no timer).
-   Usar skill frontend-design + sons existentes; contrato GameProps intocado.
-2. ~~Nome do nível trunca no HUD em telas estreitas~~ FEITO no ciclo 1 — folga
-   de largura no header (gap/tracking/padding); "Nv.1 Bronze" cabe inteiro a 390px.
-3. ~~Vercel: conectar~~ FEITO — betfood.vercel.app com auto-deploy.
+## Ciclo 23 — o arquivo de retomada estava desorientando
 
-## Bloqueios / atenção
+O topo do STATUS ainda dizia "fim do ciclo 4" e mandava conferir um deploy de
+horas atrás, com 22 ciclos já feitos abaixo. Quem retomasse o projeto (eu numa
+sessão nova, ou outra pessoa) seria mandado pra tarefa errada logo na primeira
+leitura — que é justamente o que este arquivo existe pra evitar.
 
-- Disco C: viveu 0 bytes hoje; ~7 GB livres após limpezas. Faxina pendente.
-- Wiki jibcl-wiki não conhece este projeto (nasceu hoje).
+Reorganizado: **Onde está** (o app hoje, em quatro parágrafos), **Próxima ação**
+(o que de fato falta: iPhone real e a decisão comercial), **Como trabalhar neste
+repo** (aponta pro CLAUDE.md e as armadilhas já mapeadas), bloqueios, e só então
+o histórico dos ciclos — agora em ordem cronológica, que estava embaralhada
+(1, 3, 4 tinham ido parar depois do 22).
