@@ -2,9 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import confetti from "canvas-confetti";
 import {
   canClaimDailyBonus,
+  CHIP_COST,
   claimDailyBonus,
   getChips,
   getProgress,
+  msToNextChip,
 } from "../lib/store";
 import { isMuted, play, setMuted } from "../lib/sound";
 import HowItWorks from "./HowItWorks";
@@ -121,21 +123,34 @@ function useCountUp(target: number) {
   return value;
 }
 
+/** "7:05" — tempo até a próxima ficha; null quando o saldo está no teto. */
+export function formatCountdown(ms: number | null): string | null {
+  if (ms === null) return null;
+  const total = Math.max(0, Math.ceil(ms / 1000));
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
 export default function Hud() {
   const [chips, setChips] = useState(getChips());
   const [claimable, setClaimable] = useState(canClaimDailyBonus());
   const [muted, setMutedState] = useState(isMuted());
   const [helpOpen, setHelpOpen] = useState(false);
+  const [nextChip, setNextChip] = useState<string | null>(null);
   const progress = getProgress();
   const shown = useCountUp(chips);
 
   // Estado muda em outras telas (jogar gasta ficha): re-sincroniza sempre.
   useEffect(() => {
-    const id = window.setInterval(() => {
+    const tick = () => {
       setChips(getChips());
       setClaimable(canClaimDailyBonus());
       setMutedState(isMuted());
-    }, 700);
+      setNextChip(formatCountdown(msToNextChip()));
+    };
+    tick();
+    const id = window.setInterval(tick, 700);
     return () => window.clearInterval(id);
   }, []);
 
@@ -186,6 +201,13 @@ export default function Hud() {
             <span className="font-display text-sm font-black tabular-nums text-white">
               {shown}
             </span>
+            {/* Saldo curto: mostra quando cai a próxima ficha, pra ninguém achar
+                que o app travou. Some quando há folga. */}
+            {nextChip !== null && chips < CHIP_COST * 2 && (
+              <span className="border-l border-white/25 pl-1.5 text-[10px] font-bold tabular-nums text-white/70">
+                {nextChip}
+              </span>
+            )}
           </div>
 
           {/* Streak */}

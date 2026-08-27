@@ -54,17 +54,7 @@ function Metric({
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className={`mb-3 flex h-9 w-9 items-center justify-center rounded-full ${chip}`}>
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="h-[18px] w-[18px]"
-        >
-          {icon}
-        </svg>
+        <LineIcon>{icon}</LineIcon>
       </div>
       <div className="font-display text-4xl font-bold leading-none tabular-nums text-ink">
         {value}
@@ -140,6 +130,64 @@ function Stepper({
   );
 }
 
+/** Ícone de linha 24x24 — nada de emoji na UI. */
+function LineIcon({ children, className = "h-[18px] w-[18px]" }: { children: ReactNode; className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      {children}
+    </svg>
+  );
+}
+
+/** Um argumento do bloco "Por que ter o BetFood na casa". */
+function Reason({
+  icon,
+  chip,
+  title,
+  text,
+}: {
+  icon: ReactNode;
+  chip: string;
+  title: string;
+  text: string;
+}) {
+  return (
+    <li className="flex gap-3">
+      <span className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${chip}`}>
+        <LineIcon>{icon}</LineIcon>
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="font-display text-sm font-bold leading-snug text-ink">{title}</div>
+        <p className="mt-1 text-xs leading-relaxed text-ink/70">{text}</p>
+      </div>
+    </li>
+  );
+}
+
+/** Um passo do "como funciona na prática" — aqui o número É informação. */
+function Step({ n, title, text }: { n: number; title: string; text: string }) {
+  return (
+    <li className="flex gap-3">
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-500 font-display text-sm font-bold tabular-nums text-white">
+        {n}
+      </span>
+      <div className="min-w-0 flex-1 pt-0.5">
+        <div className="font-display text-sm font-bold leading-snug text-ink">{title}</div>
+        <p className="mt-1 text-xs leading-relaxed text-ink/70">{text}</p>
+      </div>
+    </li>
+  );
+}
+
 export default function Partner() {
   const restaurants = getRestaurants();
   const [selected, setSelected] = useState(restaurants[0].id);
@@ -152,6 +200,8 @@ export default function Partner() {
   const [check, setCheck] = useState<{ typed: string; res: RedeemByCodeResult } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [confirmClear, setConfirmClear] = useState(false);
+  // Argumento de venda: começa fechado pra não atrapalhar quem só quer operar.
+  const [whyOpen, setWhyOpen] = useState(false);
 
   const now = Date.now();
   const codes = getTableCodes(selected);
@@ -225,7 +275,7 @@ export default function Partner() {
         </p>
         <h1 className="font-display text-3xl font-bold tracking-tight">Sua casa</h1>
         <p className="mt-3 max-w-[36ch] text-sm leading-relaxed text-ink/70">
-          Gere códigos de mesa e acompanhe o movimento da sua casa.
+          Valide cupons no caixa, gere códigos de mesa e acompanhe o movimento da sua casa.
         </p>
       </div>
 
@@ -516,10 +566,123 @@ export default function Partner() {
           </button>
         </div>
 
+        {/* Como funciona na prática — liga os blocos que já estão nesta tela */}
+        <div
+          className="anim-fade-up mb-3 rounded-card border border-ink/10 bg-white p-4 shadow-sm"
+          style={{ animationDelay: "360ms" }}
+        >
+          <div className="font-display text-base font-bold">Como funciona na prática</div>
+          <p className="mt-1 text-xs leading-relaxed text-ink/70">
+            Três passos, todos nesta mesma tela.
+          </p>
+          <ol className="mt-4 space-y-4">
+            <Step
+              n={1}
+              title="Entregue o código na mesa"
+              text="Gere a leva em “Gerar códigos de mesa”, aqui em cima, e passe o código na comanda, no cartão da mesa ou de boca."
+            />
+            <Step
+              n={2}
+              title="O cliente joga e ganha o cupom"
+              text="Ele digita o código no app, recebe as jogadas que você definiu e joga ali mesmo. Se premiar, o cupom cai na carteira dele valendo 24 horas."
+            />
+            <Step
+              n={3}
+              title="Você valida no caixa"
+              text="Na hora de fechar a conta, digite o código do cupom em “Validar cupom”, no topo desta tela. A baixa é dada na hora e o mesmo cupom não passa duas vezes."
+            />
+          </ol>
+        </div>
+
+        {/* Por que ter o BetFood na casa — colapsável, fechado por padrão */}
+        <div
+          className="anim-fade-up mb-6 rounded-card border border-ink/10 bg-white p-4 shadow-sm"
+          style={{ animationDelay: "400ms" }}
+        >
+          <button
+            type="button"
+            aria-expanded={whyOpen}
+            aria-controls="por-que-betfood"
+            className="press flex min-h-11 w-full items-center justify-between gap-3 text-left"
+            onClick={() => {
+              play("tap");
+              setWhyOpen((v) => !v);
+            }}
+          >
+            <span className="min-w-0">
+              <span className="block font-display text-base font-bold">
+                Por que ter o BetFood na casa
+              </span>
+              <span className="mt-0.5 block text-xs leading-relaxed text-ink/70">
+                O que isso muda no seu salão, em quatro pontos.
+              </span>
+            </span>
+            <span
+              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-paper text-ink/70 transition-transform duration-200 ${
+                whyOpen ? "rotate-180" : ""
+              }`}
+            >
+              <LineIcon className="h-4 w-4">
+                <path d="m6 9 6 6 6-6" />
+              </LineIcon>
+            </span>
+          </button>
+
+          {whyOpen && (
+            <ul id="por-que-betfood" className="anim-fade-up mt-4 space-y-4 border-t border-ink/10 pt-4">
+              <Reason
+                chip="bg-brand-50 text-brand-600"
+                title="O cliente fica mais tempo — e volta"
+                text="A jogada acontece na mesa, enquanto ele espera o pedido. O cupom que ele ganha vale 24 horas e só nesta casa: pra usar, ele precisa voltar aqui."
+                icon={
+                  <>
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M12 7.5V12l3 2" />
+                  </>
+                }
+              />
+              <Reason
+                chip="bg-accent2/15 text-[#8a5a00]"
+                title="O custo é seu e você controla"
+                text="A tabela de prêmios é da casa e ninguém joga sem um código que você entregou. Você escolhe quantos códigos gera e quantas jogadas cada um vale. Nem toda jogada premia: a faixa “não foi dessa vez” pesa 40% do sorteio."
+                icon={
+                  <>
+                    <path d="M4 7h8M17 7h3M4 17h3M12 17h8" />
+                    <circle cx="14.5" cy="7" r="2.2" />
+                    <circle cx="9.5" cy="17" r="2.2" />
+                  </>
+                }
+              />
+              <Reason
+                chip="bg-surface text-ink/70"
+                title="Não é aposta e não custa nada pro cliente"
+                text="As fichas são do próprio app: ele ganha 50 ao entrar e mais 30 por dia. Não se compram fichas e não há dinheiro do cliente em jogo em momento nenhum."
+                icon={
+                  <>
+                    <path d="M12 3.5 5 6.2v5c0 4.2 2.9 7.6 7 9.3 4.1-1.7 7-5.1 7-9.3v-5Z" />
+                    <path d="m9.2 12 2 2 3.6-4" />
+                  </>
+                }
+              />
+              <Reason
+                chip="bg-brand-100 text-brand-700"
+                title="Dá pra medir"
+                text="Códigos gerados, códigos usados, cupons ganhos e cupons resgatados ficam nas quatro métricas desta tela. Você vê quanto entregou e quanto voltou pro caixa."
+                icon={
+                  <>
+                    <path d="M4 20h16" />
+                    <path d="M7.5 20v-5M12 20V8M16.5 20v-8" />
+                  </>
+                }
+              />
+            </ul>
+          )}
+        </div>
+
         {/* Lista de códigos */}
         <div
           className="anim-fade-up mb-2 flex items-baseline justify-between"
-          style={{ animationDelay: "400ms" }}
+          style={{ animationDelay: "460ms" }}
         >
           <h2 className="text-[11px] font-bold uppercase tracking-[0.2em] text-ink/65">
             Códigos da casa
@@ -531,14 +694,14 @@ export default function Partner() {
         {codes.length === 0 && (
           <p
             className="anim-fade-up rounded-card border border-dashed border-ink/20 bg-white p-5 text-center text-xs text-ink/70"
-            style={{ animationDelay: "440ms" }}
+            style={{ animationDelay: "500ms" }}
           >
             Nenhum código gerado ainda — crie a primeira leva acima.
           </p>
         )}
         <div
           className="anim-fade-up divide-y divide-ink/5 overflow-hidden rounded-card border border-ink/10 bg-white shadow-sm empty:hidden"
-          style={{ animationDelay: "440ms" }}
+          style={{ animationDelay: "500ms" }}
         >
           {codes.map((c) => (
             <div

@@ -15,9 +15,12 @@ import {
   drawPrize,
   getChips,
   getRestaurant,
+  msToNextChip,
+  REGEN_AMOUNT,
   XP_PER_PLAY,
   XP_PER_WIN,
 } from "../lib/store";
+import { formatCountdown } from "../components/Hud";
 import { isMuted, play, setMuted, stop } from "../lib/sound";
 
 const CONFETTI_COLORS = ["#ea1d2c", "#f5a623", "#ffffff"];
@@ -87,6 +90,21 @@ export default function GamePlay() {
   const [noChips, setNoChips] = useState(() => availablePlays(restaurantId) < 1);
   const [chips, setChips] = useState(() => getChips());
   const chargedRef = useRef(false);
+
+  // Sem fichas, a espera precisa ter prazo visível — e o saldo volta sozinho.
+  const [nextChip, setNextChip] = useState<string | null>(null);
+  useEffect(() => {
+    if (!noChips) return;
+    const tick = () => {
+      const c = getChips();
+      setChips(c);
+      setNextChip(formatCountdown(msToNextChip()));
+      if (c >= CHIP_COST) setNoChips(false); // recarregou: libera o jogo
+    };
+    tick();
+    const id = window.setInterval(tick, 1000);
+    return () => window.clearInterval(id);
+  }, [noChips]);
 
   /**
    * Cobra a rodada uma única vez (o ref sobrevive ao double-render do
@@ -217,6 +235,27 @@ export default function GamePlay() {
           Cada jogada custa {CHIP_COST} fichas. Você tem {chips} agora — dá pra repor sem
           sair daqui.
         </p>
+
+        {/* Espera com prazo é espera tolerável: o saldo se recompõe sozinho. */}
+        {nextChip && (
+          <p
+            className="anim-fade-up mt-4 inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-[13px] font-semibold text-ink/70 shadow-sm"
+            style={{ animationDelay: "240ms" }}
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              className="h-4 w-4 text-brand-500"
+            >
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 7v5l3 2" />
+            </svg>
+            +{REGEN_AMOUNT} fichas em <span className="tabular-nums">{nextChip}</span>
+          </p>
+        )}
 
         <div
           className="anim-fade-up mx-auto mt-8 grid max-w-xs gap-3"

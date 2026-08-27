@@ -15,6 +15,7 @@ interface DB {
   lastPlayDay: string | null; // yyyy-mm-dd da última jogada (qualquer casa)
   chips: number; // moeda global do app (fichas)
   lastBonusDay: string | null; // yyyy-mm-dd do último bônus diário resgatado
+  lastRegenAt: number | null; // epoch ms do último crédito automático de fichas
 }
 
 function load(): DB {
@@ -34,6 +35,7 @@ function load(): DB {
         lastPlayDay: typeof db.lastPlayDay === "string" ? db.lastPlayDay : null,
         chips: typeof db.chips === "number" ? db.chips : WELCOME_CHIPS,
         lastBonusDay: typeof db.lastBonusDay === "string" ? db.lastBonusDay : null,
+        lastRegenAt: typeof db.lastRegenAt === "number" ? db.lastRegenAt : Date.now(),
       };
     }
   } catch {
@@ -52,6 +54,7 @@ function load(): DB {
     lastPlayDay: null,
     chips: WELCOME_CHIPS,
     lastBonusDay: null,
+    lastRegenAt: Date.now(),
   });
   save(fresh);
   return fresh;
@@ -159,8 +162,51 @@ export const CHIP_COST = 10; // fichas por jogada
 export const WELCOME_CHIPS = 50;
 export const DAILY_BONUS_CHIPS = 30;
 
+// Recarga automática: quem gastou tudo não fica trancado esperando o dia virar.
+// Só repõe ATÉ o teto — fichas ganhas em código da mesa ficam acima dele e não
+// travam a recarga futura, mas também não somem.
+export const REGEN_AMOUNT = 10; // 1 jogada
+export const REGEN_INTERVAL_MS = 10 * 60_000; // a cada 10 min
+export const REGEN_CAP = 50;
+
+/**
+ * Credita as fichas acumuladas desde a última recarga. Devolve true se mudou
+ * algo (o chamador grava). Idempotente: sem tempo suficiente, não faz nada.
+ */
+function applyRegen(db: DB): boolean {
+  const now = Date.now();
+  const last = db.lastRegenAt ?? now;
+
+  if ((db.chips ?? 0) >= REGEN_CAP) {
+    // No teto o relógio não corre. Só regrava quando a defasagem passa de um
+    // intervalo — senão o HUD (que consulta a cada 700ms) gravaria sem parar.
+    if (now - last > REGEN_INTERVAL_MS) {
+      db.lastRegenAt = now;
+      return true;
+    }
+    return false;
+  }
+
+  const steps = Math.floor((now - last) / REGEN_INTERVAL_MS);
+  if (steps < 1) return false;
+  db.chips = Math.min(REGEN_CAP, (db.chips ?? 0) + steps * REGEN_AMOUNT);
+  // Mantém o resto do tempo (não zera a fração já corrida).
+  db.lastRegenAt = last + steps * REGEN_INTERVAL_MS;
+  return true;
+}
+
+/** Milissegundos até a próxima ficha; null quando o saldo já está no teto. */
+export function msToNextChip(): number | null {
+  const db = load();
+  if ((db.chips ?? 0) >= REGEN_CAP) return null;
+  const last = db.lastRegenAt ?? Date.now();
+  const elapsed = (Date.now() - last) % REGEN_INTERVAL_MS;
+  return REGEN_INTERVAL_MS - elapsed;
+}
+
 export function getChips(): number {
   const db = load();
+  if (applyRegen(db)) save(db);
   return db.chips ?? 0;
 }
 
@@ -186,7 +232,11 @@ export function availablePlays(_restaurantId?: string): number {
 
 export function consumePlay(_restaurantId?: string): boolean {
   const db = load();
-  if ((db.chips ?? 0) < CHIP_COST) return false;
+  applyRegen(db); // credita o que já venceu antes de cobrar
+  if ((db.chips ?? 0) < CHIP_COST) {
+    save(db);
+    return false;
+  }
   db.chips -= CHIP_COST;
   touchProgress(db, new Date().toISOString().slice(0, 10));
   save(db);
