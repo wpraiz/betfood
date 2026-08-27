@@ -172,7 +172,13 @@ export default function Wallet() {
 
                 {/* Restaurante + prêmio */}
                 <div className={dim}>
-                  <div className="flex items-center gap-3 p-4 pb-2.5 pl-5">
+                  {/* A casa vira link: o cupom só vale lá, e é de onde se chega
+                      ao endereço e ao mapa (ciclo 49). Antes era texto morto. */}
+                  <Link
+                    to={`/r/${c.restaurantId}`}
+                    onClick={() => play("tap")}
+                    className="press flex items-center gap-3 p-4 pb-2.5 pl-5"
+                  >
                     {/* alt vazio: o nome da casa está no texto ao lado. */}
                     {r && (
                       <FoodPhoto
@@ -183,11 +189,23 @@ export default function Wallet() {
                     )}
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-sm font-bold">{r?.name}</div>
-                      <div className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink/65">
-                        {new Date(c.wonAt).toLocaleDateString("pt-BR")}
+                      <div className="mt-0.5 truncate text-[11px] text-ink/70">
+                        {r?.address ?? new Date(c.wonAt).toLocaleDateString("pt-BR")}
                       </div>
                     </div>
-                  </div>
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                      className="h-4 w-4 shrink-0 text-ink/65"
+                    >
+                      <path d="m9 6 6 6-6 6" />
+                    </svg>
+                  </Link>
                   <div className="px-4 pb-3 pl-5 font-display text-lg font-bold leading-snug">
                     {c.prizeLabel}
                   </div>

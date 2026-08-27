@@ -1,6 +1,6 @@
 # STATUS — BetFood POC
 
-Atualizado: 2026-08-27 (ciclo 49 do loop de melhoria contínua)
+Atualizado: 2026-08-27 (ciclo 50 do loop de melhoria contínua)
 
 ## Onde está
 
@@ -52,6 +52,20 @@ acessibilidade (axe-core, zero violações nas telas principais).
 ---
 
 # Histórico dos ciclos
+
+## Ciclo 50 — o cupom na carteira agora leva até a casa
+
+Fecha o que o ciclo 49 abriu. O cartão do cupom mostrava o nome da casa como
+**texto morto** e a data do ganho — nada que ajudasse a chegar lá, sendo que o
+cupom só vale naquele endereço e por 24h.
+
+Agora o topo do cartão é um link: foto, nome e **o endereço** da casa, com seta.
+Um toque abre a página dela, onde ficam o mapa e as chances. A data do ganho saiu
+do lugar de destaque (ela já aparecia na validade, que é a informação que
+importa).
+
+Verificado: joguei até ganhar, o cartão mostrou "Potengi Camaroeira · Av. Erivan
+França, 1240" e o toque abriu a casa certa.
 
 ## Ciclo 49 — o cupom só vale numa casa, e o app não dizia onde ela fica
 
