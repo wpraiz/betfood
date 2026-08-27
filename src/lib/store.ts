@@ -17,6 +17,7 @@ interface DB {
   lastBonusDay: string | null; // yyyy-mm-dd do último bônus diário resgatado
   lastRegenAt: number | null; // epoch ms do último crédito automático de fichas
   seenLevel?: number; // último nível já comemorado na tela
+  prizeLabels?: Record<string, Record<string, string>>; // casa → prêmio → rótulo da casa
 }
 
 function load(): DB {
@@ -38,6 +39,8 @@ function load(): DB {
         lastBonusDay: typeof db.lastBonusDay === "string" ? db.lastBonusDay : null,
         lastRegenAt: typeof db.lastRegenAt === "number" ? db.lastRegenAt : Date.now(),
         seenLevel: typeof db.seenLevel === "number" ? db.seenLevel : undefined,
+        prizeLabels:
+          db.prizeLabels && typeof db.prizeLabels === "object" ? db.prizeLabels : undefined,
       };
     }
   } catch {
@@ -148,12 +151,51 @@ export function hasDemoData(): boolean {
   return db.tableCodes.some((t) => t.demo) || db.coupons.some((c) => c.demo);
 }
 
+// --- Tabela de prêmios editável -------------------------------------------
+// O painel afirma ao dono que "a tabela de prêmios é sua". Pra isso ser verdade
+// ele precisa poder trocar o texto do prêmio. Só o RÓTULO é editável: os pesos
+// (a chance de cada faixa) continuam do produto, senão a economia vira outra
+// coisa a cada casa. Cupons já ganhos guardam o texto da época e não mudam.
+
+/** Aplica os rótulos que a casa personalizou, sem tocar no seed. */
+function comRotulos(r: Restaurant, db: DB): Restaurant {
+  const ov = db.prizeLabels?.[r.id];
+  if (!ov) return r;
+  return {
+    ...r,
+    prizes: r.prizes.map((p) => (ov[p.id] ? { ...p, label: ov[p.id] } : p)),
+  };
+}
+
+export function setPrizeLabel(restaurantId: string, prizeId: string, label: string) {
+  const limpo = label.trim().slice(0, 60);
+  if (!limpo) return;
+  const db = load();
+  db.prizeLabels = db.prizeLabels ?? {};
+  db.prizeLabels[restaurantId] = { ...(db.prizeLabels[restaurantId] ?? {}), [prizeId]: limpo };
+  save(db);
+}
+
+/** Devolve a casa aos prêmios originais do produto. */
+export function resetPrizeLabels(restaurantId: string) {
+  const db = load();
+  if (!db.prizeLabels?.[restaurantId]) return;
+  delete db.prizeLabels[restaurantId];
+  save(db);
+}
+
+export function hasCustomPrizes(restaurantId: string): boolean {
+  return Boolean(load().prizeLabels?.[restaurantId]);
+}
+
 export function getRestaurants(): Restaurant[] {
-  return RESTAURANTS;
+  const db = load();
+  return RESTAURANTS.map((r) => comRotulos(r, db));
 }
 
 export function getRestaurant(id: string): Restaurant | undefined {
-  return RESTAURANTS.find((r) => r.id === id);
+  const found = RESTAURANTS.find((r) => r.id === id);
+  return found ? comRotulos(found, load()) : undefined;
 }
 
 // --- Fichas ----------------------------------------------------------------

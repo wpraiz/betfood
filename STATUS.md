@@ -1,6 +1,6 @@
 # STATUS — BetFood POC
 
-Atualizado: 2026-08-27 (ciclo 31 do loop de melhoria contínua)
+Atualizado: 2026-08-27 (ciclo 32 do loop de melhoria contínua)
 
 ## Onde está
 
@@ -50,6 +50,22 @@ acessibilidade (axe-core, zero violações nas telas principais).
 ---
 
 # Histórico dos ciclos
+
+## Ciclo 32 — "a tabela é sua" virou verdade: prêmios editáveis
+
+O ciclo 31 mostrou a tabela; agora o dono **troca o prêmio ali mesmo**. Toca na
+linha, escreve o que a casa quer oferecer, salva. Vale no app inteiro na hora —
+verificado: editei o prêmio grande da Potengi Camaroeira pra "Rodízio de camarão
+pra dois" e a Home passou a anunciar "Prêmio máximo: Rodízio de camarão pra
+dois"; a roleta carrega a tabela editada; "Voltar ao padrão" restaura.
+
+Limite deliberado: **só o rótulo é editável, os pesos não**. A chance de cada
+faixa é do produto — se cada casa mexesse nela, a economia (e o argumento de
+custo) viraria outra coisa a cada restaurante. A chance segue visível ao lado do
+prêmio justamente pra deixar claro o que muda e o que não muda.
+
+Cupons já ganhos guardam o texto da época (o `prizeLabel` é copiado no momento
+do ganho), então mudar a tabela não reescreve o passado de ninguém.
 
 ## Ciclo 31 — a tabela de prêmios do dono agora aparece
 

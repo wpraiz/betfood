@@ -10,7 +10,10 @@ import {
   getRestaurantCoupons,
   getRestaurants,
   getTableCodes,
+  hasCustomPrizes,
   hasDemoData,
+  resetPrizeLabels,
+  setPrizeLabel,
   redeemCouponByCode,
   type RedeemByCodeResult,
 } from "../lib/store";
@@ -218,6 +221,16 @@ export default function Partner() {
   // Este número é uma AFIRMAÇÃO feita ao dono do restaurante sobre o próprio
   // custo dele — não pode ser escrito à mão. Sai da tabela de prêmios da casa
   // selecionada: se alguém mudar os pesos, o texto acompanha.
+  // Edição do rótulo do prêmio (a promessa "a tabela é sua" virando ação).
+  const [editando, setEditando] = useState<string | null>(null);
+  const [rascunho, setRascunho] = useState("");
+  function salvarPremio(prizeId: string) {
+    setPrizeLabel(selected, prizeId, rascunho);
+    setEditando(null);
+    play("coupon", { volume: 0.4 });
+    forceUpdate((n) => n + 1);
+  }
+
   const linkDaCasa = `${window.location.origin}${window.location.pathname}#/r/${selected}`;
   const [copiado, setCopiado] = useState(false);
   function copiarLink() {
@@ -599,24 +612,91 @@ export default function Partner() {
           className="anim-fade-up mb-6 rounded-card border border-ink/10 bg-white p-4 shadow-sm"
           style={{ animationDelay: "310ms" }}
         >
-          <div className="font-display text-base font-bold">Sua tabela de prêmios</div>
+          <div className="flex items-baseline justify-between gap-3">
+            <div className="font-display text-base font-bold">Sua tabela de prêmios</div>
+            {hasCustomPrizes(selected) && (
+              <button
+                type="button"
+                onClick={() => {
+                  play("tap");
+                  resetPrizeLabels(selected);
+                  setEditando(null);
+                  forceUpdate((n) => n + 1);
+                }}
+                className="press shrink-0 text-[11px] font-semibold text-ink/65 underline underline-offset-4"
+              >
+                Voltar ao padrão
+              </button>
+            )}
+          </div>
           <p className="mt-1 text-xs leading-relaxed text-ink/70">
-            É daqui que sai todo prêmio desta casa — e só daqui. A chance de cada
-            um é o peso dele no sorteio.
+            É daqui que sai todo prêmio desta casa — e só daqui. Toque num prêmio
+            pra trocar o que ele oferece; a chance de cada um é o peso no sorteio.
           </p>
           <ul className="mt-3 divide-y divide-ink/10">
             {(casaAtual?.prizes ?? []).map((p) => {
               const chance = pesoTotal > 0 ? Math.round((p.weight / pesoTotal) * 100) : 0;
               const semPremio = p.tier === "none";
+              // Em edição: input no lugar do texto. Só o rótulo muda — a chance
+              // é do produto e continua ao lado, pra ninguém achar que mexeu.
+              if (editando === p.id) {
+                return (
+                  <li key={p.id} className="flex items-center gap-2 py-2">
+                    <input
+                      autoFocus
+                      value={rascunho}
+                      onChange={(e) => setRascunho(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") salvarPremio(p.id);
+                        if (e.key === "Escape") setEditando(null);
+                      }}
+                      maxLength={60}
+                      className="min-h-11 min-w-0 flex-1 rounded-card border border-brand-500 bg-paper px-3 text-[13px] focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => salvarPremio(p.id)}
+                      className="press min-h-11 shrink-0 rounded-full bg-ink px-4 text-xs font-bold text-white"
+                    >
+                      Salvar
+                    </button>
+                  </li>
+                );
+              }
               return (
                 <li key={p.id} className="flex items-center justify-between gap-3 py-2.5">
-                  <span
-                    className={`min-w-0 flex-1 truncate text-[13px] ${
-                      semPremio ? "text-ink/65" : "font-semibold text-ink"
-                    }`}
-                  >
-                    {p.label}
-                  </span>
+                  {semPremio ? (
+                    <span className="min-w-0 flex-1 truncate text-[13px] text-ink/65">
+                      {p.label}
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        play("tap");
+                        setRascunho(p.label);
+                        setEditando(p.id);
+                      }}
+                      className="press flex min-h-11 min-w-0 flex-1 items-center gap-2 text-left"
+                    >
+                      <span className="min-w-0 truncate text-[13px] font-semibold text-ink">
+                        {p.label}
+                      </span>
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                        className="h-3.5 w-3.5 shrink-0 text-ink/40"
+                      >
+                        <path d="M4 20h4L19 9l-4-4L4 16v4Z" />
+                        <path d="m14.5 5.5 4 4" />
+                      </svg>
+                    </button>
+                  )}
                   <span
                     className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold tabular-nums ${
                       semPremio
