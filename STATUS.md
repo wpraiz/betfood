@@ -389,6 +389,33 @@ o usuário sai do slide 1.
 Medido depois, em produção: **1 imagem / 59 KB na estreia** (era 5 / 219 KB),
 e as 4 restantes entram ao navegar. Verificado que o slide 3 continua completo.
 
+## Ciclo 13 — auditoria de acessibilidade com axe-core (zero violações)
+
+Rodei o axe-core 4.10 injetado na página, em produção, nas quatro telas
+principais. Achados e correções:
+
+- **Zoom bloqueado** (crítico): `user-scalable=no` no viewport impedia ampliar a
+  página. Removido.
+- **Vermelho da marca reprovava AA por um fio**: `#ea1d2c` dava 4,46 sobre
+  branco (mínimo 4,5), tanto como texto quanto como fundo de botão. Trocado por
+  `#e31b28` (4,72) — visualmente indistinguível. Token `--color-brand-500`.
+- **Códigos usados ilegíveis no painel** (16 ocorrências): `opacity-40` derrubava
+  o contraste pra 2,45. Agora o estado "usado" é dado por cor (`ink/65`) e pelo
+  selo, não por transparência. Mesmo tratamento na carteira.
+- **Hierarquia de títulos**: "Validar cupom" virou `h2` (havia `h1` → `h3`).
+- **Texto alternativo redundante**: miniaturas das casas com `alt=""` onde o
+  nome já aparece ao lado (leitor de tela anunciava duas vezes).
+- **Rótulo "ativos"**: `brand-700/70` sobre `brand-50` dava 3,94 → cor cheia.
+
+Resultado final: **`#/`, `#/parceiro` e página da casa sem nenhuma violação**;
+carteira idem após o último ajuste.
+
+**Erro de processo meu, registrado**: encadeei `npm run build; git commit; git
+push` com `;` — o build falhou (comentário JSX inválido) e o commit subiu
+mesmo assim, deixando produção quebrada por alguns minutos. Corrigido em
+seguida. **Regra: `npm run build && git commit && git push`** (o `&&` para na
+primeira falha).
+
 ## Backlog priorizado (pedido do José, 26/ago à noite)
 
 1. **Subir o nível dos games além da roleta** — "memória e demais tão muito low

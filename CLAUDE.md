@@ -126,6 +126,17 @@ Antes de "consertar" um jogo, reproduza o defeito com esse método.
 
 ## Comandos
 
+**Sempre `&&`, nunca `;`** entre build e commit:
+`npm run build && git add -A && git commit -m "..." && git push`. Com `;` o
+commit sobe mesmo se o build falhar — já aconteceu (ciclo 13) e produção ficou
+quebrada por minutos, porque o deploy é automático a cada push.
+
+**Auditar acessibilidade**: injete o axe-core na página em produção e rode nas
+rotas principais (exemplo completo no STATUS, ciclo 13). Antes de olhar o
+resultado, force recarga sem cache — o service worker serve a versão antiga e
+você audita o app errado.
+
+
 - `npm run dev` → http://localhost:5199 · `npm run build` → typecheck + build
 - APK: skill `release-apk`. Novo jogo: skill `new-game`. Demo: skill `demo-poc`.
 
