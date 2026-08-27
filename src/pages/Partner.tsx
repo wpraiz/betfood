@@ -200,6 +200,7 @@ export default function Partner() {
   const [check, setCheck] = useState<{ typed: string; res: RedeemByCodeResult } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [confirmClear, setConfirmClear] = useState(false);
+  const [confirmReset, setConfirmReset] = useState(false);
   // Argumento de venda: começa fechado pra não atrapalhar quem só quer operar.
   const [whyOpen, setWhyOpen] = useState(false);
 
@@ -778,6 +779,61 @@ export default function Partner() {
             )}
           </div>
         )}
+
+        {/* Ferramenta de apresentação: entre uma pessoa e outra, volta o app ao
+            estado de estreia (inclusive o onboarding). Fica aqui, nos bastidores
+            do painel, longe de quem só está jogando. */}
+        <div className="mt-6 text-center">
+          {confirmReset ? (
+            <div className="anim-fade-up">
+              <p className="mx-auto max-w-[34ch] text-xs leading-relaxed text-ink/70">
+                Recomeçar do zero apaga <strong>tudo</strong> deste aparelho — fichas, cupons,
+                códigos e progresso — e mostra a tela de boas-vindas de novo. Serve pra
+                apresentar pra outra pessoa.
+              </p>
+              <div className="mt-3 flex justify-center gap-2">
+                <button
+                  type="button"
+                  className="press min-h-11 rounded-full border border-ink/15 bg-white px-5 text-xs font-bold text-ink/70"
+                  onClick={() => {
+                    play("tap");
+                    setConfirmReset(false);
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  className="press min-h-11 rounded-full bg-ink px-5 text-xs font-bold text-white"
+                  onClick={() => {
+                    try {
+                      Object.keys(localStorage)
+                        .filter((k) => k.startsWith("betfood-"))
+                        .forEach((k) => localStorage.removeItem(k));
+                    } catch {
+                      /* modo privado: segue e recarrega mesmo assim */
+                    }
+                    window.location.hash = "#/welcome";
+                    window.location.reload();
+                  }}
+                >
+                  Apagar tudo e recomeçar
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="press inline-flex min-h-11 items-center px-4 text-xs font-semibold text-ink/65 underline underline-offset-4"
+              onClick={() => {
+                play("tap");
+                setConfirmReset(true);
+              }}
+            >
+              Recomeçar do zero (apresentação)
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
