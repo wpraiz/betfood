@@ -1,6 +1,6 @@
 # STATUS — BetFood POC
 
-Atualizado: 2026-08-27 (ciclo 42 do loop de melhoria contínua)
+Atualizado: 2026-08-27 (ciclo 43 do loop de melhoria contínua)
 
 ## Onde está
 
@@ -50,6 +50,22 @@ acessibilidade (axe-core, zero violações nas telas principais).
 ---
 
 # Histórico dos ciclos
+
+## Ciclo 43 — as chamadas dos jogos prometiam o que o sorteio não garante
+
+Continuação do ciclo 42, agora na vitrine. As chamadas na Home diziam **"Gire e
+ganhe na hora"** e **"Raspe e descubra seu prêmio"** — as duas prometem prêmio,
+sendo que 40% do sorteio é "não foi dessa vez". É a mesma promessa exagerada que
+o herói da Home já tinha corrigido no ciclo 5, sobrevivendo nos cards.
+
+Agora anunciam o gesto e a condição, não o resultado:
+- Roleta: **"Uma volta, uma chance"**
+- Raspadinha: **"Raspe e descubra na hora"**
+- Quiz: **"2 de 3 libera o prêmio"** (era "Acerte e leve o prêmio")
+- Memória: **"Feche os pares no limite"** (era "Encontre os pares do cardápio")
+
+De quebra, os dois jogos com condição agora anunciam a regra já na vitrine — o
+jogador escolhe sabendo o que cada um cobra dele.
 
 ## Ciclo 42 — a memória cobrava a ficha sem contar a regra
 

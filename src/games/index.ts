@@ -28,25 +28,27 @@ export const GAMES: GameDefinition[] = [
   {
     id: "roleta",
     name: "Roleta de Prêmios",
-    tagline: "Gire e ganhe na hora",
+    // "Gire e ganhe" prometia prêmio garantido — 40% do sorteio é "não foi
+    // dessa vez". A chamada anuncia o gesto e a chance, não o resultado.
+    tagline: "Uma volta, uma chance",
     component: lazy(loaders.roleta),
   },
   {
     id: "raspadinha",
     name: "Raspadinha",
-    tagline: "Raspe e descubra seu prêmio",
+    tagline: "Raspe e descubra na hora",
     component: lazy(loaders.raspadinha),
   },
   {
     id: "quiz",
     name: "Quiz Gastronômico",
-    tagline: "Acerte e leve o prêmio",
+    tagline: "2 de 3 libera o prêmio",
     component: lazy(loaders.quiz),
   },
   {
     id: "memoria",
     name: "Jogo da Memória",
-    tagline: "Encontre os pares do cardápio",
+    tagline: "Feche os pares no limite",
     component: lazy(loaders.memoria),
   },
 ];
