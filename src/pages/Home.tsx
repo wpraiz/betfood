@@ -259,30 +259,53 @@ export default function Home() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-ink/15" />
-            <h3 className="mb-3 font-display text-lg font-bold">Jogar em qual casa?</h3>
+            <h3 className="font-display text-lg font-bold">Jogar em qual casa?</h3>
+            {/* Quem nunca usou não conhece nenhuma delas — o que decide é o
+                prêmio, então ele aparece aqui em vez de só nome e nota. */}
+            <p className="mb-3 mt-0.5 text-[12px] text-ink/70">
+              O prêmio muda conforme a casa. Escolha a que te agrada.
+            </p>
             <div className="grid gap-2">
-              {restaurants.map((r) => (
-                <button
-                  key={r.id}
-                  onClick={() => pickCasa(r)}
-                  className="press flex items-center gap-3 rounded-card border border-ink/10 p-2.5 text-left"
-                >
-                  <FoodPhoto
-                    src={thumb(r.photo, 160)}
-                    alt={r.name}
-                    className="h-11 w-11 shrink-0 rounded-xl"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-bold">{r.name}</div>
-                    <div className="text-[11px] text-ink/65">{r.neighborhood}</div>
-                  </div>
-                  <span className="inline-flex items-center gap-1 text-xs font-bold text-ink/70">
-                    <Star className="h-3 w-3 text-accent2" />
-                    {r.rating.toFixed(1)}
-                  </span>
-                </button>
-              ))}
+              {restaurants.map((r) => {
+                const big = r.prizes.find((p) => p.tier === "big");
+                return (
+                  <button
+                    key={r.id}
+                    onClick={() => pickCasa(r)}
+                    className="press flex items-center gap-3 rounded-card border border-ink/10 p-2.5 text-left"
+                  >
+                    <FoodPhoto
+                      src={thumb(r.photo, 160)}
+                      alt={r.name}
+                      className="h-12 w-12 shrink-0 rounded-xl"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-baseline gap-2">
+                        <span className="truncate text-sm font-bold">{r.name}</span>
+                        <span className="inline-flex shrink-0 items-center gap-0.5 text-[11px] font-bold text-ink/70">
+                          <Star className="h-3 w-3 text-accent2" />
+                          {r.rating.toFixed(1)}
+                        </span>
+                      </div>
+                      {big && (
+                        <div className="truncate text-[11px] leading-relaxed">
+                          <span className="text-ink/65">Prêmio máximo: </span>
+                          <span className="font-bold text-brand-600">{big.label}</span>
+                        </div>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
             </div>
+            {/* Saída pra quem não quer decidir: tirar a escolha da frente é o
+                que encurta o caminho até a primeira jogada. */}
+            <button
+              onClick={() => pickCasa(restaurants[Math.floor(Math.random() * restaurants.length)])}
+              className="press mt-3 min-h-11 w-full rounded-full border border-ink/15 text-sm font-bold text-ink/70"
+            >
+              Tanto faz, escolhe por mim
+            </button>
           </div>
         </div>
       )}

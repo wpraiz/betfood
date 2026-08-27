@@ -336,6 +336,24 @@ incluindo, que é o motivo de existirem. Verificado nos dois lados: carteira nov
 mostra o estado vazio com CTA "Ir jogar"; painel do parceiro segue com métricas
 e 1 cupom pendente pra validar ao vivo.
 
+## Ciclo 10 — jornada de estreia percorrida em produção
+
+Método (o que achou o bug do ciclo 9): estado zerado, site publicado, caminho
+exato de um amigo recebendo o link. Funcionou ponta a ponta — onboarding →
+Home → roleta → cupom `ZDUXM4` → validação no caixa ("Resgatado agora"), com
+fichas caindo 50→40 e o cupom entrando na carteira.
+
+Única fricção encontrada: o herói "Girar agora" abre "Jogar em qual casa?" e
+quem nunca usou não tem base pra escolher (só via nome, bairro e nota). Agora
+cada casa mostra o **prêmio máximo** (é o que decide) e há a saída "Tanto faz,
+escolhe por mim" — a escolha virou desejo em vez de obstáculo.
+
+Nota de ferramenta (pra não perder tempo de novo): o playwright-cli não navega
+de https://betfood.vercel.app para http://localhost (ERR_ABORTED) — é preciso
+`playwright-cli close` e abrir de novo no destino. Cliques por `getByRole` com
+nome acessível são mais confiáveis que refs de snapshot, que expiram a cada
+re-render.
+
 ## Backlog priorizado (pedido do José, 26/ago à noite)
 
 1. **Subir o nível dos games além da roleta** — "memória e demais tão muito low
