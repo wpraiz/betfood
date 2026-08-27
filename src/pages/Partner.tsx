@@ -724,8 +724,8 @@ export default function Partner() {
               />
               <Reason
                 chip="bg-accent2/15 text-[#8a5a00]"
-                title="O custo é seu e você controla"
-                text={`A tabela de prêmios é da casa e ninguém joga sem um código que você entregou. Você escolhe quantos códigos gera e quantas jogadas cada um vale. Nem toda jogada premia: a faixa “não foi dessa vez” pesa ${chanceSemPremio}% do sorteio.`}
+                title="Você define o prêmio e só paga quando ele volta"
+                text={`A tabela de prêmios é sua: nada sai dela sem você ter posto lá. Qualquer pessoa pode jogar com as fichas de cortesia do app — isso é o que traz gente nova — e os códigos que você entrega dão fichas extras a quem já está na mesa. Nem toda jogada premia: a faixa “não foi dessa vez” pesa ${chanceSemPremio}% do sorteio. E o custo só existe quando alguém aparece aqui com um cupom válido.`}
                 icon={
                   <>
                     <path d="M4 7h8M17 7h3M4 17h3M12 17h8" />

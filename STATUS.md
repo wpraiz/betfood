@@ -1,6 +1,6 @@
 # STATUS — BetFood POC
 
-Atualizado: 2026-08-27 (ciclo 23 do loop de melhoria contínua)
+Atualizado: 2026-08-27 (ciclo 30 do loop de melhoria contínua)
 
 ## Onde está
 
@@ -50,6 +50,28 @@ acessibilidade (axe-core, zero violações nas telas principais).
 ---
 
 # Histórico dos ciclos
+
+## Ciclo 30 — o painel afirmava ao dono algo que o app não cumpre
+
+Verificação da promessa "o cupom só vale na casa que emitiu": **cumprida** —
+cupom da Potengi Camaroeira testado no caixa da Pizzaria do Forte é recusado com
+"Código não encontrado nesta casa · Nenhum cupom com NWM5AN em Pizzaria do
+Forte".
+
+Mas a mesma varredura pegou uma **contradição no argumento de venda**: o painel
+dizia ao dono que "ninguém joga sem um código que você entregou". Não é verdade
+— o app dá 50 fichas de boas-vindas, +30 por dia e recarga automática, tudo
+usável em qualquer casa sem código nenhum. Um dono que lesse isso montaria o
+custo dele numa premissa falsa e perderia a confiança no primeiro cliente que
+ganhasse um cupom sem nunca ter recebido código.
+
+Reescrito com o que é verdade **e continua sendo bom argumento**: a tabela de
+prêmios é dele (nada sai dela sem ele ter posto), qualquer pessoa joga com as
+fichas de cortesia (é o que traz gente nova), os códigos dão fichas extras a quem
+já está na mesa, e — o ponto que importa — **o custo só existe quando alguém
+aparece na casa com um cupom válido**. O título virou "Você define o prêmio e só
+paga quando ele volta".
+
 
 ## Ciclo 29 — o QR na mesa não funcionaria pra cliente novo
 
