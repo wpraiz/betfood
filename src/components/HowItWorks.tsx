@@ -83,6 +83,16 @@ function ClockLine({ className }: { className?: string }) {
   );
 }
 
+/** Seta circular: a ficha que se repõe com o tempo (o relógio é da validade). */
+function RefreshLine({ className }: { className?: string }) {
+  return (
+    <svg {...lineProps} className={className}>
+      <path d="M20 12a8 8 0 1 1-2.5-5.8" />
+      <path d="M20 4v4.5h-4.5" />
+    </svg>
+  );
+}
+
 function ShieldLine({ className }: { className?: string }) {
   return (
     <svg {...lineProps} className={className}>
@@ -127,6 +137,14 @@ const STEPS: {
     tone: "amber",
     title: "+30 fichas grátis todo dia",
     detail: "O bônus diário aparece no topo da tela. É só tocar pra pegar.",
+  },
+  {
+    // A recarga automática entrou depois desta tela existir e ficava sem
+    // explicação: quem zerava via um relógio no topo sem saber o porquê.
+    icon: RefreshLine,
+    tone: "amber",
+    title: "As fichas voltam sozinhas",
+    detail: "A cada 10 minutos entram mais 10 fichas, até 50. Ninguém fica sem jogar.",
   },
   {
     icon: TableCodeLine,

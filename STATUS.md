@@ -531,6 +531,19 @@ Agora o número grande da casa é o mesmo do topo (fichas) e a conversão virou
 legenda: "Dá pra 19 jogadas · 10 fichas cada". Sem saldo, o texto explica o
 custo e aponta o código da mesa. Regra registrada no CLAUDE.md pra não voltar.
 
+## Ciclo 21 — a explicação estava desatualizada em relação ao app
+
+A tela "Como funciona" foi escrita no ciclo 3; a recarga automática de fichas
+chegou no ciclo 6 e **nunca entrou na explicação**. Quem zerava via um relógio
+contando no topo da tela sem nada dizer o que era aquilo.
+
+Novo item (com ícone próprio de seta circular — o relógio já é da validade do
+cupom): "As fichas voltam sozinhas · A cada 10 minutos entram mais 10 fichas,
+até 50. Ninguém fica sem jogar." Verificado abrindo o painel pelo HUD.
+
+Lição pro CLAUDE.md já registrada em espírito: mecânica nova exige revisar a
+tela que explica o app, senão a explicação vira mentira por omissão.
+
 ## Backlog priorizado (pedido do José, 26/ago à noite)
 
 1. **Subir o nível dos games além da roleta** — "memória e demais tão muito low
