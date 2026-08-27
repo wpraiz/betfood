@@ -93,7 +93,9 @@ export default function Wallet() {
             <div className="font-display text-3xl font-bold leading-none tabular-nums text-brand-600">
               {active}
             </div>
-            <div className="mt-1 text-[9px] font-bold uppercase tracking-[0.15em] text-brand-700/70">
+            {/* brand-700 cheio, sem /70: a transparência dava 3,94 de contraste
+                sobre o brand-50 do chip (mínimo 4,5). */}
+            <div className="mt-1 text-[9px] font-bold uppercase tracking-[0.15em] text-brand-700">
               {active === 1 ? "ativo" : "ativos"}
             </div>
           </div>
