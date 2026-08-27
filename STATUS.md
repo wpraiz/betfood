@@ -509,6 +509,18 @@ soa robótico — o oposto do que o José pediu desde o começo.
   faixa continuam iguais — grande 5, médio 15, pequenos 40 somados, nada 40 —,
   então a chance de ganhar não mudou, só a variedade do que sai.
 
+## Ciclo 19 — o painel diz a verdade (conferido) e agora explica o número
+
+**Auditoria dos 4 contadores com ações reais**, cada delta verificado:
+gerar 3 códigos 12 → 15; usar 1 código no restaurante 8 → 9; ganhar um cupom
+jogando 4 → 5; validar esse cupom no caixa 2 → 3. Nenhum número inflado ou
+defasado — importa porque é o que o José mostra pro dono do restaurante.
+
+**Melhoria**: abaixo das métricas, uma linha traduz os números crus pra
+linguagem de dono — "60% dos códigos entregues viraram jogada · 3 de 5 cupons
+ganhos voltaram pra casa". Calculada dos mesmos dados (nada inventado) e só
+aparece quando há base, pra não exibir "0% de 0".
+
 ## Backlog priorizado (pedido do José, 26/ago à noite)
 
 1. **Subir o nível dos games além da roleta** — "memória e demais tão muito low

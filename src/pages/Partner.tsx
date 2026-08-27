@@ -538,6 +538,34 @@ export default function Partner() {
           />
         </div>
 
+        {/* Número cru não diz nada pro dono; a leitura sim. Só aparece quando há
+            base pra falar de proporção — senão viraria "0% de 0". */}
+        {(codes.length > 0 || coupons.length > 0) && (
+          <p
+            className="anim-fade-up mt-3 text-[13px] leading-relaxed text-ink/70"
+            style={{ animationDelay: "300ms" }}
+          >
+            {codes.length > 0 && (
+              <>
+                <strong className="font-bold text-ink">
+                  {Math.round((codesUsed / codes.length) * 100)}%
+                </strong>{" "}
+                dos códigos entregues viraram jogada
+              </>
+            )}
+            {codes.length > 0 && coupons.length > 0 && " · "}
+            {coupons.length > 0 && (
+              <>
+                <strong className="font-bold text-ink">
+                  {couponsRedeemed} de {coupons.length}
+                </strong>{" "}
+                cupons ganhos voltaram pra casa
+              </>
+            )}
+            .
+          </p>
+        )}
+
         {/* Gerador com steppers */}
         <div
           className="anim-fade-up mb-6 rounded-card border border-ink/10 bg-white p-4 shadow-sm"
