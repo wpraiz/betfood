@@ -416,6 +416,29 @@ mesmo assim, deixando produção quebrada por alguns minutos. Corrigido em
 seguida. **Regra: `npm run build && git commit && git push`** (o `&&` para na
 primeira falha).
 
+## Ciclo 14 — "viagem no tempo": a lógica que só falha amanhã
+
+Testei manipulando o estado pra simular dias passando. **Tudo passou**:
+
+- Voltar depois de **3 dias fora** com 0 fichas: recarrega até o teto (50) e não
+  além — o acúmulo é limitado, como projetado.
+- **Bônus diário** volta a ficar disponível no dia seguinte.
+- **Streak** continua quando se joga em dias seguidos (3 → 4) e **reinicia em 1**
+  depois de dias sem jogar (7 → 1).
+- **Cupom vencido**: some do contador de ativos, ganha carimbo "Expirado" na
+  carteira, e o caixa recusa com data/hora exatas + a regra ("vale 24h depois de
+  ganho").
+
+Melhoria do ciclo: a carteira **separa válidos de histórico**. É a tela que o
+cliente abre na frente do garçom — o cupom que vale agora fica na primeira
+dobra, e usados/vencidos entram num "Ver usados e vencidos (N)" recolhido. Se
+não houver nenhum válido, aparece uma mensagem curta com o caminho de volta.
+
+Armadilha de teste (a terceira do mesmo tipo): trocar só o `#` da URL **não
+recarrega o documento** — cheguei a acusar o service worker de servir versão
+velha quando era a minha própria página nunca ter recarregado. Use
+`page.reload()` de verdade antes de conferir qualquer deploy.
+
 ## Backlog priorizado (pedido do José, 26/ago à noite)
 
 1. **Subir o nível dos games além da roleta** — "memória e demais tão muito low
