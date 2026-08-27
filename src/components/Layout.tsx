@@ -24,6 +24,7 @@
 import { createContext, useMemo, useRef, useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import Hud from "./Hud";
+import LevelUpToast from "./LevelUpToast";
 import InstallHint from "./InstallHint";
 
 export const ImmersiveContext = createContext<{ setImmersive: (v: boolean) => void }>({
@@ -139,7 +140,10 @@ export default function Layout() {
   return (
     <ImmersiveContext.Provider value={ctx}>
       <div className="mx-auto flex min-h-dvh max-w-md flex-col bg-paper text-ink">
-        {!immersive && <Hud />}
+        {/* Fora do bloco imersivo: a subida de nível acontece DURANTE a partida e
+          precisa de um dono que não desmonta. */}
+      <LevelUpToast />
+      {!immersive && <Hud />}
         <main className={`flex-1 ${immersive ? "" : "pb-24"}`}>
           <Outlet />
         </main>

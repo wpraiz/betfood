@@ -16,6 +16,7 @@ interface DB {
   chips: number; // moeda global do app (fichas)
   lastBonusDay: string | null; // yyyy-mm-dd do último bônus diário resgatado
   lastRegenAt: number | null; // epoch ms do último crédito automático de fichas
+  seenLevel?: number; // último nível já comemorado na tela
 }
 
 function load(): DB {
@@ -36,6 +37,7 @@ function load(): DB {
         chips: typeof db.chips === "number" ? db.chips : WELCOME_CHIPS,
         lastBonusDay: typeof db.lastBonusDay === "string" ? db.lastBonusDay : null,
         lastRegenAt: typeof db.lastRegenAt === "number" ? db.lastRegenAt : Date.now(),
+        seenLevel: typeof db.seenLevel === "number" ? db.seenLevel : undefined,
       };
     }
   } catch {
@@ -275,6 +277,33 @@ function touchProgress(db: DB, today: string) {
     db.lastPlayDay = today;
   }
   db.xp = (db.xp ?? 0) + XP_PER_PLAY;
+}
+
+/**
+ * Consome uma subida de nível, se houver: compara o nível atual com o último já
+ * comemorado e registra o novo. Devolve `null` quando não há nada a celebrar.
+ *
+ * Mora aqui, e não num `useRef` do HUD, porque o HUD é DESMONTADO durante a
+ * partida (modo imersivo) — justamente quando o XP sobe. Um ref perderia a
+ * memória e a subida passaria despercebida (foi o que aconteceu no ciclo 24).
+ */
+export function takeLevelUp(): { level: number; name: string; title: string } | null {
+  const db = load();
+  const atual = getProgress();
+  const visto = typeof db.seenLevel === "number" ? db.seenLevel : atual.level;
+  if (visto === atual.level) {
+    if (db.seenLevel !== atual.level) {
+      db.seenLevel = atual.level;
+      save(db);
+    }
+    return null;
+  }
+  db.seenLevel = atual.level;
+  save(db);
+  // Só comemora subida; queda (reset de estado) apenas re-sincroniza.
+  return atual.level > visto
+    ? { level: atual.level, name: atual.levelName, title: atual.levelTitle }
+    : null;
 }
 
 export function getProgress(): Progress {

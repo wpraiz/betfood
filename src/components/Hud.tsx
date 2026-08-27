@@ -141,6 +141,9 @@ export default function Hud() {
   const progress = getProgress();
   const shown = useCountUp(chips);
 
+  // A celebração de nível novo mora no Layout (que nunca desmonta), não aqui:
+  // este HUD some durante a partida, justamente quando o XP sobe.
+
   // Estado muda em outras telas (jogar gasta ficha): re-sincroniza sempre.
   useEffect(() => {
     const tick = () => {
@@ -291,6 +294,7 @@ export default function Hud() {
           )}
         </div>
       </header>
+
 
       <HowItWorks open={helpOpen} onClose={() => setHelpOpen(false)} />
     </>

@@ -51,6 +51,27 @@ acessibilidade (axe-core, zero violações nas telas principais).
 
 # Histórico dos ciclos
 
+## Ciclo 24 — subir de nível deixou de ser invisível
+
+O app tem cinco níveis (Bronze → Prata → Ouro → Chef → Lenda), dá XP a cada
+partida e **tinha até o som pronto** (`levelup.mp3`, gerado no ElevenLabs) — que
+nunca tocava. O jogador cruzava 100 XP e virava "Garfo de Prata" sem som, sem
+aviso, sem nada. Num app cuja proposta é recompensa, era o momento mais
+desperdiçado que restava.
+
+Agora: som + confetti + um aviso "Subiu de nível · Garfo de Prata" que aparece
+e sai sozinho em 4s, sem bloquear toque.
+
+**Onde a implementação quase deu errado** (vale registrar): a primeira versão
+guardava o último nível visto num `useRef` do HUD. Só que o HUD **é desmontado
+durante a partida** — exatamente quando o XP sobe —, então ao voltar ele já
+inicializava com o nível novo e nunca detectava a subida. A correção foi mover a
+comparação pro `store` (`takeLevelUp()`, que consome a subida de forma atômica) e
+o aviso pro `Layout`, que nunca desmonta. Verificado: aparece durante o jogo,
+aparece na Home, e **não** dispara falso em instalação nova.
+
+
+
 Cada entrada registra o que mudou e **por quê** — inclusive os erros cometidos,
 que são o que evita repeti-los.
 
