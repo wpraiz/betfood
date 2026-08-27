@@ -354,6 +354,26 @@ de https://betfood.vercel.app para http://localhost (ERR_ABORTED) — é preciso
 nome acessível são mais confiáveis que refs de snapshot, que expiram a cada
 re-render.
 
+## Ciclo 11 — os quatro jogos verificados em produção (e dois alarmes falsos)
+
+Faltava provar que quiz, raspadinha e memória **terminam** (só a roleta tinha
+sido jogada até o fim). Resultado, tudo em https://betfood.vercel.app:
+
+- **Quiz**: 3/3 acertos, feedback verde na correta e vermelho na escolhida
+  errada, placar animado até o valor certo. Nada quebrado.
+- **Raspadinha**: raspagem simulada por PointerEvents revela o resultado, chama
+  onFinish, entra XP e aparece o caminho de recuperação.
+- **Memória**: limite de 20 jogadas encerra a partida corretamente; ficha
+  cobrada uma única vez (200 → 190).
+- **Roleta**: já verificada no ciclo 10 (cupom ganho e validado no caixa).
+
+**Dois alarmes falsos meus**, registrados porque quase viraram "correção" de
+código que estava certo: (1) "o quiz não conta acertos" — na verdade as
+perguntas estouravam o timer de 15s enquanto eu media entre comandos de CLI;
+(2) "o placar final mostra 0" — era a contagem animada (380ms por ponto) lida
+no instante zero. Método correto (agora no CLAUDE.md): a partida inteira dentro
+de um único `eval` assíncrono, com esperas do tamanho das animações reais.
+
 ## Backlog priorizado (pedido do José, 26/ago à noite)
 
 1. **Subir o nível dos games além da roleta** — "memória e demais tão muito low

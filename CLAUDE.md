@@ -110,6 +110,20 @@ Armadilhas do playwright-cli: não navega de `https://betfood.vercel.app` para
 abra direto no destino. Prefira `getByRole('button', { name: ... })` a refs de
 snapshot, que expiram a cada re-render.
 
+### Testar JOGO exige um único `eval` assíncrono (não vários comandos)
+
+Cada chamada de CLI custa segundos. Os jogos têm relógio próprio (quiz: 15s por
+pergunta; memória: desvira em 800ms; contagem do placar final: 380ms por ponto),
+então medir entre comandos lê estado **de outra fase** e produz alarme falso —
+já aconteceu duas vezes: um "quiz não conta acertos" que era timeout entre meus
+comandos, e um "placar zerado" que era a contagem animada ainda não ter rodado.
+
+Faça a partida inteira dentro de um `playwright-cli eval "async () => {...}"`:
+clique, `await sleep(...)` do tamanho da animação real e só então leia o DOM.
+Respostas certas do quiz: em `QUESTION_BANK` a correta é sempre a **primeira**
+do array `options` (as alternativas são embaralhadas na tela, o texto não muda).
+Antes de "consertar" um jogo, reproduza o defeito com esse método.
+
 ## Comandos
 
 - `npm run dev` → http://localhost:5199 · `npm run build` → typecheck + build
