@@ -20,7 +20,8 @@ import {
 import { play } from "../lib/sound";
 import FoodPhoto, { thumb } from "../components/FoodPhoto";
 
-const CONFETTI_COLORS = ["#ea1d2c", "#f5a623", "#ffffff"];
+const CONFETTI_COLORS = ["#e31b28", "#f5a623", "#ffffff"];
+const CODIGOS_VISIVEIS = 5; // resto entra em "ver todos"
 
 /** "26/08/2026 às 19:04" — o parceiro precisa do horário, não só do dia. */
 function formatDateTime(iso: string | Date): string {
@@ -206,6 +207,9 @@ export default function Partner() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [confirmClear, setConfirmClear] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
+  // A lista de códigos é material de consulta: mostrar 12 de uma vez empurrava
+  // as ações do dia a dia (validar, gerar) pra fora da tela.
+  const [verTodosCodigos, setVerTodosCodigos] = useState(false);
   // Argumento de venda: começa fechado pra não atrapalhar quem só quer operar.
   const [whyOpen, setWhyOpen] = useState(false);
 
@@ -213,6 +217,7 @@ export default function Partner() {
   const codes = getTableCodes(selected);
   const coupons = getRestaurantCoupons(selected);
   const pending = getPendingCoupons(selected);
+  const codesVisiveis = verTodosCodigos ? codes : codes.slice(0, CODIGOS_VISIVEIS);
   const codesUsed = codes.filter((c) => c.usedAt).length;
   const couponsRedeemed = coupons.filter((c) => c.redeemedAt).length;
   const restaurantName = restaurants.find((r) => r.id === selected)?.name ?? "esta casa";
@@ -605,6 +610,35 @@ export default function Partner() {
           </p>
         )}
 
+        {/* Gerador com steppers */}
+        <div
+          className="anim-fade-up mb-6 rounded-card border border-ink/10 bg-white p-4 shadow-sm"
+          style={{ animationDelay: "340ms" }}
+        >
+          <div className="mb-4 font-display text-base font-bold">Gerar códigos de mesa</div>
+          <div className="mb-4 flex gap-3">
+            <Stepper label="Códigos" value={qty} min={1} max={50} onChange={setQty} />
+            <Stepper
+              label="Jogadas por código"
+              value={credits}
+              min={1}
+              max={20}
+              onChange={setCredits}
+            />
+          </div>
+          <button
+            className="press w-full rounded-card bg-brand-500 py-3.5 text-sm font-bold text-white transition-colors active:bg-brand-600"
+            onClick={() => {
+              play("tap");
+              generateTableCodes(selected, qty, credits);
+              forceUpdate((n) => n + 1);
+            }}
+          >
+            Gerar {qty} {qty === 1 ? "código" : "códigos"} · {credits}{" "}
+            {credits === 1 ? "jogada" : "jogadas"} cada
+          </button>
+        </div>
+
         {/* Sua tabela de prêmios: o painel afirma que a tabela é do dono, então
             ela precisa estar VISÍVEL — é a primeira pergunta que ele faz. A
             chance sai dos pesos, não é escrita à mão. */}
@@ -738,35 +772,6 @@ export default function Partner() {
               {copiado ? "Copiado" : "Copiar"}
             </button>
           </div>
-        </div>
-
-        {/* Gerador com steppers */}
-        <div
-          className="anim-fade-up mb-6 rounded-card border border-ink/10 bg-white p-4 shadow-sm"
-          style={{ animationDelay: "340ms" }}
-        >
-          <div className="mb-4 font-display text-base font-bold">Gerar códigos de mesa</div>
-          <div className="mb-4 flex gap-3">
-            <Stepper label="Códigos" value={qty} min={1} max={50} onChange={setQty} />
-            <Stepper
-              label="Jogadas por código"
-              value={credits}
-              min={1}
-              max={20}
-              onChange={setCredits}
-            />
-          </div>
-          <button
-            className="press w-full rounded-card bg-brand-500 py-3.5 text-sm font-bold text-white transition-colors active:bg-brand-600"
-            onClick={() => {
-              play("tap");
-              generateTableCodes(selected, qty, credits);
-              forceUpdate((n) => n + 1);
-            }}
-          >
-            Gerar {qty} {qty === 1 ? "código" : "códigos"} · {credits}{" "}
-            {credits === 1 ? "jogada" : "jogadas"} cada
-          </button>
         </div>
 
         {/* Como funciona na prática — liga os blocos que já estão nesta tela */}
@@ -906,7 +911,7 @@ export default function Partner() {
           className="anim-fade-up divide-y divide-ink/5 overflow-hidden rounded-card border border-ink/10 bg-white shadow-sm empty:hidden"
           style={{ animationDelay: "500ms" }}
         >
-          {codes.map((c) => (
+          {codesVisiveis.map((c) => (
             <div key={c.code} className="flex items-center justify-between px-4 py-3">
               {/* Código usado é apagado pela COR, não por opacity: opacity-40
                   derrubava o contraste pra 2,45 (mínimo 4,5) e o dono do
@@ -930,6 +935,22 @@ export default function Partner() {
             </div>
           ))}
         </div>
+
+        {codes.length > CODIGOS_VISIVEIS && (
+          <button
+            type="button"
+            onClick={() => {
+              play("tap");
+              setVerTodosCodigos((v) => !v);
+            }}
+            aria-expanded={verTodosCodigos}
+            className="press mt-3 min-h-11 w-full rounded-full border border-ink/15 text-[13px] font-bold text-ink/70"
+          >
+            {verTodosCodigos
+              ? "Mostrar só os recentes"
+              : `Ver todos os ${codes.length} códigos`}
+          </button>
+        )}
 
         {/* Rodapé: zerar a semente antes de gerar códigos ao vivo no pitch */}
         {showClearDemo && (

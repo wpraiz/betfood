@@ -1,6 +1,6 @@
 # STATUS — BetFood POC
 
-Atualizado: 2026-08-27 (ciclo 32 do loop de melhoria contínua)
+Atualizado: 2026-08-27 (ciclo 33 do loop de melhoria contínua)
 
 ## Onde está
 
@@ -50,6 +50,21 @@ acessibilidade (axe-core, zero violações nas telas principais).
 ---
 
 # Histórico dos ciclos
+
+## Ciclo 33 — o painel voltou a caber numa demonstração
+
+Medi o que 30 ciclos de acréscimos fizeram com a aba do parceiro: **3362px, 4
+telas de rolagem**, com "Gerar códigos de mesa" — a segunda ação do dia a dia —
+a duas telas do topo, depois da tabela de prêmios e do link.
+
+Reordenado por frequência de uso real: **validar cupom → gerar códigos** (as
+duas ações diárias, agora vizinhas) → métricas → tabela de prêmios → link →
+explicações → lista de códigos. E a lista, que é material de consulta, mostra
+os 5 mais recentes com um "Ver todos os N códigos" — 12 códigos de uma vez
+empurravam tudo pra fora da tela.
+
+Resultado medido: de 4,0 para **3,6 telas** com a lista recolhida, e o gerador
+subiu de 1734px para 1072px. O que o dono usa todo dia cabe na primeira rolagem.
 
 ## Ciclo 32 — "a tabela é sua" virou verdade: prêmios editáveis
 
