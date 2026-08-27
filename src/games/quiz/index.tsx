@@ -75,6 +75,91 @@ const QUESTION_BANK: QuizQuestion[] = [
     options: ["Camarão", "Lagosta", "Ostra", "Polvo"],
     correct: 0,
   },
+  {
+    question: "A paçoca de carne seca do sertão é feita pilando a carne com o quê?",
+    options: ["Farinha de mandioca", "Farinha de trigo", "Açúcar mascavo", "Fubá de milho"],
+    correct: 0,
+  },
+  {
+    question: "O caju que vira suco e doce no Nordeste é, botanicamente, o quê?",
+    options: [
+      "O pedúnculo — a castanha é o fruto",
+      "O fruto, e a castanha é a semente",
+      "Uma flor amadurecida",
+      "Uma raiz aérea",
+    ],
+    correct: 0,
+  },
+  {
+    question: "A moqueca capixaba se diferencia da baiana principalmente por não levar...",
+    options: ["Leite de coco e dendê", "Tomate", "Coentro", "Cebola"],
+    correct: 0,
+  },
+  {
+    question: "O que é o \"pirão\" que acompanha peixe e camarão no litoral nordestino?",
+    options: [
+      "Caldo engrossado com farinha de mandioca",
+      "Arroz cozido no caldo do peixe",
+      "Purê de batata com azeite",
+      "Molho de pimenta com limão",
+    ],
+    correct: 0,
+  },
+  {
+    question: "A tapioca de Natal fica pronta na chapa quando a goma...",
+    options: [
+      "Se aglutina com o calor, sem precisar de óleo",
+      "É frita em óleo quente",
+      "Cozinha em água fervente",
+      "Vai ao forno por 20 minutos",
+    ],
+    correct: 0,
+  },
+  {
+    question: "Qual peixe é o mais tradicional na mesa do litoral potiguar?",
+    options: ["Pescada amarela", "Salmão", "Bacalhau", "Truta"],
+    correct: 0,
+  },
+  {
+    question: "O bolo de rolo, doce típico do Nordeste, é enrolado com recheio de quê?",
+    options: ["Goiabada", "Doce de leite", "Chocolate", "Coco queimado"],
+    correct: 0,
+  },
+  {
+    question: "A castanha de caju é beneficiada de que forma antes de ir pra mesa?",
+    options: [
+      "Assada ou cozida pra retirar o líquido cáustico da casca",
+      "Só lavada em água corrente",
+      "Congelada por 24 horas",
+      "Curtida no sal por uma semana",
+    ],
+    correct: 0,
+  },
+  {
+    question: "O sarapatel, prato do Nordeste, leva principalmente...",
+    options: ["Vísceras de porco ou bode", "Peixe defumado", "Frango desfiado", "Camarão seco"],
+    correct: 0,
+  },
+  {
+    question: "A farofa de dendê e o vatapá são marcas de qual cozinha regional?",
+    options: ["Baiana", "Gaúcha", "Mineira", "Paranaense"],
+    correct: 0,
+  },
+  {
+    question: "Em Natal, o \"beiju\" é parente próximo de qual outra preparação?",
+    options: ["Tapioca", "Cuscuz", "Pão de queijo", "Polenta"],
+    correct: 0,
+  },
+  {
+    question: "O leite de coco, base de muitos pratos nordestinos, é extraído de quê?",
+    options: [
+      "Da polpa ralada do coco maduro, espremida",
+      "Da água que fica dentro do coco",
+      "Da casca fibrosa moída",
+      "Do broto da palmeira",
+    ],
+    correct: 0,
+  },
 ];
 
 // ---------------------------------------------------------------------------
