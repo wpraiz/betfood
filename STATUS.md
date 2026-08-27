@@ -374,6 +374,21 @@ perguntas estouravam o timer de 15s enquanto eu media entre comandos de CLI;
 no instante zero. Método correto (agora no CLAUDE.md): a partida inteira dentro
 de um único `eval` assíncrono, com esperas do tamanho das animações reais.
 
+## Ciclo 12 — peso da estreia medido e cortado
+
+Primeira medição real de carregamento (produção, https://betfood.vercel.app):
+HTML 396ms, load 1,15s, FCP 1,2s, JS 88 KB, CSS 11 KB — e **219 KB de imagens**,
+o maior item de longe. Com 4G simulado (1,6 Mbps, 150ms de latência) e cache
+limpo, o shell abriu instantâneo (o service worker do ciclo 4 funciona), mas a
+última foto só chegou em **1,56s**.
+
+Causa: a estreia baixava 5 fotos — a de fundo do slide 1 e as 4 do mosaico do
+slide 3, que muita gente nem vê (pula direto). Agora o mosaico só monta quando
+o usuário sai do slide 1.
+
+Medido depois, em produção: **1 imagem / 59 KB na estreia** (era 5 / 219 KB),
+e as 4 restantes entram ao navegar. Verificado que o slide 3 continua completo.
+
 ## Backlog priorizado (pedido do José, 26/ago à noite)
 
 1. **Subir o nível dos games além da roleta** — "memória e demais tão muito low
