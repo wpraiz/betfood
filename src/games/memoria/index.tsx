@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import confetti from "canvas-confetti";
 import { play } from "../../lib/sound";
+import { reduzMovimento } from "../../lib/motion";
 import type { GameProps, GameResult } from "../../lib/types";
 
 // Pares com FOTO: pratos/ingredientes da casa (Unsplash fixo, mesmo padrão do seed)
@@ -159,7 +160,9 @@ function Memoria({ restaurant, drawPrize, startPlay, onFinish }: GameProps) {
       navigator.vibrate(isFlawless ? [60, 40, 60, 40, 140] : [60, 40, 120]);
     }
 
-    later(() => finish({ won, prize }), isFlawless ? 1900 : 1500);
+    // A folga extra do "sem erro" existe pra caber a última chuva de confetti;
+    // sem animação ela vira espera vazia.
+    later(() => finish({ won, prize }), isFlawless && !reduzMovimento() ? 1900 : 1500);
   };
 
   const handleLose = () => {

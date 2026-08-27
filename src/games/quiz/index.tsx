@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import confetti from "canvas-confetti";
 import { play } from "../../lib/sound";
+import { reduzMovimento } from "../../lib/motion";
 import type { GameProps, Prize } from "../../lib/types";
 
 // ---------------------------------------------------------------------------
@@ -442,6 +443,12 @@ function Quiz({ restaurant, drawPrize, startPlay, onFinish }: GameProps) {
   // Contagem animada do placar na tela final
   useEffect(() => {
     if (phase !== "end") return;
+    // Menos movimento: o placar aparece pronto. A contagem é pura decoração —
+    // esperar 380ms por ponto sem ver número subindo é só atraso.
+    if (reduzMovimento()) {
+      setDisplayScore(score);
+      return;
+    }
     setDisplayScore(0);
     if (score === 0) return;
     let n = 0;

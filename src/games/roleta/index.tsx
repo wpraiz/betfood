@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import confetti from "canvas-confetti";
 import { play, stop } from "../../lib/sound";
+import { reduzMovimento } from "../../lib/motion";
 import type { GameProps, Prize } from "../../lib/types";
 
 const SLICES = 8;
@@ -15,10 +16,9 @@ const RESULT_DELAY = 1600; // pausa mostrando o resultado antes do onFinish
  * sem o teatro.
  */
 function tempos() {
-  const reduz =
-    typeof window !== "undefined" &&
-    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-  return reduz ? { giro: 700, resultado: 600 } : { giro: SPIN_MS, resultado: RESULT_DELAY };
+  return reduzMovimento()
+    ? { giro: 700, resultado: 600 }
+    : { giro: SPIN_MS, resultado: RESULT_DELAY };
 }
 const LIGHTS = 16; // "lâmpadas" do aro
 

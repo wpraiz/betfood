@@ -1,6 +1,6 @@
 # STATUS — BetFood POC
 
-Atualizado: 2026-08-27 (ciclo 38 do loop de melhoria contínua)
+Atualizado: 2026-08-27 (ciclo 39 do loop de melhoria contínua)
 
 ## Onde está
 
@@ -50,6 +50,20 @@ acessibilidade (axe-core, zero violações nas telas principais).
 ---
 
 # Histórico dos ciclos
+
+## Ciclo 39 — a preferência de menos movimento virou fonte única
+
+Continuação do ciclo 38, agora nos outros jogos. Criado `src/lib/motion.ts` com
+`reduzMovimento()` — um lugar só pra consultar a preferência do sistema, com a
+regra escrita no arquivo: **encurtar espera decorativa, nunca tempo de leitura**
+(ver o prêmio leva o mesmo tempo pra todo mundo).
+
+- **Quiz**: a contagem animada do placar (380ms por ponto) some — o número
+  aparece pronto. Verificado com a preferência ligada: o "3/3" já estava na tela
+  no instante do fim, em vez de subir devagar sem animação nenhuma.
+- **Memória**: a folga extra da vitória sem erros (1900ms em vez de 1500ms)
+  existia pra caber a última chuva de confetti; sem animação, vira espera vazia.
+- **Roleta**: passou a usar o helper em vez da checagem local do ciclo 38.
 
 ## Ciclo 38 — quem pede menos movimento esperava 4s olhando uma roda parada
 
