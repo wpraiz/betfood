@@ -321,6 +321,21 @@ parceiro e jogos. Único ajuste: o nome do nível some abaixo de 400px
 (`min-[400px]`) em vez de aparecer cortado. Também verificado na tela: memória
 vira carta com foto e cobra a ficha só na primeira carta.
 
+## Ciclo 9 — cupons de demonstração vazavam pra carteira do jogador
+
+Bug introduzido no ciclo 2 (semente de demonstração) e só encontrado agora, numa
+varredura com estado zerado: quem abria o app pela primeira vez ia em "Meus
+cupons" e via **16 cupons que nunca ganhou**, vários já usados/expirados. Num app
+que precisa provar que o prêmio é real, isso derruba a credibilidade logo na
+primeira impressão — e nenhum dos ciclos anteriores pegou porque eu sempre
+testava com estado já usado.
+
+Correção em `store.ts`: `getCoupons()` (carteira do jogador) filtra `demo`;
+`getRestaurantCoupons()` e `getPendingCoupons()` (visão da casa) continuam
+incluindo, que é o motivo de existirem. Verificado nos dois lados: carteira nova
+mostra o estado vazio com CTA "Ir jogar"; painel do parceiro segue com métricas
+e 1 cupom pendente pra validar ao vivo.
+
 ## Backlog priorizado (pedido do José, 26/ago à noite)
 
 1. **Subir o nível dos games além da roleta** — "memória e demais tão muito low

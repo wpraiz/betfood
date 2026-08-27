@@ -68,6 +68,11 @@ editorial serifado Broadsheet ("não tem cara de app").
   (códigos e cupons marcados `demo: true`) pra o painel do parceiro não abrir
   zerado no pitch. `clearDemoData()` limpa antes de uma demo ao vivo;
   `hasDemoData()` diz se ainda existem.
+  **Regra de leitura (não quebre)**: `getCoupons()` é a carteira DO JOGADOR e
+  filtra `demo`; `getRestaurantCoupons()`/`getPendingCoupons()` são a visão DA
+  CASA e incluem. Os cupons de demonstração representam clientes anteriores do
+  restaurante — se vazarem pra carteira, quem abre o app encontra prêmios que
+  nunca ganhou (aconteceu; ver STATUS ciclo 9).
 
 ## Arquitetura
 

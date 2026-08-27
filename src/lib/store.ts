@@ -342,8 +342,15 @@ export function awardCoupon(restaurantId: string, gameId: string, prizeLabel: st
   return coupon;
 }
 
+/**
+ * Cupons DO JOGADOR (carteira). Exclui a semente de demonstração de propósito:
+ * aqueles cupons representam clientes ANTERIORES da casa — existem só pra o
+ * painel do parceiro ter histórico e ter o que validar. Mostrá-los aqui faria
+ * quem abre o app pela primeira vez encontrar 16 prêmios que nunca ganhou, o
+ * que destrói justamente a credibilidade que o app precisa ter.
+ */
 export function getCoupons(): Coupon[] {
-  return load().coupons;
+  return load().coupons.filter((c) => !c.demo);
 }
 
 export function redeemCoupon(id: string) {
@@ -375,6 +382,7 @@ export function getTableCodes(restaurantId: string): TableCode[] {
   return load().tableCodes.filter((t) => t.restaurantId === restaurantId);
 }
 
+/** Cupons emitidos pela CASA (painel do parceiro) — inclui os de demonstração. */
 export function getRestaurantCoupons(restaurantId: string): Coupon[] {
   return load().coupons.filter((c) => c.restaurantId === restaurantId);
 }
