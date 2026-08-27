@@ -143,8 +143,11 @@ export default function Wallet() {
             // "Expirado" é um estado próprio: cupom que venceu SEM ter sido
             // usado. Quem já usou continua mostrando só "Usado".
             const expired = !used && Boolean(info?.expired);
-            const dim = used ? "opacity-40" : expired ? "opacity-55" : "";
-            const stripe = used ? "#dedbda" : expired ? "#a9a4a2" : "#ea1d2c";
+            // opacity forte derruba o contraste abaixo de AA (medido 2,45 num
+            // caso equivalente no painel). O cupom gasto fica discreto por
+            // saturação/carimbo, não por transparência que apaga o texto.
+            const dim = used ? "opacity-70" : expired ? "opacity-75" : "";
+            const stripe = used ? "#dedbda" : expired ? "#a9a4a2" : "#e31b28";
             return (
               <div
                 key={c.id}
@@ -158,9 +161,10 @@ export default function Wallet() {
                 <div className={dim}>
                   <div className="flex items-center gap-3 p-4 pb-2.5 pl-5">
                     {r && (
+                      {/* alt vazio: o nome da casa está no texto ao lado. */}
                       <FoodPhoto
                         src={thumb(r.photo, 160)}
-                        alt={r.name}
+                        alt=""
                         className="h-11 w-11 rounded-full"
                       />
                     )}

@@ -274,9 +274,10 @@ export default function Home() {
                     onClick={() => pickCasa(r)}
                     className="press flex items-center gap-3 rounded-card border border-ink/10 p-2.5 text-left"
                   >
+                    {/* alt vazio: o nome da casa vem no texto ao lado. */}
                     <FoodPhoto
                       src={thumb(r.photo, 160)}
-                      alt={r.name}
+                      alt=""
                       className="h-12 w-12 shrink-0 rounded-xl"
                     />
                     <div className="min-w-0 flex-1">

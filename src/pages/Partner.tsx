@@ -296,11 +296,9 @@ export default function Partner() {
                   on ? "border-brand-500 bg-brand-50" : "border-ink/10 bg-white"
                 }`}
               >
-                <FoodPhoto
-                  src={thumb(r.photo, 160)}
-                  alt={r.name}
-                  className="h-8 w-8 rounded-full"
-                />
+                {/* alt vazio: o nome da casa já vem no texto ao lado — repetir
+                    faria o leitor de tela anunciar duas vezes. */}
+                <FoodPhoto src={thumb(r.photo, 160)} alt="" className="h-8 w-8 rounded-full" />
                 <span
                   className={`whitespace-nowrap text-sm font-semibold ${
                     on ? "text-brand-700" : "text-ink/70"
@@ -318,7 +316,9 @@ export default function Partner() {
           className="anim-fade-up mb-6 rounded-card border border-ink/10 bg-white p-4 shadow-sm"
           style={{ animationDelay: "20ms" }}
         >
-          <div className="font-display text-base font-bold">Validar cupom</div>
+          {/* h2 de verdade: o h3 dos cupons pendentes vem logo abaixo e a
+              hierarquia precisa ser h1 → h2 → h3 pra leitor de tela. */}
+          <h2 className="font-display text-base font-bold">Validar cupom</h2>
           <p className="mt-1 text-xs leading-relaxed text-ink/70">
             Digite o código que o cliente mostrou. Se estiver valendo, a baixa é dada na hora.
           </p>
@@ -704,13 +704,17 @@ export default function Partner() {
           style={{ animationDelay: "500ms" }}
         >
           {codes.map((c) => (
-            <div
-              key={c.code}
-              className={`flex items-center justify-between px-4 py-3 ${
-                c.usedAt ? "opacity-40" : ""
-              }`}
-            >
-              <span className="font-display text-base font-bold tracking-[0.2em]">{c.code}</span>
+            <div key={c.code} className="flex items-center justify-between px-4 py-3">
+              {/* Código usado é apagado pela COR, não por opacity: opacity-40
+                  derrubava o contraste pra 2,45 (mínimo 4,5) e o dono do
+                  restaurante ainda precisa conseguir ler o código. */}
+              <span
+                className={`font-display text-base font-bold tracking-[0.2em] ${
+                  c.usedAt ? "text-ink/65" : ""
+                }`}
+              >
+                {c.code}
+              </span>
               {c.usedAt ? (
                 <span className="rounded-full bg-surface px-3 py-1 text-[10px] font-bold uppercase tracking-[0.15em] text-ink/65">
                   Usado
