@@ -202,7 +202,7 @@ function Roleta({ restaurant, drawPrize, startPlay, onFinish }: GameProps) {
       {/* Em tela baixa (celular deitado, ~390px de altura) a roda de 340px
           empurrava o botão "Girar agora" pra fora da tela. Encolhe pra caber. */}
       <div
-        className="anim-pop relative w-full max-w-[340px] [@media(max-height:560px)]:max-w-[190px]"
+        className="anim-pop relative w-full max-w-[340px] [@media(max-height:560px)]:max-w-[164px]"
         style={{ animationDelay: "80ms" }}
       >
         {/* Ponteiro */}
