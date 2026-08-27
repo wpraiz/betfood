@@ -110,6 +110,20 @@ Armadilhas do playwright-cli: não navega de `https://betfood.vercel.app` para
 abra direto no destino. Prefira `getByRole('button', { name: ... })` a refs de
 snapshot, que expiram a cada re-render.
 
+### Não martele a produção com verificação automática
+
+A Vercel tem proteção antibot. Depois de dezenas de `curl` em laço + recargas de
+navegador headless em poucas horas, `betfood.vercel.app` passou a responder
+**403 "Vercel Security Checkpoint"** (ciclo 16) — inclusive pra navegador. Quem
+recebe o link nesse momento pode topar com a barreira.
+
+Regra: **verifique o build no preview local** (`npm run build && npx vite
+preview --port 5188`) e vá à produção **uma vez**, no fim do ciclo, sem laço de
+polling. Se precisar esperar o deploy, espere por tempo (uma pausa única), não
+por repetição. Se o checkpoint aparecer: pare de acessar por alguns minutos; ele
+cede sozinho. Se persistir, o José pode desligar em Vercel → Project →
+Firewall → Attack Challenge Mode.
+
 ### Testar JOGO exige um único `eval` assíncrono (não vários comandos)
 
 Cada chamada de CLI custa segundos. Os jogos têm relógio próprio (quiz: 15s por

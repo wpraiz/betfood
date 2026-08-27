@@ -453,6 +453,28 @@ Confirmação inline (nunca `window.confirm`, que trava a página) e texto
 explicando exatamente o que some. Verificado em produção. Registrado na skill
 `demo-poc`.
 
+## Ciclo 16 — celular deitado, cache envenenado e o checkpoint da Vercel
+
+**Celular deitado (paisagem, 844x390)**: o botão "Girar agora" ficava em y=1834
+numa tela de 390px — completamente fora, e o jogo é uma tela de uma ação só.
+A roda agora encolhe em telas baixas (`[@media(max-height:560px)]`) e o herói da
+Home é escalado (as luzes são posicionadas em pixels, então encolher a caixa
+desalinharia — `scale` mantém a proporção). Botão passou a caber.
+
+**Bug meu, de infraestrutura, com potencial de 1 ano**: o `vercel.json` (ciclo 2)
+marcava `/assets/(.*)` como `immutable, max-age=31536000`. A regra casa pelo
+caminho e vale também pra **404** — quem pedisse um asset durante a propagação
+de um deploy guardaria o erro por um ano e veria o app **sem estilo nenhum**.
+Aconteceu comigo: CSS baixava 200 por `fetch`, mas o `<link>` batia num 404
+cacheado. Removi a regra (a Vercel já dá cache longo a arquivo com hash) e
+acrescentei rede de segurança no `index.html`: se o `body` não pintar, o app
+recarrega a folha com parâmetro novo, uma vez por sessão.
+
+**Consequência do meu método**: dezenas de `curl` em laço + recargas headless
+acionaram a proteção antibot da Vercel — o site passou a responder
+403 "Security Checkpoint". Regra nova no CLAUDE.md: validar no preview local e
+tocar a produção uma vez por ciclo, sem polling.
+
 ## Backlog priorizado (pedido do José, 26/ago à noite)
 
 1. **Subir o nível dos games além da roleta** — "memória e demais tão muito low
