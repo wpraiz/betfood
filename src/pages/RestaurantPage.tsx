@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { GAMES } from "../games";
+import { GAMES, prefetchGame } from "../games";
 import GameThumb from "../components/GameThumb";
 import { availablePlays, getRestaurant, redeemTableCode } from "../lib/store";
 import { play } from "../lib/sound";
@@ -194,6 +194,7 @@ export default function RestaurantPage() {
             <Link
               key={g.id}
               to={`/r/${restaurant.id}/jogar/${g.id}`}
+              onPointerDown={() => prefetchGame(g.id)}
               onClick={() => play("tap")}
               className="anim-fade-up press overflow-hidden rounded-card bg-white shadow-md"
               style={{ animationDelay: `${180 + i * 70}ms` }}

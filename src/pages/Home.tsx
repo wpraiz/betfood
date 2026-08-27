@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { GAMES } from "../games";
+import { GAMES, prefetchGame } from "../games";
 import { getRestaurants } from "../lib/store";
 import { play } from "../lib/sound";
 import type { Restaurant } from "../lib/types";
@@ -121,6 +121,7 @@ export default function Home() {
           {GAMES.map((g, i) => (
             <button
               key={g.id}
+              onPointerDown={() => prefetchGame(g.id)}
               onClick={() => playGame(g.id)}
               className="anim-fade-up press overflow-hidden rounded-card bg-white text-left shadow-md"
               style={{ animationDelay: `${120 + i * 60}ms` }}
