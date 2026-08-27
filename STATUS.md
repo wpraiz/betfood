@@ -1,6 +1,6 @@
 # STATUS — BetFood POC
 
-Atualizado: 2026-08-27 (ciclo 41 do loop de melhoria contínua)
+Atualizado: 2026-08-27 (ciclo 42 do loop de melhoria contínua)
 
 ## Onde está
 
@@ -50,6 +50,21 @@ acessibilidade (axe-core, zero violações nas telas principais).
 ---
 
 # Histórico dos ciclos
+
+## Ciclo 42 — a memória cobrava a ficha sem contar a regra
+
+Nem toda partida chega a sortear prêmio: o quiz exige 2 acertos de 3 e a memória
+exige fechar os pares dentro do limite. O quiz avisa antes ("3 perguntas. 2
+acertos. Prêmio na mesa." e "2 de 3 libera o prêmio"); **a memória não dizia
+nada** — o jogador só descobria o limite olhando as pills do placar, e só
+entendia a consequência ao perder, com a ficha já gasta.
+
+Agora, acima do tabuleiro: "Feche os 8 pares em até 20 tentativas pra concorrer
+ao prêmio." Números derivados (`FOODS.length`, `MAX_MOVES`), como manda a regra
+do projeto — se o limite mudar, o texto acompanha.
+
+Regra que fica: **condição pra concorrer ao prêmio se declara antes da ficha
+sair**, nunca no fim.
 
 ## Ciclo 41 — o quiz dava 15 segundos pra qualquer pergunta
 

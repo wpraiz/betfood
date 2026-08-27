@@ -55,6 +55,9 @@ editorial serifado Broadsheet ("não tem cara de app").
 - **Sem beco sem saída**: toda tela terminal precisa de pelo menos uma saída
   clara; o shell (HUD + tab bar) só some durante a partida — ver
   `ImmersiveContext` documentado em `src/components/Layout.tsx`.
+- **Condição do prêmio se declara ANTES da ficha sair**: se o jogo pode
+  terminar sem sortear (quiz precisa de 2 de 3, memória precisa fechar no
+  limite), diga isso na tela inicial do jogo — nunca só no resultado (ciclo 42).
 - **Copy honesta**: não prometer prêmio garantido (40% do peso é "não foi dessa
   vez"); casas fictícias levam selo "Casa exemplo".
 

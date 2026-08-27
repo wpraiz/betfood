@@ -263,6 +263,12 @@ function Memoria({ restaurant, drawPrize, startPlay, onFinish }: GameProps) {
           Ache os pares do cardápio do{" "}
           <span className="font-display font-semibold text-ink">{restaurant.name}</span>.
         </p>
+        {/* A regra precisa vir ANTES da ficha ser cobrada: estourar o limite
+            encerra a rodada sem sorteio nenhum. O quiz já avisava ("2 de 3
+            libera o prêmio"); aqui o jogador descobria no fim. */}
+        <p className="mt-1.5 text-xs text-ink/70">
+          Feche os {FOODS.length} pares em até {MAX_MOVES} tentativas pra concorrer ao prêmio.
+        </p>
       </div>
 
       {/* Placar: pills de momentum das tentativas + pares encontrados */}
