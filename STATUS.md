@@ -475,6 +475,24 @@ acionaram a proteção antibot da Vercel — o site passou a responder
 403 "Security Checkpoint". Regra nova no CLAUDE.md: validar no preview local e
 tocar a produção uma vez por ciclo, sem polling.
 
+## Ciclo 17 — conteúdo pra quem joga várias rodadas
+
+Pensando em quem vai jogar seguidas vezes hoje:
+
+- **Quiz dobrou: 12 → 24 perguntas.** Sorteia 3 por partida, então a repetição
+  só começa lá pela 8ª partida (era a 4ª). Todas verificáveis, sobre cozinha
+  potiguar/nordestina (paçoca de carne seca, caju e a castanha, pirão, bolo de
+  rolo, sarapatel, beiju, leite de coco…). Regra do banco mantida: **a resposta
+  certa é sempre a primeira do array `options`** — o embaralhamento é feito na
+  tela. Verificado jogando uma partida completa: 3/3.
+- **Etiquetas da memória conferidas contra a foto real** (duas estavam
+  imprecisas): "Frango" virou "Churrasco" (a foto é uma tábua mista) e "Prato
+  feito" virou "Petiscos" (a foto são vários pratos pequenos). Detalhe que
+  aparece na tela e passa desleixo se ficar errado.
+
+Validação feita no **preview local** (`npx vite preview --port 5188`), sem
+martelar a produção — regra do ciclo 16.
+
 ## Backlog priorizado (pedido do José, 26/ago à noite)
 
 1. **Subir o nível dos games além da roleta** — "memória e demais tão muito low

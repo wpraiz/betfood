@@ -17,10 +17,12 @@ const FOODS: Food[] = [
   { id: "tapioca", label: "Tapioca", photo: IMG("1484723091739-30a097e8f929") },
   { id: "picanha", label: "Picanha", photo: IMG("1544025162-d76694265947") },
   { id: "pizza", label: "Pizza", photo: IMG("1513104890138-7c749659a591") },
-  { id: "prato-feito", label: "Prato feito", photo: IMG("1504674900247-0877df9cc836") },
+  { id: "petiscos", label: "Petiscos", photo: IMG("1504674900247-0877df9cc836") },
   { id: "do-chef", label: "Do chef", photo: IMG("1414235077428-338989a2e8c0") },
   { id: "salmao", label: "Salmão", photo: IMG("1467003909585-2f8a72700288") },
-  { id: "frango", label: "Frango", photo: IMG("1555939594-58d7cb561ad1") },
+  // Etiquetas conferidas contra a foto real (ciclo 17): esta é uma tábua de
+  // churrasco misto, não só frango.
+  { id: "churrasco", label: "Churrasco", photo: IMG("1555939594-58d7cb561ad1") },
 ];
 
 const MAX_MOVES = 20;
