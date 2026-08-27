@@ -227,7 +227,9 @@ export default function Hud() {
               390px e o nome truncaria ("BRO..."), o que é pior que omitir. */}
           <div className="min-w-0 flex-1" title={`${progress.levelTitle} · ${progress.xp} XP`}>
             {!showCountdown && (
-              <div className="flex items-baseline">
+              // min-[400px]: em iPhone SE (375px) não sobra largura e o nome
+              // sairia cortado ("BRON..."); melhor mostrar só a barra.
+              <div className="hidden items-baseline min-[400px]:flex">
                 <span className="truncate text-[10px] font-bold uppercase tracking-[0.04em] text-ink/65">
                   {progress.levelName}
                 </span>

@@ -296,6 +296,31 @@ Tema: transformar link colado no WhatsApp em toque, e toque em app instalado.
 Verificado no browser (390x844), console limpo. **A dica de instalação e o
 compartilhamento nativo só dá pra validar no iPhone real.**
 
+## Ciclos 6-8 — sessão que não morre + argumento de venda + telas estreitas
+
+**Ciclo 6 — fichas se recuperam sozinhas.** O teste com amigos morria em ~5min
+(50 fichas = 5 jogadas, depois só no dia seguinte). Agora `store.ts` credita
+`REGEN_AMOUNT` 10 a cada `REGEN_INTERVAL_MS` 10min até o teto `REGEN_CAP` 50
+(fichas de código da mesa ficam acima do teto e não somem). `msToNextChip()`
+alimenta a contagem no HUD e na tela de fichas esgotadas, que se libera sozinha
+quando a ficha cai. Cuidado tomado: no teto o relógio não corre e só regrava
+depois de um intervalo — senão o HUD (poll de 700ms) gravaria sem parar.
+
+**Ciclo 6 — painel do parceiro vira argumento.** "Como funciona na prática" em
+3 passos numerados (cada passo aponta o bloco correspondente da própria tela) e
+"Por que ter o BetFood na casa" (colapsável, 4 pontos) — todos os números vêm do
+próprio app, nenhuma estatística de mercado inventada.
+
+**Ciclo 7 — HUD adaptativo.** Com mudo + ajuda + bônus + contador, a linha não
+cabia e o nível truncava. Agora: saldo curto → contador entra e o nome do nível
+sai; saldo folgado → nome volta.
+
+**Ciclo 8 — varredura em tela estreita (iPhone SE, 375px).** Nenhuma tela
+estoura na horizontal e nenhum alvo de toque abaixo de 44px em Home, carteira,
+parceiro e jogos. Único ajuste: o nome do nível some abaixo de 400px
+(`min-[400px]`) em vez de aparecer cortado. Também verificado na tela: memória
+vira carta com foto e cobra a ficha só na primeira carta.
+
 ## Backlog priorizado (pedido do José, 26/ago à noite)
 
 1. **Subir o nível dos games além da roleta** — "memória e demais tão muito low
