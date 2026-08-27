@@ -1,13 +1,12 @@
 # STATUS — BetFood POC
 
-Atualizado: 2026-08-27 (ciclo 46 do loop de melhoria contínua)
+Atualizado: 2026-08-27 (ciclo 47 do loop de melhoria contínua)
 
 ## Onde está
 
-**ATENÇÃO (ciclo 46): a produção está DESATUALIZADA** — os deploys estão
-falhando desde ~06h e o site serve a versão do ciclo 33. Ver ciclo 46 abaixo.
-
-**URL: https://betfood.vercel.app**
+**No ar e atualizado: https://betfood.vercel.app**
+(Os deploys ficaram 18h quebrados por um `vercel.json` inválido — resolvido no
+ciclo 47. Depois de todo push, confirme que o bundle servido bate com o local.)
 Todo push em `main` vira deploy automático (GitHub `wpraiz/betfood`, público).
 
 O app está completo e verificado ponta a ponta em produção: onboarding, Home
@@ -53,6 +52,27 @@ acessibilidade (axe-core, zero violações nas telas principais).
 ---
 
 # Histórico dos ciclos
+
+## Ciclo 47 — causa encontrada: um comentário no vercel.json
+
+O que derrubou 18 horas de deploys foi uma chave `"comment"` que **eu** coloquei
+no `vercel.json` no ciclo 16, pra explicar por que não havia regra de cache em
+`/assets`. A Vercel **valida esse arquivo contra um esquema** e rejeita
+propriedade desconhecida — o deploy falha antes do build, sem erro de
+compilação, e o push segue parecendo normal.
+
+Como fechei o diagnóstico: os horários bateram. O último deploy bem-sucedido
+(06:08 UTC = 03:08 local) é o commit imediatamente **anterior** à edição do
+`vercel.json` (03:12 local). Antes disso eu já tinha descartado erro de código
+(clone limpo + `npm ci` + build passou) e erro de caixa em imports (varredura).
+
+Corrigido: `vercel.json` só com chaves do esquema; a explicação foi pro
+CLAUDE.md, junto com a regra nova — **depois de todo push, confirmar que o
+deploy saiu**, comparando o bundle servido com o local. São 5 segundos que
+evitam horas verificando uma versão que não está no ar.
+
+A hipótese do ciclo 46 (limite diário por causa do projeto duplicado) estava
+errada; o `betfood-poc` duplica deploys mas não era a causa.
 
 ## Ciclo 46 — DESCOBERTA GRAVE: produção 15h atrasada, deploys falhando
 
