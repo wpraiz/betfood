@@ -247,8 +247,14 @@ export default function Welcome() {
                   className={`relative aspect-square overflow-hidden rounded-2xl ${on(idx === 2, "anim-pop")}`}
                   style={{ animationDelay: `${i * 90}ms` }}
                 >
-                  <div className="absolute inset-0">
-                    <FoodPhoto src={thumb(r.photo, 400)} alt={r.name} className="h-full w-full" />
+                  {/* As 4 fotos do mosaico só entram quando o usuário sai do
+                      slide 1. Carregá-las de cara dobra o peso de imagem da
+                      estreia (medido: 219 KB, a última chegando em 1,56s no 4G)
+                      por causa de um slide que muita gente nem vê. */}
+                  <div className="absolute inset-0 bg-surface">
+                    {idx >= 1 && (
+                      <FoodPhoto src={thumb(r.photo, 400)} alt={r.name} className="h-full w-full" />
+                    )}
                   </div>
                   <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
                   <span className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-white/95 px-2 py-0.5 text-[11px] font-bold text-ink shadow-sm">
