@@ -8,7 +8,10 @@ description: Roteiro e preparação da demo/pitch da POC BetFood — sobe o dev 
 ## Preparar
 
 1. `npm run dev` → http://localhost:5199 (celular na mesma rede: `npx vite --host`).
-2. Estado limpo pra ver o onboarding: no DevTools → `localStorage.clear()` (ou aba anônima). Não fazer isso no meio da demo.
+2. Estado limpo pra ver o onboarding: **aba Parceiro → rodapé → "Recomeçar do
+   zero (apresentação)"** apaga tudo do aparelho e volta pra tela de
+   boas-vindas. É o jeito de apresentar pra uma pessoa depois da outra sem
+   DevTools. (Aba anônima também serve; o app funciona lá, só não guarda nada.)
 3. Som do dispositivo LIGADO — os SFX são metade do impacto.
 4. **Wi-fi ruim no restaurante não derruba a demo**: em produção um service
    worker (`public/sw.js`) guarda o app e os 13 MP3 na primeira visita, então

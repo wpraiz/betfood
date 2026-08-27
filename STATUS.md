@@ -439,6 +439,20 @@ recarrega o documento** — cheguei a acusar o service worker de servir versão
 velha quando era a minha própria página nunca ter recarregado. Use
 `page.reload()` de verdade antes de conferir qualquer deploy.
 
+## Ciclo 15 — aba anônima e reset de apresentação
+
+**Modo privado testado** (Safari anônimo faz `localStorage.setItem` lançar):
+simulei a falha de gravação e joguei uma rodada completa em produção — Home,
+carteira, painel e uma partida inteira com vitória, **zero erro**. O app degrada
+como deveria: funciona normalmente, só não guarda progresso entre sessões.
+
+**Novo: "Recomeçar do zero (apresentação)"** no rodapé do painel do parceiro.
+Apaga todas as chaves `betfood-*` do aparelho e volta pra tela de boas-vindas —
+serve pra mostrar a POC pra uma pessoa depois da outra sem abrir DevTools.
+Confirmação inline (nunca `window.confirm`, que trava a página) e texto
+explicando exatamente o que some. Verificado em produção. Registrado na skill
+`demo-poc`.
+
 ## Backlog priorizado (pedido do José, 26/ago à noite)
 
 1. **Subir o nível dos games além da roleta** — "memória e demais tão muito low
