@@ -1,6 +1,6 @@
 # STATUS — BetFood POC
 
-Atualizado: 2026-08-27 (ciclo 34 do loop de melhoria contínua)
+Atualizado: 2026-08-27 (ciclo 35 do loop de melhoria contínua)
 
 ## Onde está
 
@@ -50,6 +50,21 @@ acessibilidade (axe-core, zero violações nas telas principais).
 ---
 
 # Histórico dos ciclos
+
+## Ciclo 35 — o teclado do cliente estava atrapalhando
+
+Continuando pelos gestos físicos: **digitar o código da mesa** é o que todo
+cliente faz sentado à mesa. O campo do caixa (usado pelo dono) já tinha os
+ajustes de teclado; **o do cliente não tinha nenhum**.
+
+Sem eles, o iOS autocapitaliza como frase, oferece autocorreção em cima de um
+código aleatório e o "Enter" não vira ação. Agora o campo tem
+`autoCapitalize="characters"`, `autoCorrect/autoComplete="off"`,
+`spellCheck={false}`, `maxLength` e `enterKeyHint="go"`, e o texto vira maiúsculo
+de verdade enquanto se digita (antes só *parecia* maiúsculo por CSS).
+
+Verificado: digitei o código em minúsculo, o campo mostrou "MEGEGV", e o Enter
+resgatou direto — "+30 fichas na sua conta!".
 
 ## Ciclo 34 — o código em tela cheia, pensado pro garçom
 

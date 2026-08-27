@@ -170,11 +170,22 @@ export default function RestaurantPage() {
             </span>
           </div>
           <div className="mt-4 flex gap-2">
+            {/* Este é o campo que TODO cliente usa, sentado à mesa, digitando
+                6 caracteres num teclado de celular. Sem estes atributos o iOS
+                autocapitaliza como frase, sugere correção e o "Enter" não vira
+                ação — o mesmo tratamento que o campo do caixa já tinha. */}
             <input
               value={code}
-              onChange={(e) => setCode(e.target.value)}
+              onChange={(e) => setCode(e.target.value.toUpperCase())}
               onKeyDown={(e) => e.key === "Enter" && redeem()}
               placeholder="Código da mesa"
+              aria-label="Código da mesa"
+              maxLength={12}
+              autoCapitalize="characters"
+              autoCorrect="off"
+              autoComplete="off"
+              spellCheck={false}
+              enterKeyHint="go"
               className="min-h-11 min-w-0 flex-1 rounded-full border border-ink/15 bg-paper px-4 py-2.5 text-sm font-semibold uppercase tracking-wider placeholder:font-normal placeholder:normal-case placeholder:tracking-normal placeholder:text-ink/65 focus:border-brand-500 focus:outline-none"
             />
             <button
