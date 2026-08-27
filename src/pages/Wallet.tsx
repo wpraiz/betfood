@@ -160,8 +160,8 @@ export default function Wallet() {
                 {/* Restaurante + prêmio */}
                 <div className={dim}>
                   <div className="flex items-center gap-3 p-4 pb-2.5 pl-5">
+                    {/* alt vazio: o nome da casa está no texto ao lado. */}
                     {r && (
-                      {/* alt vazio: o nome da casa está no texto ao lado. */}
                       <FoodPhoto
                         src={thumb(r.photo, 160)}
                         alt=""
