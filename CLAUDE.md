@@ -170,6 +170,16 @@ você audita o app errado.
   `dist/index.html` local após `npm run build`.
 - GitHub Pages foi um plano B abandonado (branch `gh-pages` apagada). Ignorar.
 
+## Vocabulário fixo (uma coisa, um nome)
+
+- **ficha** — a moeda. Único número de saldo mostrado ao jogador.
+- **jogada** — uma partida inteira; é o que custa `CHIP_COST` fichas.
+- **tentativa** — movimento DENTRO de um jogo (par de cartas na memória).
+  Nunca chame isso de "jogada": o HUD mostra fichas na mesma tela e "20 jogadas
+  restantes" parecia saldo de 200 fichas (corrigido no ciclo 28).
+- **casa** — o restaurante, na voz do app. "restaurante" só em texto formal.
+- **cupom** — o prêmio ganho, com código. **prêmio** é o que está na tabela.
+
 ## Número que o app afirma é derivado, nunca digitado
 
 Qualquer número exibido — custo da jogada, fichas de boas-vindas, bônus, teto e

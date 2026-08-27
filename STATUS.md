@@ -51,6 +51,23 @@ acessibilidade (axe-core, zero violações nas telas principais).
 
 # Histórico dos ciclos
 
+## Ciclo 28 — "jogada" queria dizer duas coisas ao mesmo tempo
+
+Varredura de vocabulário (contando cada termo na UI) revelou uma colisão real:
+**jogada** era ao mesmo tempo (a) a partida que custa 10 fichas — "1 jogada =
+10 fichas", "dá pra 19 jogadas" — e (b) o movimento dentro do jogo da memória,
+onde o placar dizia "JOGADAS 20 RESTANTES".
+
+Na mesma tela onde o HUD mostra o saldo em fichas, "20 jogadas restantes" podia
+ser lido como 200 fichas guardadas. O contador da memória virou **"TENTATIVAS 20
+RESTANTES"**, e as mensagens de fim acompanharam ("fechou os 8 pares com 5
+tentativas sobrando").
+
+Vocabulário do produto registrado no CLAUDE.md: ficha / jogada / tentativa /
+casa / cupom / prêmio, cada um com um significado só.
+
+
+
 ## Ciclo 27 — o onboarding não dizia o que é uma ficha
 
 Busca simples no `Welcome.tsx`: a palavra "ficha" aparecia **zero vez**. Ou

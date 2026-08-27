@@ -27,7 +27,7 @@ const FOODS: Food[] = [
 
 const MAX_MOVES = 20;
 const MISMATCH_DELAY = 800;
-const FLAWLESS_MARGIN = 5; // sobrando 5+ jogadas, vitória vira jackpot
+const FLAWLESS_MARGIN = 5; // sobrando 5+ tentativas, vitória vira jackpot
 
 const CONFETTI_COLORS = ["#ea1d2c", "#f5a623", "#ffffff"];
 
@@ -183,7 +183,7 @@ function Memoria({ restaurant, drawPrize, startPlay, onFinish }: GameProps) {
     setFlipped(nextFlipped);
     if (nextFlipped.length < 2) return;
 
-    // Par tentado: conta a jogada e checa
+    // Par tentado: conta a tentativa e checa
     const nextMoves = moves + 1;
     setMoves(nextMoves);
     setLocked(true);
@@ -262,14 +262,17 @@ function Memoria({ restaurant, drawPrize, startPlay, onFinish }: GameProps) {
         </p>
       </div>
 
-      {/* Placar: pills de momentum das jogadas + pares encontrados */}
+      {/* Placar: pills de momentum das tentativas + pares encontrados */}
       <div
         className="anim-fade-up mb-4 rounded-card bg-white p-4 shadow-md shadow-ink/5"
         style={{ animationDelay: "60ms" }}
       >
         <div className="mb-2.5 flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.2em] text-ink/40">
+          {/* "Tentativas", não "jogadas": jogada é a PARTIDA que custa fichas
+              (o HUD mostra o saldo em fichas na mesma tela). Chamar o par de
+              cartas de jogada fazia parecer que havia 20 partidas guardadas. */}
           <span>
-            Jogadas{" "}
+            Tentativas{" "}
             <span
               className={`font-display text-sm ${lowMoves ? "text-brand-500" : "text-ink"}`}
             >
@@ -401,8 +404,8 @@ function Memoria({ restaurant, drawPrize, startPlay, onFinish }: GameProps) {
             )}
             <p className="font-display text-lg font-extrabold leading-tight text-brand-600">
               {flawless
-                ? `Fechou os ${FOODS.length} pares com ${movesLeft} jogadas sobrando!`
-                : `Fechou os ${FOODS.length} pares em ${moves} jogadas.`}
+                ? `Fechou os ${FOODS.length} pares com ${movesLeft} tentativas sobrando!`
+                : `Fechou os ${FOODS.length} pares em ${moves} tentativas.`}
             </p>
             <p className="mt-1 text-xs font-medium text-ink/50">
               {flawless ? "Jogada de mestre — vamos ver o que saiu." : "Vamos ver o que saiu."}
@@ -412,12 +415,12 @@ function Memoria({ restaurant, drawPrize, startPlay, onFinish }: GameProps) {
         {status === "lost" && (
           <div className="anim-pop">
             <p className="font-display text-lg font-bold text-ink/45">Não foi dessa vez.</p>
-            <p className="mt-1 text-xs text-ink/50">As jogadas acabaram — bora tentar outra.</p>
+            <p className="mt-1 text-xs text-ink/50">As tentativas acabaram — bora tentar outra.</p>
           </div>
         )}
         {status === "playing" && lowMoves && (
           <p className="font-semibold text-brand-500">
-            Só mais {movesLeft} {movesLeft === 1 ? "jogada" : "jogadas"} — atenção aos pares.
+            Só mais {movesLeft} {movesLeft === 1 ? "tentativa" : "tentativas"} — atenção aos pares.
           </p>
         )}
       </div>
