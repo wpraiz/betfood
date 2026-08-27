@@ -51,6 +51,25 @@ acessibilidade (axe-core, zero violações nas telas principais).
 
 # Histórico dos ciclos
 
+## Ciclo 25 — números da economia deixam de ser copiados à mão
+
+Varredura de "exportado mas ninguém usa" (o mesmo método que achou o som de
+nível esquecido no ciclo 24). Resultado: `WELCOME_CHIPS`, `REGEN_INTERVAL_MS` e
+`REGEN_CAP` existiam no store e **a tela "Como funciona" repetia os mesmos
+números escritos à mão** — "10 fichas", "50 fichas", "a cada 10 minutos, até
+50". Bastava alguém ajustar a regra da economia pra explicação começar a mentir,
+que é exatamente o erro do ciclo 21 esperando pra acontecer de novo.
+
+Agora o sheet lê as constantes (`CHIP_COST`, `WELCOME_CHIPS`,
+`DAILY_BONUS_CHIPS`, `REGEN_AMOUNT`, `REGEN_INTERVAL_MS`, `REGEN_CAP`), incluindo
+a conta "50 ÷ 10 = 5 jogadas de boas-vindas". Verificado na tela: os textos saem
+idênticos, mas agora seguem a regra sozinhos.
+
+`findCouponByCode` e `isCouponExpired` seguem exportados de propósito
+(documentado no código): são a base de uma futura tela de conferência sem baixa.
+
+
+
 ## Ciclo 24 — subir de nível deixou de ser invisível
 
 O app tem cinco níveis (Bronze → Prata → Ouro → Chef → Lenda), dá XP a cada

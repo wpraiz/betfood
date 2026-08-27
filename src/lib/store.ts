@@ -439,7 +439,11 @@ export function isCouponExpired(coupon: Coupon, now: number = Date.now()): boole
   return couponExpiresAt(coupon).getTime() <= now;
 }
 
-/** Busca o cupom desta casa pelo código, ignorando caixa e espaços. */
+/**
+ * Busca o cupom desta casa pelo código, ignorando caixa e espaços.
+ * Usada por `redeemCouponByCode`; exportada porque uma futura tela de consulta
+ * ("só conferir, sem dar baixa") vai precisar exatamente disto.
+ */
 export function findCouponByCode(restaurantId: string, code: string): Coupon | undefined {
   const norm = normalizeCode(code);
   if (!norm) return undefined;

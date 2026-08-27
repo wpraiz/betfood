@@ -10,6 +10,16 @@
  * Sem estado global de propósito: cada tela que abre controla o próprio `open`.
  */
 import { useEffect, useRef } from "react";
+// Números da economia vêm do store: repetidos à mão, a explicação vira mentira
+// assim que alguém ajustar a regra (foi o caso da recarga, ciclo 21).
+import {
+  CHIP_COST,
+  DAILY_BONUS_CHIPS,
+  REGEN_AMOUNT,
+  REGEN_CAP,
+  REGEN_INTERVAL_MS,
+  WELCOME_CHIPS,
+} from "../lib/store";
 import { play } from "../lib/sound";
 
 const lineProps = {
@@ -123,19 +133,19 @@ const STEPS: {
   {
     icon: ChipLine,
     tone: "brand",
-    title: "1 jogada = 10 fichas",
-    detail: "Fichas são a moeda do app. Cada partida desconta 10 do seu saldo.",
+    title: `1 jogada = ${CHIP_COST} fichas`,
+    detail: `Fichas são a moeda do app. Cada partida desconta ${CHIP_COST} do seu saldo.`,
   },
   {
     icon: GiftLine,
     tone: "amber",
-    title: "Você começou com 50 fichas",
-    detail: "São 5 jogadas de boas-vindas, por conta da casa.",
+    title: `Você começou com ${WELCOME_CHIPS} fichas`,
+    detail: `São ${WELCOME_CHIPS / CHIP_COST} jogadas de boas-vindas, por conta da casa.`,
   },
   {
     icon: CalendarPlusLine,
     tone: "amber",
-    title: "+30 fichas grátis todo dia",
+    title: `+${DAILY_BONUS_CHIPS} fichas grátis todo dia`,
     detail: "O bônus diário aparece no topo da tela. É só tocar pra pegar.",
   },
   {
@@ -144,7 +154,7 @@ const STEPS: {
     icon: RefreshLine,
     tone: "amber",
     title: "As fichas voltam sozinhas",
-    detail: "A cada 10 minutos entram mais 10 fichas, até 50. Ninguém fica sem jogar.",
+    detail: `A cada ${REGEN_INTERVAL_MS / 60000} minutos entram mais ${REGEN_AMOUNT} fichas, até ${REGEN_CAP}. Ninguém fica sem jogar.`,
   },
   {
     icon: TableCodeLine,
