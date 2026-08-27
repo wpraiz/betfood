@@ -20,8 +20,18 @@ editorial serifado Broadsheet ("não tem cara de app").
 
 - Vite + React 18 + TS + Tailwind 4 (`@tailwindcss/vite`), HashRouter, Capacitor 7
 - Dados: localStorage via `src/lib/store.ts` (única porta; schema Supabase espelhado em `supabase/schema.sql`)
-- Som: `src/lib/sound.ts` — `play(name, {loop?, volume?})`/`stop(name)`; 13 SFX ElevenLabs em `public/sounds/` (spin, win, lose, scratch, coupon, tap, flip, correct, wrong, shimmer, levelup, tick, jackpot). Respeita mute, nunca lança.
+- Som: `src/lib/sound.ts` — `play(name, {loop?, volume?})`/`stop(name)`; 13 SFX ElevenLabs em `public/sounds/` (spin, win, lose, scratch, coupon, tap, flip, correct, wrong, shimmer, levelup, tick, jackpot). Respeita mute, nunca lança. `warm(names?)` pré-baixa os MP3 (chamado no `load` em `src/main.tsx`).
 - Fotos: `restaurant.photo` (Unsplash) + `restaurant.rating` no seed; sempre com skeleton shimmer no carregamento.
+- **Offline: `public/sw.js`** (service worker sem libs, cache versionado `betfood-v1`).
+  Registrado em `src/main.tsx` só em `import.meta.env.PROD` — o dev server (5199)
+  nunca tem SW. Navegação é network-first (versão nova nunca fica presa em cache);
+  assets same-origin (`/assets/`, `/sounds/`, `/icons/`) são cache-first com
+  revalidação em background; requests cross-origin (Unsplash, fontes) passam
+  direto, sem interceptação. Responde `Range` com um 206 real — sem isso o
+  `<audio>` do Safari recusa o MP3 vindo do cache. **Ao mudar o precache, suba a
+  versão do cache** (`betfood-v1` → `-v2`), senão o cliente antigo não limpa.
+  Efeito colateral útil e verificado: depois da primeira visita os chunks dos
+  jogos vêm do SW, então a latência do lazy-load some.
 
 ## Regras de UI aprendidas na auditoria (valem pra tudo que for novo)
 
@@ -62,8 +72,19 @@ editorial serifado Broadsheet ("não tem cara de app").
 ## Arquitetura
 
 - `src/lib/types.ts` — contratos. **`GameProps`/`GameDefinition` é o contrato de mini-game** (sem campo emoji).
-- `src/games/<id>/index.tsx` — um game por pasta, registrado em `src/games/index.ts`. Games NÃO acessam store/rotas; só `drawPrize()` (fonte única do resultado) e `onFinish()` exatamente uma vez.
-- `src/pages/GamePlay.tsx` — casca: consome fichas, monta o game, converte vitória em cupom.
+- `src/games/<id>/index.tsx` — um game por pasta, com **`export default` do componente** (nada de `GameDefinition` aqui). Os metadados estáticos (id/name/tagline) e o loader `import()` moram em `src/games/index.ts`, que embrulha o componente em `React.lazy` — é isso que dá **um chunk por jogo**. Games NÃO acessam store/rotas; só as props.
+- **`startPlay()` — regra permanente da cobrança justa.** A ficha sai no gesto que
+  REALMENTE inicia a rodada (girar a roleta, a primeira raspada, o "Valendo" do
+  quiz, a primeira carta da memória), **nunca na montagem**: abrir o jogo pra ver
+  como é e voltar não pode custar ficha. Retorna `false` quando não há saldo — aí
+  o jogo não começa e o GamePlay troca sozinho pra tela "Suas fichas acabaram".
+  É idempotente por rodada (`chargedRef` no GamePlay), mas chame uma vez só.
+  Sortear o prêmio (`drawPrize()`) é de graça e pode acontecer na montagem.
+- `src/pages/GamePlay.tsx` — casca: cobra a ficha via `startPlay`, monta o game
+  dentro de um `<Suspense>` com esqueleto (nunca tela branca), converte vitória
+  em cupom. O shell (HUD + tab bar) só some durante a partida de verdade.
+- `prefetchGame(id)` em `src/games/index.ts` aquece o chunk antes da navegação
+  (`onPointerDown` no card) — helper pronto, ainda não ligado nas listagens.
 - `/welcome` — splash + onboarding (flag `betfood-onboarded` no localStorage; redirect em App.tsx).
 
 ## Comandos

@@ -1,6 +1,6 @@
 # STATUS — BetFood POC
 
-Atualizado: 2026-08-26 (noite — fim do ciclo 3 do loop de melhoria)
+Atualizado: 2026-08-27 (madrugada — fim do ciclo 4 do loop de melhoria)
 
 ## O que estávamos fazendo
 
@@ -19,15 +19,111 @@ dopaminérgico** (fichas, XP, streak, som, motion).
 
 ## Em andamento / próxima ação
 
-1. Workflow "betfood-epico-ifood": verificador final (build + teste de browser + commit) — conferir se commitou.
-2. **Passe dopaminérgico final** (aguardando o commit do verificador pra não conflitar): HUD no Layout (fichas com count-up + tick, bônus diário pulsando, streak, nível), Home games-first (roleta-herói girando com luzes + shimmer, thumbnails ricas dos jogos, restaurantes abaixo), near-miss na roleta, XP flutuante no resultado.
-3. Build + push + **deploy preview na Vercel** (José já autorizou preview? — ele pediu o plano; o "sobe" final é dele). Team: jose-icaro-bezerra-clementes-projects.
+1. Ciclo 4 commitado e empurrado pra `main` → deploy automático na Vercel.
+   **Conferir o deploy**: `curl -s https://betfood.vercel.app | grep -o
+   'assets/[^"]*\.js'` deve bater com o `dist/index.html` local.
+2. **Primeira visita depois do deploy instala o service worker.** Abrir
+   betfood.vercel.app uma vez antes de qualquer demo — é o que garante a POC
+   funcionando com wi-fi ruim.
+3. Próximo ciclo: ver "Backlog restante" do ciclo 4 (iPhone real, offline no
+   celular, near-miss/ritmo dos jogos).
 
 ## No ar
 
 **https://betfood.vercel.app** (deploy automático a cada push em main).
 Games repaginados, modo imersivo, HUD de fichas/XP/streak, near-miss na roleta —
 tudo publicado e verificado sem erro de console.
+
+## Ciclo 4 (loop de melhoria) — 26/ago, madrugada
+
+Dois agentes em paralelo + verificação final. Fecha os itens 1, 2 e 3 do backlog
+do ciclo 3 (lazy-load dos games, service worker/offline, cobrança justa).
+
+### O que mudou
+
+**Cobrança justa — a ficha só sai quando a rodada começa**
+- `src/lib/types.ts`: nova prop `GameProps.startPlay: () => boolean`. Contrato
+  permanente, documentado no CLAUDE.md e na skill `new-game`.
+- `src/pages/GamePlay.tsx`: a montagem não cobra mais nada — só OLHA o saldo
+  (`availablePlays`) pra decidir se já mostra "fichas acabaram". `startPlay`
+  cobra via `consumePlay` uma única vez por rodada (`chargedRef`, sobrevive ao
+  double-render do StrictMode) e devolve `false` sem saldo. State `chips` novo
+  pra o contador da barra reagir à cobrança.
+- Os 4 jogos chamam `startPlay()` no gesto real: roleta em `spin()`, raspadinha
+  no `handlePointerDown`, quiz no "Valendo", memória no primeiro `handleFlip`.
+- Bônus diário na tela de fichas esgotadas agora só credita e devolve o jogo;
+  a ficha sai quando a rodada começar.
+- `inMatch` passou a incluir rota/jogo inválido — erro sem tab bar era beco.
+
+**Lazy-load por jogo (`src/games/index.ts` reescrito)**
+- Cada `src/games/<id>/index.tsx` virou `export default <Componente>`; os
+  metadados (id/name/tagline) ficaram estáticos no registry, com
+  `component: lazy(loaders.<id>)`. As listagens mostram os 4 jogos sem baixar
+  nenhum. Novo helper `prefetchGame(id)` (pronto, ainda não ligado nos cards).
+- `GamePlay` monta o jogo dentro de `<Suspense>` com `GameSkeleton`.
+- `src/App.tsx`: `Partner` e `Welcome` também em `React.lazy`, `<Routes>` dentro
+  de um `<Suspense>`.
+
+**Service worker / offline (`public/sw.js`, novo — sem libs)**
+- Cache versionado `betfood-v1`: precache do shell, dos 4 ícones e dos 13 MP3.
+  Navegação network-first (versão nova nunca fica presa), assets same-origin
+  cache-first com revalidação, cross-origin sem interceptação, `Range` respondido
+  com 206 real (Safari recusa MP3 servido como 200 inteiro).
+- Registrado em `src/main.tsx` só em `PROD`; `warm()` novo em `src/lib/sound.ts`
+  pré-baixa os sons no `load`.
+
+### Números do bundle (`npm run build`)
+
+| | Antes (ciclo 3) | Depois |
+|---|---|---|
+| Bundle principal | **313,42 kB** | **251,60 kB** (gzip 79,71 kB) |
+
+Queda de **61,82 kB (-19,7%)** no que o app baixa pra abrir. Chunks novos, sob
+demanda: roleta 8,12 kB · memória 8,17 kB · raspadinha 9,57 kB · quiz 16,01 kB ·
+Welcome 9,32 kB · Partner 13,96 kB.
+
+### Verificação
+
+`npm run build` limpo (60 módulos, sem erro) e `npx tsc --noEmit -p
+tsconfig.app.json` exit 0. Chrome 390x844 no dev server, estado zerado
+(`betfood-onboarded=1`, 50 fichas):
+- **Cobrança justa**: abrir a roleta e sair sem jogar → fichas seguem **50**.
+  Voltar e clicar "Girar agora" → **40**, resultado com cupom, HUD e tab bar de
+  volta. Raspadinha: abrir → 40 intacto; primeira raspada → **30**, prêmio
+  entregue. Quiz: abrir → 30 intacto; "Valendo" → **20**. Memória: abrir → 20
+  intacto; primeira carta → **10**.
+- **Sem fichas**: `chips=0` → "Suas fichas acabaram" com as três saídas, HUD
+  (0 fichas, Nv.1 Bronze, Bônus +30) e tab bar visíveis. Resgatar o bônus
+  credita 30 e devolve o jogo na hora, **sem cobrar**.
+- **Suspense**: com rede a 6 kB/s no dev server, o fallback aparece como
+  esqueleto pulsante + "Preparando o jogo…" **com a barra do jogo já pintada**
+  (voltar, título, mudo, fichas). Nunca tela branca.
+- **Service worker** (preview de produção, `vite preview --port 5188`): 1 SW
+  `activated`, cache `betfood-v1` com **24 entradas**; com a rede desligada o app
+  abre inteiro e navega. Só as fotos do Unsplash falham (cross-origin, tratadas
+  pelo `FoodPhoto`).
+- Console: **0 erro, 0 warning** nas três sessões.
+
+Screenshots: `C:\tmp\c4-roleta-aberta.png`, `C:\tmp\c4-roleta-resultado.png`,
+`C:\tmp\c4-raspadinha-resultado.png`, `C:\tmp\c4-quiz-pergunta.png`,
+`C:\tmp\c4-sem-fichas.png`, `C:\tmp\c4-suspense-skeleton.png`,
+`C:\tmp\c4-offline.png`.
+
+### Backlog restante
+
+1. **Ligar o `prefetchGame` nos cards** — 1 linha em `src/pages/Home.tsx` e em
+   `src/pages/RestaurantPage.tsx` (`onPointerDown={() => prefetchGame(g.id)}`).
+   Baixa prioridade: o SW já mata a latência a partir da segunda visita.
+2. **Validar em iPhone real** — safe-area, alvos de 44px e o input de código a
+   375px seguem sendo aposta de código.
+3. **Testar offline no celular** — verificado no Chrome desktop; falta o iPhone
+   (e confirmar se o SW registra no APK Capacitor, `capacitor://localhost`).
+4. **Near-miss / ritmo dos jogos** — a roleta tem near-miss; raspadinha, quiz e
+   memória ainda não têm a tensão equivalente.
+5. Elevar o nível visual dos games além da roleta (item 1 do backlog do José).
+6. Cupom expirado nunca sai da carteira — decisão de produto.
+7. Som ambiente (`shimmer`) ainda começa ao ABRIR o jogo, não ao iniciar a
+   rodada. Mantido de propósito; amarrar ao `startPlay` é opcional.
 
 ## Ciclo 3 (loop de melhoria) — 26/ago, noite
 

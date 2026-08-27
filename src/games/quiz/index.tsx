@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import confetti from "canvas-confetti";
 import { play } from "../../lib/sound";
-import type { GameDefinition, GameProps, Prize } from "../../lib/types";
+import type { GameProps, Prize } from "../../lib/types";
 
 // ---------------------------------------------------------------------------
 // Banco de perguntas (fatos verificáveis de gastronomia potiguar/nordestina)
@@ -293,7 +293,7 @@ interface FlyPoint {
   key: number;
 }
 
-function Quiz({ restaurant, drawPrize, onFinish }: GameProps) {
+function Quiz({ restaurant, drawPrize, startPlay, onFinish }: GameProps) {
   const questions = useMemo(drawQuestions, []);
   const [phase, setPhase] = useState<Phase>("intro");
   const [idx, setIdx] = useState(0);
@@ -500,6 +500,9 @@ function Quiz({ restaurant, drawPrize, onFinish }: GameProps) {
               className="press anim-fade-up mt-5 w-full rounded-full bg-brand-500 py-4 font-display text-base font-bold text-white shadow-lg shadow-brand-500/30 transition-colors hover:bg-brand-600 active:bg-brand-600"
               style={{ animationDelay: "260ms" }}
               onClick={() => {
+                // "Valendo" é o início real da rodada: cobra aqui. Sem saldo, a
+                // intro fica onde está (o GamePlay troca pra tela de reposição).
+                if (!startPlay()) return;
                 play("tap");
                 setPhase("question");
               }}
@@ -732,9 +735,6 @@ function Quiz({ restaurant, drawPrize, onFinish }: GameProps) {
   );
 }
 
-export const quiz: GameDefinition = {
-  id: "quiz",
-  name: "Quiz Gastronômico",
-  tagline: "Acerte e leve o prêmio",
-  component: Quiz,
-};
+// Default export: o registro (id/name/tagline) mora em src/games/index.ts, que
+// carrega este módulo sob demanda via React.lazy.
+export default Quiz;

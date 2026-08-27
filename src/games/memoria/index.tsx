@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import confetti from "canvas-confetti";
 import { play } from "../../lib/sound";
-import type { GameDefinition, GameProps, GameResult } from "../../lib/types";
+import type { GameProps, GameResult } from "../../lib/types";
 
 // Pares com FOTO: pratos/ingredientes da casa (Unsplash fixo, mesmo padrão do seed)
 const IMG = (id: string) => `https://images.unsplash.com/photo-${id}?w=200&q=70`;
@@ -63,7 +63,7 @@ function formatTime(totalSeconds: number): string {
 
 type Status = "playing" | "won" | "lost";
 
-function Memoria({ restaurant, drawPrize, onFinish }: GameProps) {
+function Memoria({ restaurant, drawPrize, startPlay, onFinish }: GameProps) {
   const [deck] = useState<Card[]>(buildDeck);
   const [flipped, setFlipped] = useState<number[]>([]);
   const [matched, setMatched] = useState<Set<number>>(() => new Set());
@@ -76,6 +76,7 @@ function Memoria({ restaurant, drawPrize, onFinish }: GameProps) {
   const [seconds, setSeconds] = useState(0);
 
   const finishedRef = useRef(false);
+  const startedRef = useRef(false); // rodada já cobrada?
   const timeoutsRef = useRef<number[]>([]);
 
   const later = (fn: () => void, ms: number) => {
@@ -168,6 +169,12 @@ function Memoria({ restaurant, drawPrize, onFinish }: GameProps) {
   const handleFlip = (index: number) => {
     if (locked || status !== "playing") return;
     if (flipped.includes(index) || matched.has(index)) return;
+
+    // Primeira carta virada = início real da rodada: cobra aqui, uma vez só.
+    if (!startedRef.current) {
+      if (!startPlay()) return;
+      startedRef.current = true;
+    }
 
     play("flip");
     const nextFlipped = [...flipped, index];
@@ -416,9 +423,6 @@ function Memoria({ restaurant, drawPrize, onFinish }: GameProps) {
   );
 }
 
-export const memoria: GameDefinition = {
-  id: "memoria",
-  name: "Jogo da Memória",
-  tagline: "Encontre os pares do cardápio",
-  component: Memoria,
-};
+// Default export: o registro (id/name/tagline) mora em src/games/index.ts, que
+// carrega este módulo sob demanda via React.lazy.
+export default Memoria;

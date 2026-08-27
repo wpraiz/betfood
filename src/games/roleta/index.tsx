@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import confetti from "canvas-confetti";
 import { play, stop } from "../../lib/sound";
-import type { GameDefinition, GameProps, Prize } from "../../lib/types";
+import type { GameProps, Prize } from "../../lib/types";
 
 const SLICES = 8;
 const SLICE_ANGLE = 360 / SLICES;
@@ -62,7 +62,7 @@ function TierMark({ tier, x, y }: { tier: Prize["tier"]; x: number; y: number })
 
 type Phase = "idle" | "spinning" | "done";
 
-function Roleta({ restaurant, drawPrize, onFinish }: GameProps) {
+function Roleta({ restaurant, drawPrize, startPlay, onFinish }: GameProps) {
   // 8 fatias ciclando os prêmios do restaurante (todos aparecem pelo menos 1x).
   const [slices] = useState<Prize[]>(() =>
     Array.from({ length: SLICES }, (_, i) => restaurant.prizes[i % restaurant.prizes.length]),
@@ -85,6 +85,9 @@ function Roleta({ restaurant, drawPrize, onFinish }: GameProps) {
 
   const spin = () => {
     if (phase !== "idle") return;
+    // A rodada começa AQUI: é este clique que cobra a ficha. Sem saldo, não gira
+    // (o GamePlay já troca pra tela de reposição).
+    if (!startPlay()) return;
 
     const drawn = drawPrize();
     setPrize(drawn);
@@ -363,9 +366,6 @@ function Roleta({ restaurant, drawPrize, onFinish }: GameProps) {
   );
 }
 
-export const roleta: GameDefinition = {
-  id: "roleta",
-  name: "Roleta de Prêmios",
-  tagline: "Gire e ganhe na hora",
-  component: Roleta,
-};
+// Default export: o registro (id/name/tagline) mora em src/games/index.ts, que
+// carrega este módulo sob demanda via React.lazy.
+export default Roleta;

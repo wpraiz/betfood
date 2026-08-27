@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import confetti from "canvas-confetti";
 import { play, stop } from "../../lib/sound";
-import type { GameDefinition, GameProps, Prize } from "../../lib/types";
+import type { GameProps, Prize } from "../../lib/types";
 
 const BRUSH_RADIUS = 24; // px (CSS), pincel redondo
 const REVEAL_THRESHOLD = 0.55; // >55% raspado => revela tudo
@@ -18,8 +18,9 @@ const CHIP_LIFE_MS = 620; // vida da lasca (casada com o keyframe)
 const CONFETTI_COLORS = ["#ea1d2c", "#f5a623", "#ffffff"];
 const CHIP_COLORS = ["#aab0ba", "#c7ccd4", "#9aa0ab", "#dfe3e9"];
 
-function Raspadinha({ restaurant, drawPrize, onFinish }: GameProps) {
-  // Sorteia uma única vez, na montagem.
+function Raspadinha({ restaurant, drawPrize, startPlay, onFinish }: GameProps) {
+  // Sorteia uma única vez, na montagem. Sortear não custa nada — a ficha só sai
+  // na primeira raspada de verdade (startPlay em handlePointerDown).
   const [prize] = useState<Prize>(() => drawPrize());
   const won = prize.tier !== "none";
 
@@ -36,6 +37,7 @@ function Raspadinha({ restaurant, drawPrize, onFinish }: GameProps) {
   const moveCountRef = useRef(0);
   const revealedRef = useRef(false);
   const finishedRef = useRef(false);
+  const startedRef = useRef(false); // rodada já cobrada?
 
   // Timeouts da revelação: cancelados no unmount pra som/confetti não caírem na
   // tela seguinte nem creditar cupom de rodada abandonada (padrão da roleta).
@@ -260,6 +262,11 @@ function Raspadinha({ restaurant, drawPrize, onFinish }: GameProps) {
 
   const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
     if (revealedRef.current) return;
+    // Primeiro toque na camada = início real da rodada: cobra aqui, uma vez só.
+    if (!startedRef.current) {
+      if (!startPlay()) return;
+      startedRef.current = true;
+    }
     scratchingRef.current = true;
     lastPointRef.current = null;
     play("scratch", { loop: true, volume: 0.5 });
@@ -463,9 +470,6 @@ function Raspadinha({ restaurant, drawPrize, onFinish }: GameProps) {
   );
 }
 
-export const raspadinha: GameDefinition = {
-  id: "raspadinha",
-  name: "Raspadinha",
-  tagline: "Raspe e descubra seu prêmio",
-  component: Raspadinha,
-};
+// Default export: o registro (id/name/tagline) mora em src/games/index.ts, que
+// carrega este módulo sob demanda via React.lazy.
+export default Raspadinha;

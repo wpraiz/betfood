@@ -1,10 +1,11 @@
-import { useContext, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import confetti from "canvas-confetti";
 import { getGame } from "../games";
 import { ImmersiveContext } from "../components/Layout";
 import type { GameResult } from "../lib/types";
 import {
+  availablePlays,
   awardCoupon,
   canClaimDailyBonus,
   CHIP_COST,
@@ -33,6 +34,18 @@ function XpBadge({ amount }: { amount: number }) {
         +{amount} XP
       </span>
     </>
+  );
+}
+
+/** Esqueleto enquanto o chunk do jogo chega — nunca tela branca. */
+function GameSkeleton() {
+  return (
+    <div className="flex flex-col items-center gap-5 px-5 py-4" aria-busy="true" aria-live="polite">
+      <div className="h-3 w-40 animate-pulse rounded-full bg-ink/10" />
+      <div className="h-64 w-full max-w-[340px] animate-pulse rounded-card bg-ink/10" />
+      <div className="h-12 w-full max-w-[280px] animate-pulse rounded-full bg-ink/10" />
+      <p className="text-xs font-semibold text-ink/65">Preparando o jogo…</p>
+    </div>
   );
 }
 
@@ -67,20 +80,34 @@ export default function GamePlay() {
   const [couponCode, setCouponCode] = useState<string | null>(null);
   const [muted, setMutedState] = useState(() => isMuted());
 
-  // Consome a jogada UMA única vez por montagem — o ref sobrevive ao
-  // double-mount do StrictMode em dev (useMemo cobraria duas vezes).
-  const [allowed, setAllowed] = useState<boolean | null>(null);
+  // Cobrança justa: abrir o jogo é de graça. A ficha só sai quando o jogo chama
+  // startPlay() no gesto que inicia a rodada de verdade. Na montagem apenas
+  // OLHAMOS o saldo (availablePlays) pra já mostrar "fichas acabaram" a quem
+  // não tem como jogar — sem cobrar nada.
+  const [noChips, setNoChips] = useState(() => availablePlays(restaurantId) < 1);
+  const [chips, setChips] = useState(() => getChips());
   const chargedRef = useRef(false);
-  useEffect(() => {
-    if (chargedRef.current) return;
-    chargedRef.current = true;
-    setAllowed(restaurant ? consumePlay(restaurant.id) : false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
-  // Só a partida em si esconde o app. Resultado e "fichas acabaram" devolvem
+  /**
+   * Cobra a rodada uma única vez (o ref sobrevive ao double-render do
+   * StrictMode e a chamadas repetidas do jogo). `false` = sem saldo: o jogo não
+   * começa e caímos na tela de reposição.
+   */
+  const startPlay = useCallback(() => {
+    if (chargedRef.current) return true;
+    if (!consumePlay(restaurantId)) {
+      setNoChips(true);
+      return false;
+    }
+    chargedRef.current = true;
+    setChips(getChips()); // re-renderiza o contador da barra do jogo
+    return true;
+  }, [restaurantId]);
+
+  // Só o jogo em si esconde o app. Resultado e "fichas acabaram" devolvem
   // HUD (fichas/bônus) e tab bar — sem isso a tela vira beco sem saída.
-  const inMatch = allowed !== false && !result;
+  // (rota/jogo inválido também devolve o shell: erro sem tab bar seria beco.)
+  const inMatch = !!restaurant && !!game && !noChips && !result;
   useEffect(() => {
     setImmersive(inMatch);
     return () => setImmersive(false);
@@ -88,13 +115,13 @@ export default function GamePlay() {
 
   // Ambiente sonoro discreto durante a partida (para ao sair ou ao terminar).
   useEffect(() => {
-    if (allowed && !result && !muted) {
+    if (!noChips && !result && !muted) {
       play("shimmer", { loop: true, volume: 0.12 });
     } else {
       stop("shimmer");
     }
     return () => stop("shimmer");
-  }, [allowed, result, muted]);
+  }, [noChips, result, muted]);
 
   const toggleMute = () => {
     const next = !muted;
@@ -143,18 +170,17 @@ export default function GamePlay() {
   if (!restaurant || !game)
     return <div className="p-5 text-sm text-ink/70">Jogo não encontrado.</div>;
 
-  // Ainda decidindo se a jogada foi cobrada (primeiro frame): não pisca tela.
-  if (allowed === null && !result) return null;
-
   // --- Sem fichas ----------------------------------------------------------
-  if (!allowed && !result) {
+  if (noChips && !result) {
     const canClaim = canClaimDailyBonus();
-    // O bônus vira jogada na hora: credita, cobra de novo e a partida começa.
+    // O bônus devolve o jogo na hora: credita e volta pra mesa. A ficha só sai
+    // quando a rodada começar de verdade (startPlay).
     const claimBonus = () => {
       const r = claimDailyBonus();
       if (!r.ok) return;
       play("jackpot");
-      setAllowed(consumePlay(restaurant.id));
+      setChips(getChips());
+      if (availablePlays(restaurant.id) >= 1) setNoChips(false);
     };
 
     return (
@@ -188,7 +214,7 @@ export default function GamePlay() {
           className="anim-fade-up mx-auto mt-3 max-w-[32ch] text-sm leading-relaxed text-ink/70"
           style={{ animationDelay: "200ms" }}
         >
-          Cada jogada custa {CHIP_COST} fichas. Você tem {getChips()} agora — dá pra repor sem
+          Cada jogada custa {CHIP_COST} fichas. Você tem {chips} agora — dá pra repor sem
           sair daqui.
         </p>
 
@@ -415,21 +441,25 @@ export default function GamePlay() {
               <circle cx="12" cy="12" r="10" fill="#f5a623" />
               <circle cx="12" cy="12" r="6" fill="#fff3d6" />
             </svg>
-            <span className="text-[11px] font-black tabular-nums text-white">{getChips()}</span>
+            <span className="text-[11px] font-black tabular-nums text-white">{chips}</span>
           </div>
         </div>
       </div>
-      <GameComponent
-        restaurant={restaurant}
-        drawPrize={() => drawPrize(restaurant)}
-        onFinish={(r) => {
-          if (r.won && r.prize && r.prize.tier !== "none") {
-            const c = awardCoupon(restaurant.id, game.id, r.prize.label);
-            setCouponCode(c.code);
-          }
-          setResult(r);
-        }}
-      />
+      {/* O jogo chega em chunk próprio (React.lazy): esqueleto no lugar da espera. */}
+      <Suspense fallback={<GameSkeleton />}>
+        <GameComponent
+          restaurant={restaurant}
+          drawPrize={() => drawPrize(restaurant)}
+          startPlay={startPlay}
+          onFinish={(r) => {
+            if (r.won && r.prize && r.prize.tier !== "none") {
+              const c = awardCoupon(restaurant.id, game.id, r.prize.label);
+              setCouponCode(c.code);
+            }
+            setResult(r);
+          }}
+        />
+      </Suspense>
     </div>
   );
 }

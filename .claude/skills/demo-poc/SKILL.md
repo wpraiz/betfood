@@ -10,6 +10,11 @@ description: Roteiro e preparação da demo/pitch da POC BetFood — sobe o dev 
 1. `npm run dev` → http://localhost:5199 (celular na mesma rede: `npx vite --host`).
 2. Estado limpo pra ver o onboarding: no DevTools → `localStorage.clear()` (ou aba anônima). Não fazer isso no meio da demo.
 3. Som do dispositivo LIGADO — os SFX são metade do impacto.
+4. **Wi-fi ruim no restaurante não derruba a demo**: em produção um service
+   worker (`public/sw.js`) guarda o app e os 13 MP3 na primeira visita, então
+   depois disso a POC abre e toca offline. Abra https://betfood.vercel.app uma
+   vez no local antes de apresentar. Testar: DevTools → Network → Offline e
+   recarregar, ou modo avião no celular depois de ter aberto o app uma vez.
 
 ## Roteiro (ordem que converte)
 

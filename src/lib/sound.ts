@@ -44,6 +44,24 @@ function get(name: SoundName): HTMLAudioElement {
   return a;
 }
 
+/**
+ * Baixa os MP3 pro cache HTTP antes de precisarem tocar — não exige gesto do
+ * usuário (ao contrário de audio.play()), e o <audio> reaproveita depois, então
+ * o som sai junto com a animação mesmo em wi-fi ruim. Sem argumento, aquece os 13.
+ * Totalmente silencioso: offline ou bloqueado, o jogo segue igual.
+ */
+export function warm(names: SoundName[] = [...NAMES]) {
+  for (const name of names) {
+    try {
+      void fetch(`${import.meta.env.BASE_URL}sounds/${name}.mp3`, { cache: "force-cache" })
+        .then((r) => r.blob()) // consome o corpo: sem isso o download pode não completar
+        .catch(() => {});
+    } catch {
+      /* fetch indisponível: ignora */
+    }
+  }
+}
+
 /** Toca um efeito. loop=true pra sons contínuos (raspadinha); pare com stop(). */
 export function play(name: SoundName, opts?: { loop?: boolean; volume?: number }) {
   if (isMuted()) return;
