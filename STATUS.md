@@ -51,6 +51,23 @@ acessibilidade (axe-core, zero violações nas telas principais).
 
 # Histórico dos ciclos
 
+## Ciclo 26 — o que o app afirma ao dono do restaurante agora é calculado
+
+Continuação do ciclo 25, num lugar onde errar custa mais: o bloco "Por que ter o
+BetFood na casa" faz **afirmações ao dono sobre o custo dele** — "a faixa 'não
+foi dessa vez' pesa 40% do sorteio" e "ele ganha 50 fichas ao entrar e mais 30
+por dia". Estavam escritas à mão. Mudar a tabela de prêmios de uma casa (coisa
+que o produto promete que o dono controla) deixaria o painel afirmando um número
+falso numa conversa comercial.
+
+Agora os 40% saem da **tabela de prêmios da casa selecionada** (soma dos pesos
+da faixa "none" sobre o total) e as fichas saem das constantes do store.
+Verificado na tela: continua "40% do sorteio" e "50 ao entrar e mais 30 por dia",
+mas agora porque foi calculado — e passa a acompanhar cada casa, já que a
+tabela é por restaurante.
+
+
+
 ## Ciclo 25 — números da economia deixam de ser copiados à mão
 
 Varredura de "exportado mas ninguém usa" (o mesmo método que achou o som de

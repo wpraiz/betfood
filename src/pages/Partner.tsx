@@ -3,6 +3,8 @@ import confetti from "canvas-confetti";
 import {
   clearDemoData,
   couponExpiresAt,
+  DAILY_BONUS_CHIPS,
+  WELCOME_CHIPS,
   generateTableCodes,
   getPendingCoupons,
   getRestaurantCoupons,
@@ -212,6 +214,15 @@ export default function Partner() {
   const couponsRedeemed = coupons.filter((c) => c.redeemedAt).length;
   const restaurantName = restaurants.find((r) => r.id === selected)?.name ?? "esta casa";
   const showClearDemo = hasDemoData();
+
+  // Este número é uma AFIRMAÇÃO feita ao dono do restaurante sobre o próprio
+  // custo dele — não pode ser escrito à mão. Sai da tabela de prêmios da casa
+  // selecionada: se alguém mudar os pesos, o texto acompanha.
+  const casaAtual = restaurants.find((r) => r.id === selected);
+  const pesoTotal = casaAtual?.prizes.reduce((s, p) => s + p.weight, 0) ?? 0;
+  const pesoSemPremio =
+    casaAtual?.prizes.filter((p) => p.tier === "none").reduce((s, p) => s + p.weight, 0) ?? 0;
+  const chanceSemPremio = pesoTotal > 0 ? Math.round((pesoSemPremio / pesoTotal) * 100) : 0;
 
   /** Troca de casa zera o que era da casa anterior (código digitado e resultado). */
   function selectRestaurant(id: string) {
@@ -673,7 +684,7 @@ export default function Partner() {
               <Reason
                 chip="bg-accent2/15 text-[#8a5a00]"
                 title="O custo é seu e você controla"
-                text="A tabela de prêmios é da casa e ninguém joga sem um código que você entregou. Você escolhe quantos códigos gera e quantas jogadas cada um vale. Nem toda jogada premia: a faixa “não foi dessa vez” pesa 40% do sorteio."
+                text={`A tabela de prêmios é da casa e ninguém joga sem um código que você entregou. Você escolhe quantos códigos gera e quantas jogadas cada um vale. Nem toda jogada premia: a faixa “não foi dessa vez” pesa ${chanceSemPremio}% do sorteio.`}
                 icon={
                   <>
                     <path d="M4 7h8M17 7h3M4 17h3M12 17h8" />
@@ -685,7 +696,7 @@ export default function Partner() {
               <Reason
                 chip="bg-surface text-ink/70"
                 title="Não é aposta e não custa nada pro cliente"
-                text="As fichas são do próprio app: ele ganha 50 ao entrar e mais 30 por dia. Não se compram fichas e não há dinheiro do cliente em jogo em momento nenhum."
+                text={`As fichas são do próprio app: ele ganha ${WELCOME_CHIPS} ao entrar e mais ${DAILY_BONUS_CHIPS} por dia. Não se compram fichas e não há dinheiro do cliente em jogo em momento nenhum.`}
                 icon={
                   <>
                     <path d="M12 3.5 5 6.2v5c0 4.2 2.9 7.6 7 9.3 4.1-1.7 7-5.1 7-9.3v-5Z" />
