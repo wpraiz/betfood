@@ -198,12 +198,14 @@ export default function Hud() {
 
           {/* Nível */}
           <div className="min-w-0 flex-1">
-            <div className="flex items-baseline justify-between gap-1">
-              <span className="truncate text-[10px] font-bold uppercase tracking-[0.04em] text-ink/65">
-                Nv.{progress.level} {progress.levelName}
-              </span>
-              <span className="shrink-0 text-[10px] font-semibold tabular-nums text-ink/65">
-                {progress.xp} XP
+            {/* Só o nível: a barra já mostra o progresso, e o número de XP
+                espremia o nome do nível em telas de 375px. */}
+            <div className="flex items-baseline">
+              <span
+                className="truncate text-[10px] font-bold uppercase tracking-[0.04em] text-ink/65"
+                title={`${progress.levelTitle} · ${progress.xp} XP`}
+              >
+                {progress.levelName}
               </span>
             </div>
             <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-surface">

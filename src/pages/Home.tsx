@@ -7,6 +7,7 @@ import type { Restaurant } from "../lib/types";
 import GameThumb, { WHEEL_GRADIENT } from "../components/GameThumb";
 import FoodPhoto, { thumb } from "../components/FoodPhoto";
 import HowItWorks from "../components/HowItWorks";
+import ShareButton from "../components/ShareButton";
 
 const LAST_CASA_KEY = "betfood-last-casa";
 
@@ -189,9 +190,9 @@ export default function Home() {
         </div>
       </div>
 
-      {/* COMO FUNCIONA: card discreto de fechamento — explica as fichas e que
-          não é aposta, sem roubar espaço dos jogos. */}
-      <div className="px-5 pb-6">
+      {/* FECHAMENTO: dois cards discretos — entender o jogo e chamar alguém pra
+          jogar junto. Ficam no fim de propósito, sem roubar espaço dos jogos. */}
+      <div className="grid gap-3 px-5 pb-6">
         <button
           type="button"
           onClick={() => {
@@ -242,6 +243,10 @@ export default function Home() {
             <path d="m9 5 7 7-7 7" />
           </svg>
         </button>
+
+        {/* CHAME A GALERA: o convite. Aqui o app cresce sozinho — o amigo recebe
+            o link no WhatsApp em vez de depender do José mandar um por um. */}
+        <ShareButton className="anim-fade-up" style={{ animationDelay: "640ms" }} />
       </div>
 
       <HowItWorks open={helpOpen} onClose={() => setHelpOpen(false)} />

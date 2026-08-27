@@ -275,6 +275,27 @@ código até o playtest com os amigos.
    da tela; sair antes de jogar queima ficha.
 7. **Validade do cupom** — cupom nasce sem prazo; falta data e estado de expirado.
 
+## Ciclo 5 — o link é o funil (26/ago, noite)
+
+Tema: transformar link colado no WhatsApp em toque, e toque em app instalado.
+
+- **Prévia do link**: `public/og.png` (1200x630, roleta + proposta) + tags Open
+  Graph/Twitter com URL absoluta em `index.html`. Antes o link aparecia pelado.
+  Fonte da imagem em `scripts/og-card.html` (como regerar está no CLAUDE.md).
+- **Dica de instalação no iPhone** (`src/components/InstallHint.tsx`): Safari não
+  oferece instalar; a faixa só aparece em iOS Safari fora do standalone, depois
+  da 1ª interação (ou 8s), com o caminho Compartilhar → Adicionar à Tela de
+  Início, dispensável pra sempre. Não monta durante a partida.
+- **Convite** (`src/components/ShareButton.tsx`): card "Chame a galera" na Home,
+  `navigator.share` → clipboard → URL selecionável (nenhum caminho morre).
+- **HUD**: com mudo + ajuda + bônus a barra ficou apertada e o nível truncava
+  ("NV.1 BRO..."). Removido o número de XP (a barra já mostra) e o prefixo
+  "Nv.N" — agora só "BRONZE", que cabe a 390px.
+- `.gitignore`: `*.tsbuildinfo` (dois artefatos estavam versionados à toa).
+
+Verificado no browser (390x844), console limpo. **A dica de instalação e o
+compartilhamento nativo só dá pra validar no iPhone real.**
+
 ## Backlog priorizado (pedido do José, 26/ago à noite)
 
 1. **Subir o nível dos games além da roleta** — "memória e demais tão muito low

@@ -24,6 +24,7 @@
 import { createContext, useMemo, useRef, useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import Hud from "./Hud";
+import InstallHint from "./InstallHint";
 
 export const ImmersiveContext = createContext<{ setImmersive: (v: boolean) => void }>({
   setImmersive: () => {},
@@ -143,13 +144,19 @@ export default function Layout() {
           <Outlet />
         </main>
         {!immersive && (
-          <nav className="fixed bottom-0 left-1/2 w-full max-w-md -translate-x-1/2 border-t border-ink/10 bg-white pb-[env(safe-area-inset-bottom)]">
-            <div className="flex">
-              {tab("/", "Início", "restaurantes")}
-              {tab("/cupons", "Cupons", "cupons")}
-              {tab("/parceiro", "Parceiro", "parceiro")}
-            </div>
-          </nav>
+          <>
+            {/* Dica de "Adicionar à Tela de Início" (só iOS/Safari fora do
+                standalone; ela mesma decide se aparece). Fora do <main> e presa
+                ao mesmo destino da tab bar — durante a partida nem monta. */}
+            <InstallHint />
+            <nav className="fixed bottom-0 left-1/2 w-full max-w-md -translate-x-1/2 border-t border-ink/10 bg-white pb-[env(safe-area-inset-bottom)]">
+              <div className="flex">
+                {tab("/", "Início", "restaurantes")}
+                {tab("/cupons", "Cupons", "cupons")}
+                {tab("/parceiro", "Parceiro", "parceiro")}
+              </div>
+            </nav>
+          </>
         )}
       </div>
     </ImmersiveContext.Provider>
