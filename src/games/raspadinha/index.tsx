@@ -458,13 +458,34 @@ function Raspadinha({ restaurant, drawPrize, startPlay, onFinish }: GameProps) {
             }}
           />
         </div>
-        <p className="mt-1.5 text-center text-xs font-medium text-ink/65">
+        <p className="mt-1.5 text-center text-xs font-medium text-ink/70">
           {revealed
             ? "Revelado."
             : progress > 0
               ? `Raspado: ${Math.min(progress, 100)}%`
               : "Raspe a área prateada e descubra"}
         </p>
+
+        {/* Caminho alternativo: raspar exige arrastar o dedo por mais da metade
+            da área — gesto impossível pra quem tem limitação motora, e chato em
+            mouse. O botão revela o MESMO resultado já sorteado; ninguém ganha
+            nem perde nada por usá-lo. */}
+        {!revealed && (
+          <button
+            type="button"
+            onClick={() => {
+              if (!startedRef.current) {
+                if (!startPlay()) return;
+                startedRef.current = true;
+              }
+              play("tap");
+              reveal();
+            }}
+            className="press mx-auto mt-3 block min-h-11 rounded-full border border-ink/15 bg-white px-5 text-xs font-bold text-ink/70"
+          >
+            Revelar sem raspar
+          </button>
+        )}
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 # STATUS — BetFood POC
 
-Atualizado: 2026-08-27 (ciclo 39 do loop de melhoria contínua)
+Atualizado: 2026-08-27 (ciclo 40 do loop de melhoria contínua)
 
 ## Onde está
 
@@ -50,6 +50,20 @@ acessibilidade (axe-core, zero violações nas telas principais).
 ---
 
 # Histórico dos ciclos
+
+## Ciclo 40 — a raspadinha era injogável pra quem tem limitação motora
+
+O jogo exigia arrastar o dedo por **55% da área** pra revelar. Quem tem
+dificuldade motora (tremor, força reduzida, uso de uma mão só) simplesmente não
+conseguia terminar uma rodada — e pagou a ficha do mesmo jeito.
+
+Agora existe **"Revelar sem raspar"** abaixo da barra de progresso. Revela o
+mesmo resultado já sorteado: ninguém ganha nem perde chance por usar o botão,
+porque o prêmio foi decidido no `drawPrize()` da montagem, não pela raspagem.
+
+Verificado nos dois caminhos: pelo botão (fichas 300 → 290, cupom entregue) e
+raspando de verdade (mesma cobrança, mesmo fluxo). O botão também cobra a ficha
+se a rodada ainda não tinha começado, então não vira atalho de graça.
 
 ## Ciclo 39 — a preferência de menos movimento virou fonte única
 

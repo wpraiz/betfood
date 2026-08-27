@@ -42,6 +42,10 @@ editorial serifado Broadsheet ("não tem cara de app").
   Atenção: contraste medido sobre BRANCO engana; o fundo do app é papel, mais
   escuro (descoberto no ciclo 37).
 - **Toque**: todo alvo interativo com ≥44x44px de área (padding conta).
+- **Gesto sempre tem alternativa**: se um jogo exige arrastar, raspar ou
+  segurar, ofereça um botão que faça o mesmo (ver "Revelar sem raspar" na
+  raspadinha, ciclo 40). O resultado já vem do `drawPrize()` — o gesto é
+  apresentação, então a alternativa não desequilibra nada.
 - **Safe-area**: topo com `pt-[env(safe-area-inset-top)]` (PWA no iPhone desenha
   sob o notch), rodapé com `pb-[env(safe-area-inset-bottom)]`.
 - **Som**: nunca forçar `navigator.audioSession` — o app respeita o silencioso do
