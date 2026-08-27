@@ -1,6 +1,6 @@
 # STATUS — BetFood POC
 
-Atualizado: 2026-08-27 (ciclo 33 do loop de melhoria contínua)
+Atualizado: 2026-08-27 (ciclo 34 do loop de melhoria contínua)
 
 ## Onde está
 
@@ -50,6 +50,20 @@ acessibilidade (axe-core, zero violações nas telas principais).
 ---
 
 # Histórico dos ciclos
+
+## Ciclo 34 — o código em tela cheia, pensado pro garçom
+
+Medições primeiro: Home 2,6 telas, carteira 1 tela, e **os quatro jogos cabem
+sem rolagem** tanto em iPhone Pro (844px) quanto em iPhone SE (667px) — o
+acúmulo de blocos não estragou as telas de jogo. Nada a corrigir ali.
+
+Melhoria veio do momento mais físico do produto: **quem lê o código não é o
+cliente, é o garçom** — de pé, no salão com pouca luz, olhando o celular da
+outra pessoa. Agora um toque no código abre em **tela cheia, fundo escuro e tipo
+gigante** (15vw), com o nome da casa e o prêmio acima. Fecha com toque em
+qualquer lugar: ninguém quer caçar botão com o garçom esperando.
+
+Só cupom válido amplia — usado ou expirado não abre, porque não há o que mostrar.
 
 ## Ciclo 33 — o painel voltou a caber numa demonstração
 

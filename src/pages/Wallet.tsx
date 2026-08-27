@@ -67,6 +67,9 @@ export default function Wallet() {
   const [, forceUpdate] = useState(0);
   const [helpOpen, setHelpOpen] = useState(false);
   const [historicoAberto, setHistoricoAberto] = useState(false);
+  const [ampliado, setAmpliado] = useState<{ code: string; casa: string; premio: string } | null>(
+    null
+  );
   // Cupom vence em 24h: sem este tick a tela mostraria "Vale até" pra sempre em
   // quem deixou o app aberto.
   const [now, setNow] = useState(() => Date.now());
@@ -212,9 +215,20 @@ export default function Wallet() {
 
                 {/* Código + ação */}
                 <div className={`flex items-end justify-between gap-3 p-4 pl-5 pt-3 ${dim}`}>
-                  <div>
+                  {/* Toque no código abre em tela cheia: quem lê é o garçom, de
+                      pé, no salão escuro, olhando o celular do cliente. */}
+                  <button
+                    type="button"
+                    disabled={used || expired}
+                    onClick={() => {
+                      play("tap");
+                      setAmpliado({ code: c.code, casa: r?.name ?? "", premio: c.prizeLabel });
+                    }}
+                    className="press min-w-0 text-left disabled:cursor-default"
+                  >
                     <div className="text-[10px] font-semibold uppercase tracking-[0.25em] text-ink/65">
                       Código do cupom
+                      {!used && !expired && <span className="ml-1 normal-case">· toque pra ampliar</span>}
                     </div>
                     <div
                       className={`mt-0.5 font-display text-3xl font-bold tracking-[0.12em] ${
@@ -223,7 +237,7 @@ export default function Wallet() {
                     >
                       {c.code}
                     </div>
-                  </div>
+                  </button>
                   {!used && !expired && (
                     <button
                       className="press inline-flex min-h-11 shrink-0 items-center justify-center rounded-full border border-ink/15 bg-white px-4 text-xs font-bold text-ink/70 transition-colors active:bg-surface"
@@ -321,6 +335,30 @@ export default function Wallet() {
           Como funciona / regras do cupom
         </button>
       </div>
+
+      {/* Código em tela cheia: fundo escuro e tipo enorme pra leitura à
+          distância, num salão com pouca luz. Fecha com um toque em qualquer
+          lugar — ninguém quer caçar botão com o garçom esperando. */}
+      {ampliado && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Código ${ampliado.code}`}
+          onClick={() => setAmpliado(null)}
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-6 bg-ink px-6 text-center"
+        >
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-white/60">
+              {ampliado.casa}
+            </p>
+            <p className="mt-2 font-display text-lg font-bold text-white/90">{ampliado.premio}</p>
+          </div>
+          <p className="font-display text-[15vw] font-black leading-none tracking-[0.08em] text-white">
+            {ampliado.code}
+          </p>
+          <p className="text-xs text-white/60">Toque pra fechar</p>
+        </div>
+      )}
 
       <HowItWorks open={helpOpen} onClose={() => setHelpOpen(false)} />
     </div>
