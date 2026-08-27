@@ -199,6 +199,24 @@ e o texto fica, virando afirmação falsa — inclusive no painel do parceiro, o
 o app faz afirmações **ao dono do restaurante sobre o custo dele** (ciclos 25 e
 26). Ao escrever copy com número, importe a constante e interpole.
 
+## vercel.json: só chaves do esquema (nada de comentário)
+
+O arquivo é **validado pela Vercel** — qualquer propriedade fora do esquema
+(inclusive uma chave `"comment"` explicativa) faz o deploy **falhar antes do
+build**, sem erro de compilação nenhum. Aconteceu no ciclo 16 e derrubou 18
+horas de deploys em silêncio: o build local passava, o push ia pro GitHub, e a
+produção continuava servindo a versão velha (ciclo 46-47).
+
+Anotações sobre cache moram aqui, não lá:
+- `/assets/*` **não** leva regra própria. Já tem hash no nome e a Vercel dá cache
+  longo por padrão; declarar `immutable` faria a regra valer também pra respostas
+  404 durante a propagação de um deploy, e o cliente guardaria o erro por um ano.
+- `/sounds/*` e `/icons/*` não têm hash: cache moderado (7 dias).
+
+**Depois de qualquer push, confirme que o deploy saiu** — comparar o bundle
+servido com o `dist/index.html` local (comando na seção de deploy) leva 5s e
+evita horas verificando uma versão que não está no ar.
+
 ## Compartilhamento (o link é o funil)
 
 O José divulga colando a URL no WhatsApp. `index.html` tem as tags Open

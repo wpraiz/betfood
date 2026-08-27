@@ -1,6 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "comment": "Os arquivos de /assets já têm hash no nome e a Vercel aplica cache longo neles por padrão — NÃO declare 'immutable' aqui. A regra casa pelo caminho e vale também pra respostas 404: quem pedir um asset durante a propagação de um deploy guardaria o erro por um ano e ficaria com o app sem estilo (aconteceu no ciclo 16). Sons e ícones não têm hash, então recebem cache moderado.",
   "headers": [
     {
       "source": "/sounds/(.*)",
