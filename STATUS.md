@@ -1,6 +1,6 @@
 # STATUS — BetFood POC
 
-Atualizado: 2026-08-27 (ciclo 47 do loop de melhoria contínua)
+Atualizado: 2026-08-27 (ciclo 48 do loop de melhoria contínua)
 
 ## Onde está
 
@@ -52,6 +52,24 @@ acessibilidade (axe-core, zero violações nas telas principais).
 ---
 
 # Histórico dos ciclos
+
+## Ciclo 48 — conferência em produção do que ficou 18h engavetado
+
+Durante a janela dos deploys quebrados eu validei tudo no preview local — o que
+é legítimo, mas não é o que o usuário abre. Com a produção restabelecida,
+refiz a conferência **no site publicado**, e as oito entregas estão lá:
+
+- Chances de cada prêmio visíveis pro jogador (com os 40% de "não foi dessa vez")
+- Campo do código com teclado ajustado (`autocapitalize=characters`, Enter = ir)
+- "Revelar sem raspar" na raspadinha
+- Histórico do jogador na carteira
+- Código do cupom ampliável em tela cheia
+- Tabela de prêmios no painel, com o prêmio editável
+- Link direto da casa
+- Timer do quiz proporcional (marcou 21s numa pergunta longa; era 15s fixo)
+
+Console sem erro. É a primeira vez desde o ciclo 33 que o que está no ar
+corresponde ao que está no repositório.
 
 ## Ciclo 47 — causa encontrada: um comentário no vercel.json
 
