@@ -49,5 +49,32 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+
+    <!--
+      Rede de segurança contra CSS que não aplica (ex.: um 404 guardado em cache
+      durante a propagação de um deploy). Sem isto o app aparece SEM ESTILO e a
+      pessoa acha que quebrou. Recarrega a folha com um parâmetro novo — o que
+      fura qualquer cache — no máximo uma vez por sessão.
+    -->
+    <script>
+      addEventListener("load", function () {
+        setTimeout(function () {
+          try {
+            var pintou = getComputedStyle(document.body).backgroundColor;
+            var vazio = !pintou || pintou === "rgba(0, 0, 0, 0)" || pintou === "transparent";
+            if (!vazio || sessionStorage.getItem("betfood-css-retry")) return;
+            sessionStorage.setItem("betfood-css-retry", "1");
+            document.querySelectorAll('link[rel="stylesheet"]').forEach(function (l) {
+              var novo = document.createElement("link");
+              novo.rel = "stylesheet";
+              novo.href = l.href + (l.href.indexOf("?") < 0 ? "?" : "&") + "r=" + Date.now();
+              document.head.appendChild(novo);
+            });
+          } catch (e) {
+            /* nada a fazer: melhor seguir sem estilo do que travar */
+          }
+        }, 400);
+      });
+    </script>
   </body>
 </html>
