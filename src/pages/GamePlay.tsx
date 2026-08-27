@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import confetti from "canvas-confetti";
 import { getGame } from "../games";
 import { ImmersiveContext } from "../components/Layout";
-import type { GameResult } from "../lib/types";
+import type { Coupon, GameResult } from "../lib/types";
 import {
   availablePlays,
   awardCoupon,
@@ -37,6 +37,21 @@ const CONSOLOS = [
 ];
 
 const sorteia = (lista: string[]) => lista[Math.floor(Math.random() * lista.length)];
+
+/** "amanhã às 21:40" — o prazo do cupom em linguagem de gente. */
+function formatPrazo(iso: string): string {
+  const d = new Date(iso);
+  const hora = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  const hoje = new Date().toDateString();
+  const amanha = new Date(Date.now() + 86_400_000).toDateString();
+  const dia =
+    d.toDateString() === hoje
+      ? "hoje"
+      : d.toDateString() === amanha
+        ? "amanhã"
+        : d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+  return `${dia} às ${hora}`;
+}
 
 /** Selo de XP que sobe e some, celebrando o ganho da rodada. */
 function XpBadge({ amount }: { amount: number }) {
@@ -93,7 +108,8 @@ export default function GamePlay() {
   const game = getGame(gameId);
   const { setImmersive } = useContext(ImmersiveContext);
   const [result, setResult] = useState<GameResult | null>(null);
-  const [couponCode, setCouponCode] = useState<string | null>(null);
+  const [cupom, setCupom] = useState<Coupon | null>(null);
+  const couponCode = cupom?.code ?? null;
   // Sorteadas uma vez por montagem: a frase não pode trocar a cada re-render.
   const [frases] = useState(() => ({
     vitoria: sorteia(MANCHETES_VITORIA),
@@ -368,7 +384,10 @@ export default function GamePlay() {
                   {couponCode}
                 </div>
               )}
-              <p className="mt-2 text-xs font-semibold text-ink/70">Mostra pro garçom e pronto.</p>
+              <p className="mt-2 text-xs font-semibold text-ink/70">
+                Mostra pro garçom e pronto
+                {cupom?.expiresAt && <> — vale até {formatPrazo(cupom.expiresAt)}</>}.
+              </p>
               {/* O cupom vale 24h e só nesta casa: dizer onde ela fica é parte
                   do prêmio, não detalhe. Abre o mapa do aparelho. */}
               <a
@@ -529,8 +548,7 @@ export default function GamePlay() {
           startPlay={startPlay}
           onFinish={(r) => {
             if (r.won && r.prize && r.prize.tier !== "none") {
-              const c = awardCoupon(restaurant.id, game.id, r.prize.label);
-              setCouponCode(c.code);
+              setCupom(awardCoupon(restaurant.id, game.id, r.prize.label));
             }
             setResult(r);
           }}

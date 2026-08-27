@@ -1,6 +1,6 @@
 # STATUS — BetFood POC
 
-Atualizado: 2026-08-27 (ciclo 50 do loop de melhoria contínua)
+Atualizado: 2026-08-27 (ciclo 51 do loop de melhoria contínua)
 
 ## Onde está
 
@@ -52,6 +52,21 @@ acessibilidade (axe-core, zero violações nas telas principais).
 ---
 
 # Histórico dos ciclos
+
+## Ciclo 51 — o prazo aparece no instante em que ele começa a correr
+
+Medição primeiro (20 ciclos desde a última): produção em **1,05s de load, 91 kB
+de JS, 59 kB de imagem** — sem regressão; o lazy-load por jogo e o mosaico
+adiado seguem segurando o peso.
+
+Melhoria: a tela de vitória entregava o código e dizia "Mostra pro garçom e
+pronto", mas **não dizia até quando** — sendo que é exatamente ali que o relógio
+de 24h começa. A validade só aparecia depois, na carteira.
+
+Agora: "Mostra pro garçom e pronto — **vale até amanhã às 20:37**", com o prazo
+em linguagem de gente (hoje/amanhã/data + hora). Junto com o endereço logo
+abaixo, a tela de vitória passou a responder as três perguntas do momento: o que
+ganhei, até quando vale e onde uso.
 
 ## Ciclo 50 — o cupom na carteira agora leva até a casa
 
