@@ -111,7 +111,15 @@ export default function Welcome() {
     finished.current = true;
     play("tap");
     localStorage.setItem("betfood-onboarded", "1");
-    navigate("/");
+    // Veio por link direto de uma casa? Devolve pra lá (ver App.tsx, ciclo 29).
+    let destino = "/";
+    try {
+      destino = sessionStorage.getItem("betfood-destino") || "/";
+      sessionStorage.removeItem("betfood-destino");
+    } catch {
+      /* modo privado: cai na Home mesmo */
+    }
+    navigate(destino, { replace: true });
   }
 
   // Classe de entrada só quando o slide está ativo — o conteúdo "chega" junto.

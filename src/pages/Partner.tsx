@@ -218,6 +218,21 @@ export default function Partner() {
   // Este número é uma AFIRMAÇÃO feita ao dono do restaurante sobre o próprio
   // custo dele — não pode ser escrito à mão. Sai da tabela de prêmios da casa
   // selecionada: se alguém mudar os pesos, o texto acompanha.
+  const linkDaCasa = `${window.location.origin}${window.location.pathname}#/r/${selected}`;
+  const [copiado, setCopiado] = useState(false);
+  function copiarLink() {
+    play("tap");
+    navigator.clipboard?.writeText(linkDaCasa).then(
+      () => {
+        setCopiado(true);
+        window.setTimeout(() => setCopiado(false), 2000);
+      },
+      () => {
+        /* sem permissão de área de transferência: o link fica visível pra copiar à mão */
+      }
+    );
+  }
+
   const casaAtual = restaurants.find((r) => r.id === selected);
   const pesoTotal = casaAtual?.prizes.reduce((s, p) => s + p.weight, 0) ?? 0;
   const pesoSemPremio =
@@ -576,6 +591,32 @@ export default function Partner() {
             .
           </p>
         )}
+
+        {/* Link direto da casa: é o que vira QR na mesa ou vai pro Instagram.
+            Agora funciona até pra quem nunca abriu o app — o onboarding devolve
+            a pessoa nesta casa em vez de despejar na Home (ciclo 29). */}
+        <div
+          className="anim-fade-up mb-6 rounded-card border border-ink/10 bg-white p-4 shadow-sm"
+          style={{ animationDelay: "320ms" }}
+        >
+          <div className="font-display text-base font-bold">Link desta casa</div>
+          <p className="mt-1 text-xs leading-relaxed text-ink/70">
+            Manda pro cliente ou imprime como QR na mesa. Quem abrir cai direto
+            em {restaurantName}, mesmo sem nunca ter usado o app.
+          </p>
+          <div className="mt-3 flex items-center gap-2">
+            <code className="min-w-0 flex-1 truncate rounded-full bg-paper px-3 py-2.5 text-[12px] text-ink/70">
+              {linkDaCasa}
+            </code>
+            <button
+              type="button"
+              onClick={copiarLink}
+              className="press min-h-11 shrink-0 rounded-full bg-ink px-4 text-xs font-bold text-white"
+            >
+              {copiado ? "Copiado" : "Copiar"}
+            </button>
+          </div>
+        </div>
 
         {/* Gerador com steppers */}
         <div

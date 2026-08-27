@@ -33,10 +33,23 @@ function KeyedGamePlay() {
   return <GamePlay key={`${restaurantId}/${gameId}`} />;
 }
 
+/** Onde o app deve pousar depois do onboarding (link direto guardado). */
+const DESTINO = "betfood-destino";
+
 export default function App() {
   const { pathname } = useLocation();
   const onboarded = localStorage.getItem("betfood-onboarded") === "1";
-  if (!onboarded && pathname !== "/welcome") return <Navigate to="/welcome" replace />;
+  if (!onboarded && pathname !== "/welcome") {
+    // Cliente que chega por link direto da casa (QR na mesa, story, WhatsApp)
+    // ia pro onboarding e depois era despejado na Home — perdia o restaurante
+    // que o trouxe. Guardamos o destino pra devolver no fim (ciclo 29).
+    try {
+      if (pathname !== "/") sessionStorage.setItem(DESTINO, pathname);
+    } catch {
+      /* modo privado: segue sem guardar, cai na Home */
+    }
+    return <Navigate to="/welcome" replace />;
+  }
 
   return (
     <Suspense fallback={<RouteFallback />}>

@@ -51,6 +51,24 @@ acessibilidade (axe-core, zero violações nas telas principais).
 
 # Histórico dos ciclos
 
+## Ciclo 29 — o QR na mesa não funcionaria pra cliente novo
+
+Testei o cenário que o produto pressupõe: cliente abre um link direto da casa
+(QR na mesa, story, WhatsApp do restaurante). **Quebrado** — quem nunca usou o
+app era mandado pro onboarding e, ao terminar, despejado na Home, perdendo
+justamente o restaurante que o trouxe. Ou seja, o material impresso do parceiro
+falharia com o público que ele quer atingir: gente nova.
+
+Agora o destino é guardado (`sessionStorage`) antes do desvio e devolvido no fim
+do onboarding. Verificado ponta a ponta com estado zerado: abre
+`#/r/pizzaria-forte` → onboarding → "Pular" → **cai na Pizzaria do Forte**.
+
+E o dono passou a ter acesso a esse link: bloco "Link desta casa" no painel, com
+botão copiar e a explicação de que serve como QR na mesa. Era uma capacidade que
+já existia no app e ninguém sabia que existia.
+
+
+
 ## Ciclo 28 — "jogada" queria dizer duas coisas ao mesmo tempo
 
 Varredura de vocabulário (contando cada termo na UI) revelou uma colisão real:
