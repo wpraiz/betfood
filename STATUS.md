@@ -1,6 +1,6 @@
 # STATUS — BetFood POC
 
-Atualizado: 2026-08-27 (ciclo 43 do loop de melhoria contínua)
+Atualizado: 2026-08-27 (ciclo 44 do loop de melhoria contínua)
 
 ## Onde está
 
@@ -50,6 +50,20 @@ acessibilidade (axe-core, zero violações nas telas principais).
 ---
 
 # Histórico dos ciclos
+
+## Ciclo 44 — o jogador agora vê a mesma chance que o dono vê
+
+O painel do parceiro mostrava a tabela com a probabilidade de cada prêmio desde
+o ciclo 31. O jogador não via nada — e esconder a chance de quem joga é
+exatamente a lógica de cassino que este produto diz não ser.
+
+Agora a página da casa tem **"Prêmios desta casa · Veja a chance real de cada
+um"** (recolhido por padrão, um toque abre): mesma lista, mesmos percentuais
+calculados dos pesos, inclusive a linha "Não foi dessa vez · 40%" — sem
+maquiagem. Se o dono editar a tabela, cliente e painel mudam juntos.
+
+É o argumento mais forte que o app tem contra a comparação com aposta: não é só
+dizer "não é aposta", é **mostrar a matemática antes de a pessoa jogar**.
 
 ## Ciclo 43 — as chamadas dos jogos prometiam o que o sorteio não garante
 

@@ -90,12 +90,14 @@ export default function RestaurantPage() {
   const restaurant = getRestaurant(restaurantId);
   const [code, setCode] = useState("");
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [chancesAbertas, setChancesAbertas] = useState(false);
   const [, forceUpdate] = useState(0);
 
   if (!restaurant)
     return <div className="p-5 text-sm text-ink/70">Restaurante não encontrado.</div>;
   const plays = availablePlays(restaurant.id);
   const chips = getChips();
+  const pesoTotal = restaurant.prizes.reduce((s, p) => s + p.weight, 0);
 
   const redeem = () => {
     if (!code.trim()) return;
@@ -203,6 +205,75 @@ export default function RestaurantPage() {
             >
               {msg.text}
             </p>
+          )}
+        </div>
+
+        {/* Prêmios e chances, do lado do JOGADOR. O painel do parceiro já
+            mostrava isso ao dono; esconder do cliente seria a lógica de
+            cassino, e o app se apresenta como o contrário disso. Mesmos
+            números, calculados dos pesos do sorteio. */}
+        <div className="anim-fade-up mt-7" style={{ animationDelay: "120ms" }}>
+          <button
+            type="button"
+            onClick={() => {
+              play("tap");
+              setChancesAbertas((v) => !v);
+            }}
+            aria-expanded={chancesAbertas}
+            className="press flex min-h-11 w-full items-center justify-between gap-3 rounded-card bg-white px-4 shadow-sm"
+          >
+            <span className="text-left">
+              <span className="block font-display text-[15px] font-bold">
+                Prêmios desta casa
+              </span>
+              <span className="mt-0.5 block text-[11px] text-ink/70">
+                Veja a chance real de cada um
+              </span>
+            </span>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+              className={`h-4 w-4 shrink-0 text-ink/65 transition-transform ${
+                chancesAbertas ? "rotate-180" : ""
+              }`}
+            >
+              <path d="m6 9 6 6 6-6" />
+            </svg>
+          </button>
+          {chancesAbertas && (
+            <ul className="anim-fade-up mt-2 divide-y divide-ink/10 rounded-card bg-white px-4 shadow-sm">
+              {restaurant.prizes.map((p) => {
+                const chance = pesoTotal > 0 ? Math.round((p.weight / pesoTotal) * 100) : 0;
+                const semPremio = p.tier === "none";
+                return (
+                  <li key={p.id} className="flex items-center justify-between gap-3 py-2.5">
+                    <span
+                      className={`min-w-0 flex-1 truncate text-[13px] ${
+                        semPremio ? "text-ink/70" : "font-semibold text-ink"
+                      }`}
+                    >
+                      {p.label}
+                    </span>
+                    <span
+                      className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold tabular-nums ${
+                        semPremio
+                          ? "bg-surface text-ink/70"
+                          : p.tier === "big"
+                            ? "bg-accent2/15 text-[#8a5a00]"
+                            : "bg-brand-50 text-brand-700"
+                      }`}
+                    >
+                      {chance}%
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
           )}
         </div>
 
