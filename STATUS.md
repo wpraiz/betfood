@@ -1,10 +1,13 @@
 # STATUS — BetFood POC
 
-Atualizado: 2026-08-27 (ciclo 45 do loop de melhoria contínua)
+Atualizado: 2026-08-27 (ciclo 46 do loop de melhoria contínua)
 
 ## Onde está
 
-**No ar e pronto pra demonstrar: https://betfood.vercel.app**
+**ATENÇÃO (ciclo 46): a produção está DESATUALIZADA** — os deploys estão
+falhando desde ~06h e o site serve a versão do ciclo 33. Ver ciclo 46 abaixo.
+
+**URL: https://betfood.vercel.app**
 Todo push em `main` vira deploy automático (GitHub `wpraiz/betfood`, público).
 
 O app está completo e verificado ponta a ponta em produção: onboarding, Home
@@ -50,6 +53,27 @@ acessibilidade (axe-core, zero violações nas telas principais).
 ---
 
 # Histórico dos ciclos
+
+## Ciclo 46 — DESCOBERTA GRAVE: produção 15h atrasada, deploys falhando
+
+Verificação de rotina revelou que **o site publicado está 15 horas atrasado**: o
+bundle servido é o do ciclo ~33. Tudo desde então (código em tela cheia, teclado
+do cliente, acessibilidade dos jogos, tempo adaptativo do quiz, "Revelar sem
+raspar", tabela de chances pro jogador, histórico do jogador) **não está no ar**.
+
+Diagnóstico:
+- Código está bom: clonei o repo do zero, `npm ci` + `npm run build` passou limpo.
+  Não é erro de compilação, nem de caixa em import (varri todos).
+- GitHub mostra os deploys chegando: **os 8 últimos falharam**, todos.
+- Causa provável: **cada push dispara DOIS deploys** — os projetos `betfood` e
+  `betfood-poc` estão ambos ligados ao repo (o `-poc` fui eu que criei num ciclo
+  anterior). Com ~50 pushes no dia, isso consome ~100 deploys e bate no limite
+  diário do plano Hobby.
+- Não consigo confirmar pelo MCP (403/401 nesse projeto) nem pausar o duplicado
+  (ação bloqueada pelo classificador de permissões).
+
+Mudança de método imediata: **parar de publicar a cada ciclo**. Acumular as
+mudanças e publicar em lote, pra não queimar cota nem esconder falha.
 
 ## Ciclo 45 — o jogador passa a ver o próprio histórico
 
