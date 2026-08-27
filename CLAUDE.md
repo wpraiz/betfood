@@ -92,6 +92,24 @@ editorial serifado Broadsheet ("não tem cara de app").
   (`onPointerDown` no card) — helper pronto, ainda não ligado nas listagens.
 - `/welcome` — splash + onboarding (flag `betfood-onboarded` no localStorage; redirect em App.tsx).
 
+## Como testar (o dev server não sobrevive em segundo plano)
+
+`npm run dev` iniciado em background nesta máquina é encerrado de fora depois de
+alguns minutos (verificado 27/ago: o Vite sobe, serve, e leva `[killed]`). Não
+conte com ele entre um ciclo e outro. Alternativas, em ordem:
+
+1. **Testar em produção** — `https://betfood.vercel.app` está sempre atualizado
+   (todo push vira deploy) e é o que o usuário final vê, inclusive service
+   worker, que só roda em produção.
+2. **Preview local pontual** — `npm run build` e `npx vite preview --port 5188`
+   dentro do mesmo comando que faz o teste.
+3. O José pode subir o dev server no terminal dele quando for mexer na mão.
+
+Armadilhas do playwright-cli: não navega de `https://betfood.vercel.app` para
+`http://localhost` (ERR_ABORTED) — feche a sessão (`playwright-cli close`) e
+abra direto no destino. Prefira `getByRole('button', { name: ... })` a refs de
+snapshot, que expiram a cada re-render.
+
 ## Comandos
 
 - `npm run dev` → http://localhost:5199 · `npm run build` → typecheck + build
