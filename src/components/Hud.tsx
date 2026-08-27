@@ -177,6 +177,10 @@ export default function Hud() {
     setClaimable(false);
   }
 
+  // Saldo curto: o contador de recarga entra e o nome do nível sai (não cabem
+  // os dois a 390px com mudo + ajuda + bônus na mesma linha).
+  const showCountdown = nextChip !== null && chips < CHIP_COST * 2;
+
   const pct =
     progress.levelCeil === null
       ? 100
@@ -203,7 +207,7 @@ export default function Hud() {
             </span>
             {/* Saldo curto: mostra quando cai a próxima ficha, pra ninguém achar
                 que o app travou. Some quando há folga. */}
-            {nextChip !== null && chips < CHIP_COST * 2 && (
+            {showCountdown && (
               <span className="border-l border-white/25 pl-1.5 text-[10px] font-bold tabular-nums text-white/70">
                 {nextChip}
               </span>
@@ -218,18 +222,17 @@ export default function Hud() {
             </div>
           )}
 
-          {/* Nível */}
-          <div className="min-w-0 flex-1">
-            {/* Só o nível: a barra já mostra o progresso, e o número de XP
-                espremia o nome do nível em telas de 375px. */}
-            <div className="flex items-baseline">
-              <span
-                className="truncate text-[10px] font-bold uppercase tracking-[0.04em] text-ink/65"
-                title={`${progress.levelTitle} · ${progress.xp} XP`}
-              >
-                {progress.levelName}
-              </span>
-            </div>
+          {/* Nível — a barra é o essencial; o nome só aparece quando sobra
+              espaço. Com o contador de recarga ligado, a linha fica apertada a
+              390px e o nome truncaria ("BRO..."), o que é pior que omitir. */}
+          <div className="min-w-0 flex-1" title={`${progress.levelTitle} · ${progress.xp} XP`}>
+            {!showCountdown && (
+              <div className="flex items-baseline">
+                <span className="truncate text-[10px] font-bold uppercase tracking-[0.04em] text-ink/65">
+                  {progress.levelName}
+                </span>
+              </div>
+            )}
             <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-surface">
               <div
                 className="h-full rounded-full bg-gradient-to-r from-brand-500 to-accent2 transition-all duration-700"
