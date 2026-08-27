@@ -2,7 +2,13 @@ import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { GAMES, prefetchGame } from "../games";
 import GameThumb from "../components/GameThumb";
-import { availablePlays, getRestaurant, redeemTableCode } from "../lib/store";
+import {
+  availablePlays,
+  CHIP_COST,
+  getChips,
+  getRestaurant,
+  redeemTableCode,
+} from "../lib/store";
 import { play } from "../lib/sound";
 
 /** Foto com skeleton shimmer enquanto carrega. */
@@ -89,6 +95,7 @@ export default function RestaurantPage() {
   if (!restaurant)
     return <div className="p-5 text-sm text-ink/70">Restaurante não encontrado.</div>;
   const plays = availablePlays(restaurant.id);
+  const chips = getChips();
 
   const redeem = () => {
     if (!code.trim()) return;
@@ -144,15 +151,22 @@ export default function RestaurantPage() {
           className="anim-fade-up rounded-card bg-white p-5 shadow-md"
           style={{ animationDelay: "80ms" }}
         >
+          {/* O topo da tela mostra FICHAS e aqui mostrava JOGADAS: duas unidades
+              pra mesma coisa confundem. O número grande agora é o mesmo do HUD,
+              com a conversão escrita embaixo. */}
           <div className="flex items-center justify-between">
             <div>
               <span className="text-xs font-bold uppercase tracking-wider text-ink/65">
-                Jogadas disponíveis
+                Suas fichas
               </span>
-              <p className="mt-0.5 text-xs text-ink/65">Código da mesa libera mais.</p>
+              <p className="mt-0.5 text-xs text-ink/65">
+                {plays > 0
+                  ? `Dá pra ${plays} ${plays === 1 ? "jogada" : "jogadas"} · ${CHIP_COST} fichas cada`
+                  : `Cada jogada custa ${CHIP_COST} fichas — o código da mesa repõe`}
+              </p>
             </div>
             <span className="font-display text-5xl font-bold leading-none tabular-nums text-brand-500">
-              {plays}
+              {chips}
             </span>
           </div>
           <div className="mt-4 flex gap-2">

@@ -53,7 +53,11 @@ editorial serifado Broadsheet ("não tem cara de app").
 
 ## Economia e progressão (store.ts)
 
-- **Fichas** (moeda global): boas-vindas 50, jogada custa `CHIP_COST` 10, bônus diário +30 (`claimDailyBonus`), código da mesa credita `credits × 10` fichas.
+- **Fichas** (moeda global): boas-vindas 50, jogada custa `CHIP_COST` 10, bônus diário +30 (`claimDailyBonus`), código da mesa credita `credits × 10` fichas. Recarrega sozinha: `REGEN_AMOUNT` 10 a cada `REGEN_INTERVAL_MS` 10min até `REGEN_CAP` 50.
+  **A unidade visível é sempre FICHA.** Não mostre "N jogadas" como número
+  principal em lugar nenhum — o HUD mostra fichas e uma segunda unidade na mesma
+  tela confunde (corrigido no ciclo 20). Se precisar falar de jogadas, use como
+  legenda: "dá pra N jogadas · 10 fichas cada".
 - **XP/nível**: +10 por jogada, +25 por vitória; níveis Garfo de Bronze → Prata → Ouro → Chef da Casa → Lenda de Natal (`getProgress()`).
 - **Streak**: dias seguidos jogando (qualquer casa).
 - **Cupom** tem `expiresAt` (24h após o ganho). A validação no caixa mora em

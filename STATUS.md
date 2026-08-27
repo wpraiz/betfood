@@ -521,6 +521,16 @@ linguagem de dono — "60% dos códigos entregues viraram jogada · 3 de 5 cupon
 ganhos voltaram pra casa". Calculada dos mesmos dados (nada inventado) e só
 aparece quando há base, pra não exibir "0% de 0".
 
+## Ciclo 20 — uma unidade só: ficha
+
+Inconsistência herdada da migração pra fichas: o HUD mostrava **190 fichas** e a
+página da casa, logo abaixo, mostrava **19 jogadas** — duas unidades pro mesmo
+saldo, na mesma tela. Quem chega novo não sabe qual é a moeda.
+
+Agora o número grande da casa é o mesmo do topo (fichas) e a conversão virou
+legenda: "Dá pra 19 jogadas · 10 fichas cada". Sem saldo, o texto explica o
+custo e aponta o código da mesa. Regra registrada no CLAUDE.md pra não voltar.
+
 ## Backlog priorizado (pedido do José, 26/ago à noite)
 
 1. **Subir o nível dos games além da roleta** — "memória e demais tão muito low
