@@ -544,6 +544,23 @@ até 50. Ninguém fica sem jogar." Verificado abrindo o painel pelo HUD.
 Lição pro CLAUDE.md já registrada em espírito: mecânica nova exige revisar a
 tela que explica o app, senão a explicação vira mentira por omissão.
 
+## Ciclo 22 — documentação que enganava quem abrisse o repo
+
+O repositório é **público**: o Allan (ou qualquer pessoa) pode abrir. E os dois
+arquivos de entrada estavam parados no começo do dia:
+
+- **README** dizia "1 jogada grátis por dia por restaurante" e "código = +3
+  jogadas" — mecânica que não existe desde a economia de fichas. Também não
+  mencionava a URL no ar, o PWA, o offline, o som, o XP nem a validação de cupom
+  no caixa. Reescrito: como o app funciona hoje, roteiro de demo, o que é o
+  Capacitor (configurado, mas o caminho escolhido foi PWA porque os testes são em
+  iPhone) e onde estão as convenções.
+- **supabase/schema.sql** não tinha fichas, XP, streak, validade de cupom nem
+  jogador. Atualizado pra espelhar o `store.ts` de hoje, com comentário no topo
+  avisando que os dois andam em par.
+
+Nada disso muda o app — muda o que uma pessoa entende ao chegar nele.
+
 ## Backlog priorizado (pedido do José, 26/ago à noite)
 
 1. **Subir o nível dos games além da roleta** — "memória e demais tão muito low
