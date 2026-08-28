@@ -146,6 +146,12 @@ painel tem dezenas de hooks; early return lá dentro é hook condicional), e ela
   o jogo não começa e o GamePlay troca sozinho pra tela "Suas fichas acabaram".
   É idempotente por rodada (`chargedRef` no GamePlay), mas chame uma vez só.
   Sortear o prêmio (`drawPrize()`) é de graça e pode acontecer na montagem.
+- **`src/components/Guardiao.tsx`** — error boundary envolvendo as rotas em
+  `App.tsx`, POR FORA do `<Suspense>`: `import()` que falha rejeita a promessa e
+  o Suspense não trata isso (tela branca). Em falha de chunk com rede, recarrega
+  **uma vez** (trava em `sessionStorage`) — resolve o caso "deploy novo, aba
+  antiga". Sem isso, qualquer exceção derruba o app inteiro pro branco no meio
+  de uma demonstração.
 - `src/pages/GamePlay.tsx` — casca: cobra a ficha via `startPlay`, monta o game
   dentro de um `<Suspense>` com esqueleto (nunca tela branca), converte vitória
   em cupom. O shell (HUD + tab bar) só some durante a partida de verdade.

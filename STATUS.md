@@ -1,6 +1,6 @@
 # STATUS — BetFood POC
 
-Atualizado: 2026-08-27 (ciclo 61 do loop de melhoria contínua)
+Atualizado: 2026-08-27 (ciclo 62 do loop de melhoria contínua)
 
 ## Onde está
 
@@ -52,6 +52,41 @@ acessibilidade (axe-core, zero violações nas telas principais).
 ---
 
 # Histórico dos ciclos
+
+## Ciclo 62 — tela branca deixou de ser um desfecho possível
+
+O app não tinha **nenhum** error boundary. Qualquer exceção em qualquer render
+desmontava a árvore inteira e sobrava uma página em branco — o pior desfecho
+possível num app apresentado ao vivo pra dono de restaurante.
+
+E o caso mais provável nem é bug de lógica: é **chunk de jogo que não baixa**.
+Os jogos são `React.lazy`, então o `import()` acontece no toque. Duas situações
+reais: offline num jogo nunca aberto, e deploy novo com a aba antiga aberta (o
+index velho pede um chunk que já não existe). `import()` que falha **rejeita a
+promessa — e isso o Suspense não trata**; só error boundary segura.
+
+Feito:
+
+- **`src/components/Guardiao.tsx`**, envolvendo as rotas em `src/App.tsx` (por
+  fora do `<Suspense>`).
+- **Recarrega uma vez, sozinho, quando a falha é de chunk e há rede** — é o que
+  resolve o caso do deploy novo, porque o index novo aponta pros chunks novos. A
+  trava fica em `sessionStorage`, senão vira laço de recarga.
+- **Tela de recuperação** quando recarregar não resolve: diz que nada do que a
+  pessoa ganhou se perdeu (fichas e cupons estão no aparelho) e oferece duas
+  saídas. Offline tem texto próprio: "Esse jogo precisa de internet — os que
+  você já abriu funcionam offline".
+- O link de volta usa `href` cru, não `<Link>`: o router pode ser exatamente o
+  que quebrou.
+
+Conferido no preview derrubando o chunk da memória com `route --status=404`: sem
+tela branca, recarregou uma vez, mostrou a tela de recuperação em vez de entrar
+em laço, e depois de liberar a rota o "Tentar de novo" voltou ao jogo normal.
+axe na tela de recuperação: zero violações.
+
+**Achado de brinde**: com o chunk já em cache, o 404 forçado não teve efeito
+nenhum — o service worker serviu o jogo mesmo assim. Ou seja, **jogo já aberto
+uma vez funciona offline de verdade**, como o SW promete.
 
 ## Ciclo 61 — a tela mais frequente do app era a mais vazia
 
@@ -224,7 +259,7 @@ Resultado: Welcome, trava, painel e folha de cartões — **zero violações**.
 ### Armadilha que quase virou falso positivo
 
 O primeiro teste do Escape falhou rodando um bundle antigo. **Culpei o service
-worker — e estava errado** (corrigido no ciclo 61, com prova): `playwright-cli
+worker — e estava errado** (corrigido no ciclo 62, com prova): `playwright-cli
 goto` para uma URL que só difere no **hash** não recarrega o documento. Eu tinha
 rebuildado e "navegado", mas o navegador seguia com o documento de antes. Provei
 marcando `window.__marca` e vendo o marcador sobreviver ao `goto`.
