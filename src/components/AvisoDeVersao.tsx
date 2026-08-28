@@ -14,10 +14,19 @@ import { useEffect, useRef, useState } from "react";
  * nunca dispara. E quando dispara, dispara na carga em que o usuário JÁ está na
  * versão nova — avisaria errado.
  *
- * O sinal honesto é outro: comparar o build que ESTE documento carregou
- * (`__BUILD_ID__`, congelado no bundle) com o que o servidor está publicando
- * agora (`version.json`). Diferente = este documento está velho.
+ * O sinal honesto é outro: comparar o build que ESTE documento carregou (meta
+ * `betfood-build`, escrita no index.html pelo vite.config.ts) com o que o
+ * servidor está publicando agora (`version.json`). Diferente = este documento
+ * está velho.
+ *
+ * O id mora na meta e não dentro do bundle de propósito: dentro do JS ele
+ * mudaria o hash do arquivo a cada build e quebraria a conferência de deploy
+ * (comparar `assets/index-XXXX.js` local com o de produção).
  */
+
+/** Build que este documento carregou. Ausente em dev — aí não há o que comparar. */
+const BUILD_LOCAL =
+  document.querySelector<HTMLMetaElement>('meta[name="betfood-build"]')?.content ?? "";
 
 /** Espaço mínimo entre consultas: voltar pro app não pode virar enxurrada. */
 const INTERVALO_MS = 60_000;
@@ -30,7 +39,7 @@ export default function AvisoDeVersao() {
     let vivo = true;
 
     const checar = async () => {
-      if (temNova) return;
+      if (temNova || !BUILD_LOCAL) return;
       const agora = Date.now();
       if (agora - ultimaChecagem.current < INTERVALO_MS) return;
       ultimaChecagem.current = agora;
@@ -40,7 +49,7 @@ export default function AvisoDeVersao() {
         });
         if (!res.ok) return;
         const { id } = await res.json();
-        if (vivo && id && id !== __BUILD_ID__) setTemNova(true);
+        if (vivo && id && id !== BUILD_LOCAL) setTemNova(true);
       } catch {
         // Sem rede (o app funciona offline): tenta de novo na próxima volta.
       }

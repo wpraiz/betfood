@@ -72,9 +72,16 @@ Foi o custo do ciclo 46 em outra forma.
 
 Feito:
 
-- **`vite.config.ts`** gera um `BUILD_ID` por build, injeta em `__BUILD_ID__`
-  (congelado dentro do bundle) e emite `dist/version.json` com o mesmo id.
-- **`src/components/AvisoDeVersao.tsx`** compara os dois: o id que ESTE
+- **`vite.config.ts`** gera um `BUILD_ID` por build, escreve no `index.html`
+  como `<meta name="betfood-build">` e emite `dist/version.json` com o mesmo id.
+
+  Primeira tentativa foi injetar o id **dentro do bundle** (`define`). Errado, e
+  o erro apareceu na hora de conferir o deploy: um id que muda a cada build muda
+  o conteúdo do JS e, com ele, o hash do arquivo — então `assets/index-XXXX.js`
+  local **nunca mais bate** com o de produção, que é justamente como se confere
+  se um deploy saiu. Na meta, o hash do bundle volta a ser estável entre builds
+  do mesmo código (verificado: dois builds seguidos = mesmo hash).
+- **`src/components/AvisoDeVersao.tsx`** compara os dois: a meta que ESTE
   documento carregou contra o que o servidor publica agora. Diferente = este
   documento está velho. Consulta na montagem e a cada volta pro app
   (`visibilitychange`), no máximo uma vez por minuto, e some sem barulho se

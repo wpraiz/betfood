@@ -229,8 +229,11 @@ dentro e Escape fechando.
 
 ## Versão velha rodando: o app avisa sozinho
 
-`vite.config.ts` gera um `BUILD_ID` por build, injeta em `__BUILD_ID__` e emite
-`version.json`. `src/components/AvisoDeVersao.tsx` compara os dois na montagem e
+`vite.config.ts` gera um `BUILD_ID` por build, escreve no `index.html` como
+`<meta name="betfood-build">` e emite `version.json`. **O id nunca entra no
+bundle**: dentro do JS ele mudaria o hash do arquivo a cada build e a
+conferência de deploy (comparar `assets/index-XXXX.js` local com o de produção)
+pararia de funcionar para sempre. `src/components/AvisoDeVersao.tsx` compara os dois na montagem e
 a cada volta pro app (máx. 1x/min) — diferente significa que ESTE documento está
 velho, e aparece uma pílula "Versão nova · toque pra atualizar". **Convite, não
 recarga automática**: ninguém perde jogada no meio.
