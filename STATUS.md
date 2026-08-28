@@ -1,6 +1,6 @@
 # STATUS — BetFood POC
 
-Atualizado: 2026-08-27 (ciclo 62 do loop de melhoria contínua)
+Atualizado: 2026-08-27 (ciclo 63 do loop de melhoria contínua)
 
 ## Onde está
 
@@ -52,6 +52,47 @@ acessibilidade (axe-core, zero violações nas telas principais).
 ---
 
 # Histórico dos ciclos
+
+## Ciclo 63 — a primeira carga caiu de 583 KB para 202 KB
+
+O funil é um link colado no WhatsApp, então a primeira carga é o que mais
+importa — e eu não media isso há muitos ciclos. Medi em 4G simulado (1,6 Mbps,
+150 ms de latência, CPU 4x mais lenta) e o retrato foi este: **583 KB, dos quais
+só 87 KB eram JS**. O resto era áudio.
+
+Os 13 MP3 somam 452 KB — **cinco vezes o app inteiro** — e baixavam todos na
+abertura, por dois caminhos independentes: o `warm()` no `load` e o precache do
+service worker. Tudo isso disputando banda com as fotos dos restaurantes, que é
+o que a pessoa está de fato olhando.
+
+Feito:
+
+- **`src/main.tsx`**: na abertura aquece só `tap` e `coupon` (48 KB) — os únicos
+  que podem tocar nos primeiros segundos (`coupon` é a celebração do slide 2 do
+  onboarding). `shimmer` e `jackpot`, os mais pesados, só tocam dentro de
+  partida.
+- **`src/games/index.ts`**: cada jogo declara os SFX que usa, e `prefetchGame`
+  aquece junto com o chunk — no `onPointerDown` do card, antes da navegação.
+- **`public/sw.js`**: sons saíram do precache (fica só `tap`), cache
+  `betfood-v1` → **`betfood-v2`**. O handler cache-first de `/sounds/` continua
+  guardando cada arquivo no primeiro uso.
+- **Rede de segurança da promessa offline**: um `warm()` completo 15s depois da
+  carga, pra quem fica com o app aberto ter os 13 em disco de qualquer jeito.
+
+Medido depois: **202 KB**, 2 MP3 na abertura, e a última foto de restaurante
+chegando em **2,00s contra 3,58s**. O toque no card do jogo da memória traz os 8
+sons dele; entrar na partida não espera nada.
+
+### `requestIdleCallback` não serve pra adiar rede
+
+Primeira tentativa foi adiar o `warm()` completo com `requestIdleCallback`. Não
+mudou nada: a thread principal fica ociosa ~1s depois da carga, quando as fotos
+ainda estão descendo. **Ocioso de CPU não é ocioso de rede.** Virou espera de
+relógio (15s).
+
+Nota lateral: o CLAUDE.md dizia que `prefetchGame` estava "pronto, ainda não
+ligado nas listagens". Estava ligado (Home e RestaurantPage, `onPointerDown`)
+desde algum ciclo anterior. Corrigido.
 
 ## Ciclo 62 — tela branca deixou de ser um desfecho possível
 
@@ -259,7 +300,7 @@ Resultado: Welcome, trava, painel e folha de cartões — **zero violações**.
 ### Armadilha que quase virou falso positivo
 
 O primeiro teste do Escape falhou rodando um bundle antigo. **Culpei o service
-worker — e estava errado** (corrigido no ciclo 62, com prova): `playwright-cli
+worker — e estava errado** (corrigido no ciclo 63, com prova): `playwright-cli
 goto` para uma URL que só difere no **hash** não recarrega o documento. Eu tinha
 rebuildado e "navegado", mas o navegador seguia com o documento de antes. Provei
 marcando `window.__marca` e vendo o marcador sobreviver ao `goto`.

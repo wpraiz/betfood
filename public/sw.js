@@ -3,13 +3,14 @@
    já estão em disco (no iOS o som chegava depois da animação).
    Versionar CACHE é o que impede versão nova de ficar presa em cache velho. */
 
-const CACHE = "betfood-v1";
+const CACHE = "betfood-v2";
 
-const SOUNDS = [
-  "spin", "win", "lose", "scratch", "coupon", "tap", "flip",
-  "correct", "wrong", "shimmer", "levelup", "tick", "jackpot",
-];
-
+/* Os 13 MP3 somam 452 KB — cinco vezes o JS do app. Estavam TODOS aqui, então
+   a primeira visita baixava meio megabyte de áudio por baixo, em paralelo com o
+   que a pessoa está olhando na tela (ciclo 63). Saíram do precache: o handler
+   cache-first de /sounds/ guarda cada um no primeiro uso, e o app aquece os de
+   cada jogo em prefetchGame, quando o dedo encosta no card. Só `tap` fica aqui
+   — é o toque de UI, tem 12 KB e soa antes de qualquer outra coisa. */
 const PRECACHE = [
   "./",
   "./index.html",
@@ -18,7 +19,7 @@ const PRECACHE = [
   "./icons/icon-192.png",
   "./icons/icon-512.png",
   "./icons/icon-maskable-512.png",
-  ...SOUNDS.map((n) => `./sounds/${n}.mp3`),
+  "./sounds/tap.mp3",
 ];
 
 // allSettled: um arquivo que falhe não pode abortar a instalação inteira.

@@ -20,9 +20,18 @@ editorial serifado Broadsheet ("não tem cara de app").
 
 - Vite + React 18 + TS + Tailwind 4 (`@tailwindcss/vite`), HashRouter, Capacitor 7
 - Dados: localStorage via `src/lib/store.ts` (única porta; schema Supabase espelhado em `supabase/schema.sql`)
-- Som: `src/lib/sound.ts` — `play(name, {loop?, volume?})`/`stop(name)`; 13 SFX ElevenLabs em `public/sounds/` (spin, win, lose, scratch, coupon, tap, flip, correct, wrong, shimmer, levelup, tick, jackpot). Respeita mute, nunca lança. `warm(names?)` pré-baixa os MP3 (chamado no `load` em `src/main.tsx`).
+- Som: `src/lib/sound.ts` — `play(name, {loop?, volume?})`/`stop(name)`; 13 SFX
+  ElevenLabs em `public/sounds/` (spin, win, lose, scratch, coupon, tap, flip,
+  correct, wrong, shimmer, levelup, tick, jackpot). Respeita mute, nunca lança.
+  **Os MP3 somam 452 KB, cinco vezes o JS do app** — nunca baixe todos na
+  abertura (era 65% da primeira carga, ciclo 63). `warm(["tap","coupon"])` no
+  `load`, os SFX de cada jogo em `prefetchGame` (lista `SONS_DO_JOGO` em
+  `src/games/index.ts`), e um `warm()` completo 15s depois só como rede de
+  segurança do offline. Pra adiar rede use **relógio**, não
+  `requestIdleCallback`: a CPU fica ociosa ~1s após a carga, com as fotos ainda
+  descendo.
 - Fotos: `restaurant.photo` (Unsplash) + `restaurant.rating` no seed; sempre com skeleton shimmer no carregamento.
-- **Offline: `public/sw.js`** (service worker sem libs, cache versionado `betfood-v1`).
+- **Offline: `public/sw.js`** (service worker sem libs, cache versionado `betfood-v2`).
   Registrado em `src/main.tsx` só em `import.meta.env.PROD` — o dev server (5199)
   nunca tem SW. Navegação é network-first (versão nova nunca fica presa em cache);
   assets same-origin (`/assets/`, `/sounds/`, `/icons/`) são cache-first com
@@ -155,8 +164,9 @@ painel tem dezenas de hooks; early return lá dentro é hook condicional), e ela
 - `src/pages/GamePlay.tsx` — casca: cobra a ficha via `startPlay`, monta o game
   dentro de um `<Suspense>` com esqueleto (nunca tela branca), converte vitória
   em cupom. O shell (HUD + tab bar) só some durante a partida de verdade.
-- `prefetchGame(id)` em `src/games/index.ts` aquece o chunk antes da navegação
-  (`onPointerDown` no card) — helper pronto, ainda não ligado nas listagens.
+- `prefetchGame(id)` em `src/games/index.ts` aquece **o chunk e os SFX** do jogo
+  antes da navegação. Já ligado no `onPointerDown` dos cards em `Home.tsx` e
+  `RestaurantPage.tsx`.
 - `/welcome` — splash + onboarding (flag `betfood-onboarded` no localStorage; redirect em App.tsx).
 
 ## Como testar (o dev server não sobrevive em segundo plano)

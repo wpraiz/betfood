@@ -1,6 +1,7 @@
 import { lazy } from "react";
 import type { ComponentType } from "react";
 import type { GameDefinition, GameProps } from "../lib/types";
+import { warm, type SoundName } from "../lib/sound";
 
 type GameModule = { default: ComponentType<GameProps> };
 
@@ -12,6 +13,26 @@ type GameModule = { default: ComponentType<GameProps> };
  * Novo jogo: crie `src/games/<id>/index.tsx` com `export default` do componente,
  * acrescente o loader aqui e a entrada em GAMES com os metadados estáticos.
  */
+/**
+ * SFX de cada jogo, baixados junto com o chunk no `prefetchGame`.
+ *
+ * Os 13 MP3 somam 452 KB — cinco vezes o JS do app. Baixar todos na abertura
+ * custava meio megabyte antes do primeiro toque e disputava banda com as fotos
+ * dos restaurantes, que são o que a pessoa está olhando (ciclo 63). Aqui cada
+ * jogo pede o que usa, no momento em que o dedo encosta no card.
+ *
+ * `win`/`lose`/`jackpot`/`shimmer` entram na lista de todos: quem toca é a
+ * casca (GamePlay), no fim da rodada, mas a rodada é sempre de algum jogo.
+ */
+const FIM_DE_RODADA: SoundName[] = ["win", "lose", "jackpot", "shimmer"];
+
+const SONS_DO_JOGO: Record<string, SoundName[]> = {
+  roleta: ["spin", ...FIM_DE_RODADA],
+  raspadinha: ["scratch", "coupon", "tap", ...FIM_DE_RODADA],
+  quiz: ["tick", "tap", ...FIM_DE_RODADA],
+  memoria: ["flip", "correct", "wrong", "tick", ...FIM_DE_RODADA],
+};
+
 const loaders: Record<string, () => Promise<GameModule>> = {
   roleta: () => import("./roleta"),
   raspadinha: () => import("./raspadinha"),
@@ -69,4 +90,6 @@ export function getGame(id: string): GameDefinition | undefined {
  */
 export function prefetchGame(id: string): void {
   void loaders[id]?.().catch(() => {});
+  const sons = SONS_DO_JOGO[id];
+  if (sons) warm(sons);
 }
