@@ -546,3 +546,62 @@ export function getPendingCoupons(restaurantId: string): Coupon[] {
     )
     .sort((a, b) => b.wonAt.localeCompare(a.wonAt));
 }
+
+// --- Trava do painel do parceiro -------------------------------------------
+//
+// O painel gera código de mesa e dá baixa em cupom: nas mãos do cliente sentado
+// à mesa, é ficha infinita e cupom queimado. Mora fora do `DB` de propósito —
+// "Recomeçar do zero (apresentação)" limpa a operação da casa, não deve
+// destravar o caixa nem esquecer o PIN que o dono escolheu.
+
+const PIN_KEY = "betfood-parceiro-pin";
+const DESTRAVADO_KEY = "betfood-parceiro-ok";
+
+/** PIN de fábrica. O painel mostra o atual e deixa trocar. */
+export const PIN_PADRAO = "1234";
+
+export function getPartnerPin(): string {
+  try {
+    return localStorage.getItem(PIN_KEY) || PIN_PADRAO;
+  } catch {
+    return PIN_PADRAO;
+  }
+}
+
+export function setPartnerPin(pin: string): boolean {
+  const limpo = pin.replace(/\D/g, "");
+  if (limpo.length !== 4) return false;
+  try {
+    localStorage.setItem(PIN_KEY, limpo);
+  } catch {
+    /* modo privado: segue com o PIN de fábrica */
+  }
+  return true;
+}
+
+/** Destravado fica no aparelho: o tablet do caixa não pede PIN o dia todo. */
+export function isPartnerUnlocked(): boolean {
+  try {
+    return localStorage.getItem(DESTRAVADO_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function unlockPartner(pin: string): boolean {
+  if (pin.replace(/\D/g, "") !== getPartnerPin()) return false;
+  try {
+    localStorage.setItem(DESTRAVADO_KEY, "1");
+  } catch {
+    /* modo privado: destrava só nesta tela */
+  }
+  return true;
+}
+
+export function lockPartner(): void {
+  try {
+    localStorage.removeItem(DESTRAVADO_KEY);
+  } catch {
+    /* nada a fazer */
+  }
+}

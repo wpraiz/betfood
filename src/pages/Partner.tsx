@@ -12,6 +12,10 @@ import {
   getTableCodes,
   hasCustomPrizes,
   hasDemoData,
+  isPartnerUnlocked,
+  lockPartner,
+  getPartnerPin,
+  setPartnerPin,
   resetPrizeLabels,
   setPrizeLabel,
   redeemCouponByCode,
@@ -21,6 +25,7 @@ import { play } from "../lib/sound";
 import FoodPhoto, { thumb } from "../components/FoodPhoto";
 import QrCode from "../components/QrCode";
 import CartoesDeMesa from "../components/CartoesDeMesa";
+import TravaParceiro from "../components/TravaParceiro";
 
 const CONFETTI_COLORS = ["#e31b28", "#f5a623", "#ffffff"];
 const CODIGOS_VISIVEIS = 5; // resto entra em "ver todos"
@@ -196,7 +201,17 @@ function Step({ n, title, text }: { n: number; title: string; text: string }) {
   );
 }
 
+/**
+ * Porta antes do painel. O painel tem dezenas de hooks, então a trava não pode
+ * ser um early return lá dentro — precisa ser este componente separado.
+ */
 export default function Partner() {
+  const [destravado, setDestravado] = useState(isPartnerUnlocked);
+  if (!destravado) return <TravaParceiro onAbrir={() => setDestravado(true)} />;
+  return <PainelParceiro aoSair={() => setDestravado(false)} />;
+}
+
+function PainelParceiro({ aoSair }: { aoSair: () => void }) {
   const restaurants = getRestaurants();
   const [selected, setSelected] = useState(restaurants[0].id);
   const [qty, setQty] = useState(5);
@@ -244,6 +259,9 @@ export default function Partner() {
   const linkDaCasa = `${window.location.origin}${window.location.pathname}#/r/${selected}`;
   const [copiado, setCopiado] = useState(false);
   const [imprimindo, setImprimindo] = useState(false);
+  const [trocandoPin, setTrocandoPin] = useState(false);
+  const [novoPin, setNovoPin] = useState("");
+  const [pinSalvo, setPinSalvo] = useState(false);
   function copiarLink() {
     play("tap");
     navigator.clipboard?.writeText(linkDaCasa).then(
@@ -1076,6 +1094,73 @@ export default function Partner() {
               Recomeçar do zero (apresentação)
             </button>
           )}
+
+          {/* Acesso: sair devolve o aparelho ao cliente; trocar o PIN é o que
+              faz a trava ser da CASA e não do app. */}
+          <div className="mt-4 border-t border-ink/10 pt-4">
+            {trocandoPin ? (
+              <div>
+                <label htmlFor="novo-pin" className="block text-xs font-bold uppercase tracking-wide text-ink/70">
+                  Novo PIN (4 dígitos)
+                </label>
+                <div className="mt-2 flex gap-2">
+                  <input
+                    id="novo-pin"
+                    value={novoPin}
+                    onChange={(e) => {
+                      setNovoPin(e.target.value.replace(/\D/g, "").slice(0, 4));
+                      setPinSalvo(false);
+                    }}
+                    inputMode="numeric"
+                    autoComplete="off"
+                    placeholder={getPartnerPin()}
+                    className="min-w-0 flex-1 rounded-full border border-ink/15 bg-paper px-4 py-2.5 text-center font-display text-lg tracking-[0.4em] outline-none"
+                  />
+                  <button
+                    type="button"
+                    disabled={novoPin.length < 4}
+                    onClick={() => {
+                      if (setPartnerPin(novoPin)) {
+                        play("coupon");
+                        setPinSalvo(true);
+                        setNovoPin("");
+                      }
+                    }}
+                    className="press min-h-11 shrink-0 rounded-full bg-ink px-4 text-xs font-bold text-white disabled:opacity-40"
+                  >
+                    Salvar
+                  </button>
+                </div>
+                <p className="mt-2 text-xs text-ink/70">
+                  {pinSalvo ? "PIN trocado. Ele vale no próximo acesso." : `PIN atual: ${getPartnerPin()}`}
+                </p>
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    play("tap");
+                    lockPartner();
+                    aoSair();
+                  }}
+                  className="press min-h-11 rounded-full border border-ink/15 px-4 text-xs font-bold text-ink/70"
+                >
+                  Sair do painel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    play("tap");
+                    setTrocandoPin(true);
+                  }}
+                  className="press min-h-11 rounded-full border border-ink/15 px-4 text-xs font-bold text-ink/70"
+                >
+                  Trocar PIN
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

@@ -1,6 +1,6 @@
 # STATUS — BetFood POC
 
-Atualizado: 2026-08-27 (ciclo 55 do loop de melhoria contínua)
+Atualizado: 2026-08-27 (ciclo 56 do loop de melhoria contínua)
 
 ## Onde está
 
@@ -52,6 +52,39 @@ acessibilidade (axe-core, zero violações nas telas principais).
 ---
 
 # Histórico dos ciclos
+
+## Ciclo 56 — o painel do parceiro deixou de ficar aberto pro cliente
+
+Buraco de produto, não de código: a aba "Parceiro" estava aberta pra qualquer um
+na mesa. Dava pra **gerar código de mesa à vontade** (ficha infinita) e **dar
+baixa em cupom alheio**. É a primeira pergunta que um dono de restaurante faz ao
+ver o app — "o cliente também vê isso?".
+
+Feito:
+
+- **`src/components/TravaParceiro.tsx`** — porta com PIN de 4 dígitos, teclado
+  numérico no celular, campo `password` (o balcão é público), erro com `role="alert"`
+  e saída "Voltar para os jogos" (nada de beco sem saída).
+- **`src/pages/Partner.tsx`** — o painel virou `PainelParceiro` e o `export
+  default` é o porteiro. Tinha que ser componente separado: o painel tem dezenas
+  de hooks e um early return lá dentro seria hook condicional.
+- **"Sair do painel" e "Trocar PIN"** no rodapé do painel. Trocar o PIN é o que
+  faz a trava ser **da casa** e não do app.
+- **Trava fora do `DB`** (`src/lib/store.ts`, chaves `betfood-parceiro-pin` e
+  `betfood-parceiro-ok`): "Recomeçar do zero (apresentação)" limpa a operação,
+  não deve destravar o caixa nem esquecer o PIN escolhido pelo dono.
+- Destravado fica no aparelho: o tablet do caixa não pede PIN o dia todo.
+
+**PIN de fábrica: `1234`** (`PIN_PADRAO` no store).
+
+O que isso NÃO é: segurança de verdade. O dado é local e a POC não tem servidor
+— quem abrir o DevTools passa. É trava de balcão, como a gaveta do caixa: barra
+o acidente e o oportunista, e mostra a quem está comprando o produto que existe
+separação entre o lado do cliente e o lado da casa.
+
+Conferido no preview: painel não vaza antes do PIN, PIN errado dá erro visível,
+certo abre, fica destravado após recarregar, "Sair" tranca de novo, PIN trocado
+pra 7788 passou a valer e o 1234 foi recusado.
 
 ## Ciclo 55 — o cartão da mesa dispensa o teclado
 

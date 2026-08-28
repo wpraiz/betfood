@@ -83,6 +83,19 @@ Cuidado ligado a isso: qualquer link de entrada com query precisa que
 `src/App.tsx` guarde `pathname + search` antes de desviar pro onboarding —
 guardar só o pathname faz o novato chegar na casa certa sem ficha.
 
+## O painel do parceiro é trancado (PIN)
+
+A aba "Parceiro" gera código de mesa e dá baixa em cupom — nas mãos do cliente
+é ficha infinita e cupom queimado. `src/pages/Partner.tsx` exporta um porteiro
+que mostra `src/components/TravaParceiro.tsx` até o PIN certo; o painel de
+verdade é `PainelParceiro`. **PIN de fábrica `1234`** (`PIN_PADRAO`), trocável
+no rodapé do painel. As chaves (`betfood-parceiro-pin`, `betfood-parceiro-ok`)
+moram **fora do `DB`**: "Recomeçar do zero" limpa a operação, não o acesso.
+
+Duas coisas a não esquecer: a trava **tem que ser componente separado** (o
+painel tem dezenas de hooks; early return lá dentro é hook condicional), e ela
+**não é segurança** — o dado é local, sem servidor. É trava de balcão.
+
 ## Economia e progressão (store.ts)
 
 - **Fichas** (moeda global): boas-vindas 50, jogada custa `CHIP_COST` 10, bônus diário +30 (`claimDailyBonus`), código da mesa credita `credits × 10` fichas. Recarrega sozinha: `REGEN_AMOUNT` 10 a cada `REGEN_INTERVAL_MS` 10min até `REGEN_CAP` 50.
