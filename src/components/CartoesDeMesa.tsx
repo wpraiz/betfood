@@ -8,8 +8,10 @@ import type { TableCode } from "../lib/types";
  *
  * É a ponte física que faltava: o painel mandava "imprima como QR" e não
  * gerava QR nenhum, então o dono da casa teria que produzir isso por fora.
- * Cada cartão junta as duas metades do fluxo — o QR abre o app já na casa
- * certa, o código escrito grande credita as fichas.
+ * Cada cartão tem QR PRÓPRIO, com o código embutido (`?c=CODIGO`): quem
+ * aponta a câmera cai na casa certa já com as fichas creditadas, sem digitar
+ * nada. O código impresso embaixo é a saída manual — leitor de QR falhando em
+ * mesa mal iluminada não pode travar o cliente.
  *
  * Vai num portal em `document.body` porque a impressão esconde `#root`
  * inteiro (regra em index.css): assim o cartão não herda nada do app —
@@ -67,9 +69,9 @@ export default function CartoesDeMesa({
             <div className="text-[10px] font-bold uppercase tracking-wider text-black/60">
               Jogue enquanto espera
             </div>
-            <QrCode value={link} size={104} />
+            <QrCode value={`${link}?c=${c.code}`} size={104} />
             <div className="text-[10px] leading-tight text-black/60">
-              Aponte a câmera e digite o código
+              Aponte a câmera — as fichas caem sozinhas
             </div>
             <div className="font-display text-lg font-bold tracking-[0.12em] text-black">
               {c.code}

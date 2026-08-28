@@ -37,14 +37,17 @@ function KeyedGamePlay() {
 const DESTINO = "betfood-destino";
 
 export default function App() {
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   const onboarded = localStorage.getItem("betfood-onboarded") === "1";
   if (!onboarded && pathname !== "/welcome") {
     // Cliente que chega por link direto da casa (QR na mesa, story, WhatsApp)
     // ia pro onboarding e depois era despejado na Home — perdia o restaurante
     // que o trouxe. Guardamos o destino pra devolver no fim (ciclo 29).
     try {
-      if (pathname !== "/") sessionStorage.setItem(DESTINO, pathname);
+      // Com a query junto: o cartão da mesa chega como `?c=CODIGO` e é
+      // justamente o que credita as fichas. Guardar só o pathname jogava o
+      // código fora e a pessoa caía na casa certa sem ficha nenhuma.
+      if (pathname !== "/") sessionStorage.setItem(DESTINO, pathname + search);
     } catch {
       /* modo privado: segue sem guardar, cai na Home */
     }

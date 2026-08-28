@@ -1,6 +1,6 @@
 # STATUS — BetFood POC
 
-Atualizado: 2026-08-27 (ciclo 54 do loop de melhoria contínua)
+Atualizado: 2026-08-27 (ciclo 55 do loop de melhoria contínua)
 
 ## Onde está
 
@@ -52,6 +52,35 @@ acessibilidade (axe-core, zero violações nas telas principais).
 ---
 
 # Histórico dos ciclos
+
+## Ciclo 55 — o cartão da mesa dispensa o teclado
+
+O ciclo 54 imprimiu o cartão, mas o cliente ainda tinha que digitar seis
+caracteres sentado à mesa — o maior atrito do fluxo inteiro, e logo no primeiro
+contato com o app.
+
+Feito:
+
+- **QR próprio por cartão** (`src/components/CartoesDeMesa.tsx`): agora cada um
+  codifica `<link da casa>?c=CODIGO`, não só o link da casa.
+- **Crédito automático** (`src/pages/RestaurantPage.tsx`): chegando com `?c=`,
+  o código é resgatado na hora, com som e aviso na tela. Em seguida o parâmetro
+  sai da URL (`setParams({}, {replace:true})`) — recarregar não tenta de novo
+  nem deixa o aviso preso. `useRef` protege do efeito rodar duas vezes no
+  StrictMode.
+- **O código impresso continua embaixo do QR**: leitor falhando em mesa mal
+  iluminada não pode travar o cliente. O campo manual segue funcionando.
+- **`src/App.tsx` guardava só o `pathname`** ao desviar pro onboarding — a
+  query ia pro lixo, então quem nunca abriu o app escaneava o cartão, via o
+  onboarding, caía na casa certa e **sem ficha nenhuma**. Agora guarda
+  `pathname + search`.
+
+Conferido no preview pelo caminho mais difícil (aparelho virgem → QR →
+onboarding → casa): destino guardado como `/r/camaroes-potiguar?c=MEGEGV`,
+pousou na casa, fichas de 50 → 80, aviso "+30 fichas na sua conta!" na tela,
+URL limpa, e recarregar manteve 80.
+
+Falta o mesmo de sempre: **apontar uma câmera de verdade** no papel impresso.
 
 ## Ciclo 54 — o cartão da mesa deixou de ser instrução e virou papel
 

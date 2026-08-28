@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { GAMES, prefetchGame } from "../games";
 import GameThumb from "../components/GameThumb";
 import {
@@ -91,7 +91,25 @@ export default function RestaurantPage() {
   const [code, setCode] = useState("");
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [chancesAbertas, setChancesAbertas] = useState(false);
+  const [params, setParams] = useSearchParams();
   const [, forceUpdate] = useState(0);
+
+  // Chegou pelo QR do cartão da mesa (`?c=CODIGO`): credita sozinho. Digitar
+  // seis caracteres sentado à mesa era o maior atrito do fluxo inteiro, e o
+  // cartão já é físico — quem o tem na mão está no salão.
+  const codigoDoQr = params.get("c");
+  const jaCreditou = useRef(false);
+  useEffect(() => {
+    if (!codigoDoQr || jaCreditou.current) return;
+    jaCreditou.current = true;
+    const r = redeemTableCode(codigoDoQr);
+    play(r.ok ? "coupon" : "wrong");
+    setMsg({ ok: r.ok, text: r.message });
+    // Tira o código da URL: recarregar a página não pode tentar de novo nem
+    // deixar o aviso preso na tela para sempre.
+    setParams({}, { replace: true });
+    forceUpdate((n) => n + 1);
+  }, [codigoDoQr, setParams]);
 
   if (!restaurant)
     return <div className="p-5 text-sm text-ink/70">Restaurante não encontrado.</div>;
@@ -107,6 +125,7 @@ export default function RestaurantPage() {
     setCode("");
     forceUpdate((n) => n + 1);
   };
+
 
   return (
     <div>

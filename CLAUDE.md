@@ -75,6 +75,14 @@ derivadas de `credits × CHIP_COST`) num **portal em `document.body`**; o
 herda barra, HUD nem fundo colorido. Botões do cabeçalho levam `.nao-imprime`.
 Tudo isso mora no chunk lazy do Partner — o jogador não baixa nada disso.
 
+**O QR carrega o código** (`?c=CODIGO`): `RestaurantPage` resgata sozinho ao
+chegar e **limpa o parâmetro da URL** — sem isso, recarregar repetiria a
+tentativa e prenderia o aviso na tela. O código também vai impresso embaixo do
+QR e o campo manual continua vivo: leitor de QR falha em mesa mal iluminada.
+Cuidado ligado a isso: qualquer link de entrada com query precisa que
+`src/App.tsx` guarde `pathname + search` antes de desviar pro onboarding —
+guardar só o pathname faz o novato chegar na casa certa sem ficha.
+
 ## Economia e progressão (store.ts)
 
 - **Fichas** (moeda global): boas-vindas 50, jogada custa `CHIP_COST` 10, bônus diário +30 (`claimDailyBonus`), código da mesa credita `credits × 10` fichas. Recarrega sozinha: `REGEN_AMOUNT` 10 a cada `REGEN_INTERVAL_MS` 10min até `REGEN_CAP` 50.
