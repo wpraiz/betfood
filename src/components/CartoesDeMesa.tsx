@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import QrCode from "./QrCode";
 import { CHIP_COST } from "../lib/store";
@@ -28,11 +29,26 @@ export default function CartoesDeMesa({
   link: string;
   onFechar: () => void;
 }) {
+  const fechar = useRef<HTMLButtonElement>(null);
+
+  // A folha cobre o app inteiro: é modal de fato, então Escape fecha e o foco
+  // entra nela. Sem isso, quem usa teclado continuava tabulando pelo painel
+  // atrás da folha, invisível.
+  useEffect(() => {
+    fechar.current?.focus();
+    const aoTeclar = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onFechar();
+    };
+    window.addEventListener("keydown", aoTeclar);
+    return () => window.removeEventListener("keydown", aoTeclar);
+  }, [onFechar]);
+
   return createPortal(
     <div
       id="impressao"
       className="fixed inset-0 z-[60] overflow-auto bg-white p-4 pt-[env(safe-area-inset-top)]"
       role="dialog"
+      aria-modal="true"
       aria-label="Cartões de mesa para imprimir"
     >
       <div className="nao-imprime mb-4 flex items-center justify-between gap-3">
@@ -45,6 +61,7 @@ export default function CartoesDeMesa({
         <div className="flex shrink-0 gap-2">
           <button
             type="button"
+            ref={fechar}
             onClick={onFechar}
             className="press min-h-11 rounded-full border border-ink/15 px-4 text-xs font-bold text-ink/70"
           >

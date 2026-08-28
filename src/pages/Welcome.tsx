@@ -128,13 +128,17 @@ export default function Welcome() {
   const last = idx === 2;
 
   return (
-    <div className="relative mx-auto flex h-dvh w-full max-w-md flex-col overflow-hidden bg-paper">
+    <main className="relative mx-auto flex h-dvh w-full max-w-md flex-col overflow-hidden bg-paper">
+      {/* O único h1 da tela morava no splash, que sai em 2,1s — depois disso a
+          página ficava sem título de nível 1 e sem landmark. Este fica sempre,
+          lido só por leitor de tela. */}
+      <h1 className="sr-only">BetFood — jogue enquanto espera e ganhe prêmios</h1>
       {/* Pular — discreto no topo, muda de cor sobre a foto do slide 1 */}
       {splash === "off" && (
         <button
           onClick={finish}
           className={`press anim-fade-up absolute right-4 top-4 z-20 inline-flex min-h-11 min-w-11 items-center justify-center rounded-full px-4 text-[13px] font-semibold transition-colors ${
-            idx === 0 ? "bg-black/40 text-white backdrop-blur-sm" : "bg-ink/5 text-ink/70"
+            idx === 0 ? "bg-black/70 text-white backdrop-blur-sm" : "bg-ink/5 text-ink/70"
           }`}
         >
           Pular
@@ -142,13 +146,19 @@ export default function Welcome() {
       )}
 
       {/* Trilho de slides (scroll-snap horizontal) */}
+      {/* tabIndex no trilho: sem ele o teclado não alcança a área rolável e as
+          setas não andam entre os slides. Os pontinhos e o "Próximo" já eram
+          alcançáveis, mas quem navega por teclado esperava rolar aqui. */}
       <div
         ref={trackRef}
         onScroll={onScroll}
-        className="flex flex-1 snap-x snap-mandatory overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        tabIndex={0}
+        role="group"
+        aria-label="Apresentação do BetFood, 3 passos"
+        className="flex flex-1 snap-x snap-mandatory overflow-x-auto overflow-y-hidden outline-none [scrollbar-width:none] focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-inset [&::-webkit-scrollbar]:hidden"
       >
         {/* Slide 1 — Jogue enquanto espera (foto full-bleed) */}
-        <section className="relative flex w-full shrink-0 snap-center flex-col justify-end overflow-hidden">
+        <section aria-label="Passo 1 de 3" className="relative flex w-full shrink-0 snap-center flex-col justify-end overflow-hidden">
           <div className="absolute inset-0">
             <FoodPhoto src={heroPhoto.photo} alt={heroPhoto.name} className="h-full w-full" priority />
           </div>
@@ -177,7 +187,7 @@ export default function Welcome() {
         </section>
 
         {/* Slide 2 — Ganhe prêmios de verdade (mock de cupom) */}
-        <section className="relative flex w-full shrink-0 snap-center flex-col overflow-hidden bg-paper">
+        <section aria-label="Passo 2 de 3" className="relative flex w-full shrink-0 snap-center flex-col overflow-hidden bg-paper">
           <div className="flex flex-1 items-center justify-center px-8">
             <div className="relative w-full max-w-[300px]">
               {/* cartão de fundo pra dar profundidade */}
@@ -246,7 +256,7 @@ export default function Welcome() {
         </section>
 
         {/* Slide 3 — Nos melhores restaurantes de Natal (mosaico) */}
-        <section className="relative flex w-full shrink-0 snap-center flex-col overflow-hidden bg-paper">
+        <section aria-label="Passo 3 de 3" className="relative flex w-full shrink-0 snap-center flex-col overflow-hidden bg-paper">
           <div className="flex flex-1 items-center px-6 pt-14">
             <div className="grid w-full grid-cols-2 gap-2.5">
               {restaurants.map((r, i) => (
@@ -394,6 +404,6 @@ export default function Welcome() {
           </p>
         </div>
       )}
-    </div>
+    </main>
   );
 }

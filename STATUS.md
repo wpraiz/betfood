@@ -1,6 +1,6 @@
 # STATUS — BetFood POC
 
-Atualizado: 2026-08-27 (ciclo 56 do loop de melhoria contínua)
+Atualizado: 2026-08-27 (ciclo 57 do loop de melhoria contínua)
 
 ## Onde está
 
@@ -52,6 +52,41 @@ acessibilidade (axe-core, zero violações nas telas principais).
 ---
 
 # Histórico dos ciclos
+
+## Ciclo 57 — a tela menos acessível do app era a primeira que todo mundo vê
+
+Três telas entraram nos ciclos 54-56 sem auditoria. Rodei o axe nelas: **as três
+passaram limpas**. Mas a auditoria caiu de raspão no **onboarding** e achou
+quatro problemas lá — a tela que 100% dos usuários veem, e que já estava assim
+antes destes ciclos.
+
+Corrigido em `src/pages/Welcome.tsx`:
+
+- **"Pular" com contraste 2,98:1** (`bg-black/40` + texto branco sobre a foto do
+  camarão). Reprova por larga margem. Passou pra `bg-black/70` — no pior caso,
+  foto branca atrás, dá ~8,6:1.
+- **Trilho de slides inalcançável pelo teclado**: `overflow-x-auto` sem
+  `tabIndex`. As setas não rolavam nada. Agora tem `tabIndex={0}`,
+  `role="group"`, nome acessível e anel de foco visível.
+- **Sem `<h1>`**: o único era o "BetFood" do splash, que **some em 2,1s**.
+  Agora há um `h1` em `sr-only` que fica.
+- **Sem landmark `<main>`**: o Welcome mora fora do `Layout` (que já tinha o
+  seu), então nunca herdou nenhum. A raiz virou `<main>`.
+- Cada slide ganhou `aria-label` "Passo N de 3".
+
+E um acerto na folha de cartões (`src/components/CartoesDeMesa.tsx`): ela cobre
+o app inteiro, é modal de fato, mas o teclado continuava tabulando pelo painel
+invisível atrás. Agora `aria-modal`, foco entra no "Fechar" e **Escape fecha**.
+
+Resultado: Welcome, trava, painel e folha de cartões — **zero violações**.
+
+### Armadilha que quase virou falso positivo
+
+O primeiro teste do Escape falhou. Não era o código: o **service worker serviu
+um bundle antigo** (`index-wqZcBonG` no lugar de `index-DbWd87YD`), exatamente o
+que o CLAUDE.md avisa. Desregistrar o SW e limpar os caches antes de reauditar
+resolveu. Vale reforçar: em preview de produção, **sempre limpar SW+cache antes
+de auditar**, senão você audita o app de ontem.
 
 ## Ciclo 56 — o painel do parceiro deixou de ficar aberto pro cliente
 

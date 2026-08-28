@@ -194,10 +194,26 @@ Antes de "consertar" um jogo, reproduza o defeito com esse método.
 commit sobe mesmo se o build falhar — já aconteceu (ciclo 13) e produção ficou
 quebrada por minutos, porque o deploy é automático a cada push.
 
-**Auditar acessibilidade**: injete o axe-core na página em produção e rode nas
-rotas principais (exemplo completo no STATUS, ciclo 13). Antes de olhar o
-resultado, force recarga sem cache — o service worker serve a versão antiga e
-você audita o app errado.
+**Auditar acessibilidade**: injete o axe-core na página e rode nas rotas
+principais (exemplo completo no STATUS, ciclo 13). **Antes de auditar,
+desregistre o service worker e limpe os caches** — não basta recarregar: em
+build de produção o SW serve o bundle de ontem e você audita o app errado (deu
+falso negativo no ciclo 57):
+
+```js
+for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister();
+for (const k of await caches.keys()) await caches.delete(k);
+location.reload();
+```
+
+Confira qual bundle está rodando (`[...document.querySelectorAll('script[src]')]`)
+e compare com o `dist/index.html` antes de confiar no resultado.
+
+**Telas fora do `Layout` não herdam nada**: `/welcome` tem que trazer o próprio
+`<main>` e o próprio `<h1>` — o `h1` do splash some em 2,1s e não conta. Área
+com `overflow-x-auto` precisa de `tabIndex={0}` + nome acessível, senão o
+teclado não alcança. Overlay que cobre o app é modal: `aria-modal`, foco pra
+dentro e Escape fechando.
 
 
 - `npm run dev` → http://localhost:5199 · `npm run build` → typecheck + build
