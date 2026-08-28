@@ -111,7 +111,12 @@ painel tem dezenas de hooks; early return lá dentro é hook condicional), e ela
   Tirar essa linha faz o bônus ser pago a cada consulta do toast, de 900 em 900
   ms (aconteceu no ciclo 59). Ao mexer nessa função, **meça o saldo ao longo do
   tempo**, não só o texto do toast.
-- **Streak**: dias seguidos jogando (qualquer casa).
+- **Streak**: dias seguidos jogando (qualquer casa). **Faz o bônus diário
+  crescer**: +30 no 1º dia, +`STREAK_STEP_CHIPS` (10) por dia seguido, teto no
+  `STREAK_MAX_DAYS` (5º) — declarado no sheet "Como funciona". Nunca leia
+  `db.streak` direto: `streakVivo()` zera a sequência se a última jogada não foi
+  hoje nem ontem, senão a tela mostra sequência morta e paga bônus por dias que
+  a pessoa não jogou. O valor exibido sai sempre de `dailyBonusAmount()`.
 - **Cupom** tem `expiresAt` (24h após o ganho). A validação no caixa mora em
   `store.ts`, não na página: `findCouponByCode(restaurantId, code)` (busca
   case-insensitive e ignorando espaços, escopada por casa),

@@ -20,6 +20,9 @@ import {
   REGEN_INTERVAL_MS,
   WELCOME_CHIPS,
   getProgress,
+  dailyBonusAmount,
+  STREAK_STEP_CHIPS,
+  STREAK_MAX_DAYS,
 } from "../lib/store";
 import { play } from "../lib/sound";
 
@@ -217,6 +220,8 @@ export default function HowItWorks({ open, onClose }: { open: boolean; onClose: 
   // Lido na abertura do sheet: o XP muda a cada jogada e o sheet é montado na
   // hora, então não há estado velho pra sincronizar.
   const progresso = getProgress();
+  const bonusHoje = dailyBonusAmount();
+  const bonusTeto = DAILY_BONUS_CHIPS + (STREAK_MAX_DAYS - 1) * STREAK_STEP_CHIPS;
 
   function close() {
     play("tap", { volume: 0.35 });
@@ -292,6 +297,43 @@ export default function HowItWorks({ open, onClose }: { open: boolean; onClose: 
               );
             })}
           </ul>
+
+          {/* Escada do streak: o número com chama no HUD não fazia nada até o
+              ciclo 60. Como toda regra de prêmio aqui, aparece antes. */}
+          <div
+            className="anim-fade-up mt-5 flex items-start gap-3 rounded-card border border-ink/10 bg-paper p-4"
+            style={{ animationDelay: "230ms" }}
+          >
+            <span
+              aria-hidden="true"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-brand-600"
+            >
+              <svg {...lineProps} className="h-5 w-5">
+                <path d="M12 3s5 4.3 5 8.5a5 5 0 0 1-10 0C7 9 9 7 9 7s0 2 1.5 2.5C11 8 12 5.5 12 3Z" />
+              </svg>
+            </span>
+            <div className="min-w-0">
+              <p className="font-display text-[15px] font-bold leading-tight">
+                Voltar todo dia rende mais
+              </p>
+              <p className="mt-1 text-[13px] leading-relaxed text-ink/70">
+                {progresso.streak > 0 ? (
+                  <>
+                    Você está em {progresso.streak}{" "}
+                    {progresso.streak === 1 ? "dia seguido" : "dias seguidos"}: o bônus de hoje é{" "}
+                    <strong className="font-bold text-ink">+{bonusHoje} fichas</strong>.
+                  </>
+                ) : (
+                  <>
+                    O bônus começa em{" "}
+                    <strong className="font-bold text-ink">+{DAILY_BONUS_CHIPS} fichas</strong>.
+                  </>
+                )}{" "}
+                Cada dia seguido jogando soma +{STREAK_STEP_CHIPS}, até +{bonusTeto} no{" "}
+                {STREAK_MAX_DAYS}º dia. Faltou um dia, a sequência recomeça.
+              </p>
+            </div>
+          </div>
 
           {/* O nível pagava só título e confete até o ciclo 59. Agora paga
               ficha — e a regra aparece ANTES de ser conquistada, como toda

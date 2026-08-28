@@ -8,6 +8,7 @@ import {
   availablePlays,
   awardCoupon,
   canClaimDailyBonus,
+  dailyBonusAmount,
   CHIP_COST,
   claimDailyBonus,
   consumePlay,
@@ -301,7 +302,7 @@ export default function GamePlay() {
               onClick={claimBonus}
               className="press min-h-11 rounded-full bg-brand-500 px-6 py-3.5 text-sm font-bold text-white transition-colors active:bg-brand-600"
             >
-              Resgatar bônus de hoje · +{DAILY_BONUS_CHIPS} fichas
+              Resgatar bônus de hoje · +{dailyBonusAmount()} fichas
             </button>
           )}
           <Link

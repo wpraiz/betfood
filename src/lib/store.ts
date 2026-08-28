@@ -264,14 +264,45 @@ export function canClaimDailyBonus(): boolean {
   return db.lastBonusDay !== today;
 }
 
+/** Cada dia seguido acrescenta isto ao bônus diário. */
+export const STREAK_STEP_CHIPS = 10;
+/** A partir daqui o bônus para de crescer (dia 5 = teto). */
+export const STREAK_MAX_DAYS = 5;
+
+/**
+ * Streak que vale AGORA.
+ *
+ * `db.streak` só é escrito quando a pessoa joga, então some sozinho ele mente:
+ * quem jogou cinco dias e sumiu por uma semana continuava vendo "5" no HUD — e
+ * passaria a receber o bônus de cinco dias sem ter voltado. Aqui o calendário
+ * decide: a sequência só está viva se a última jogada foi hoje ou ontem.
+ */
+function streakVivo(db: DB): number {
+  const hoje = new Date().toISOString().slice(0, 10);
+  const ontem = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10);
+  if (db.lastPlayDay !== hoje && db.lastPlayDay !== ontem) return 0;
+  return db.streak ?? 0;
+}
+
+/**
+ * Quanto o bônus de hoje paga. O streak era um número com chama no HUD e mais
+ * nada (ciclo 60) — justamente a mecânica que traz a pessoa de volta amanhã,
+ * que é o que o restaurante compra.
+ */
+export function dailyBonusAmount(): number {
+  const passos = Math.min(Math.max(streakVivo(load()) - 1, 0), STREAK_MAX_DAYS - 1);
+  return DAILY_BONUS_CHIPS + passos * STREAK_STEP_CHIPS;
+}
+
 export function claimDailyBonus(): { ok: boolean; amount: number; chips: number } {
   const db = load();
   const today = new Date().toISOString().slice(0, 10);
   if (db.lastBonusDay === today) return { ok: false, amount: 0, chips: db.chips ?? 0 };
+  const amount = dailyBonusAmount();
   db.lastBonusDay = today;
-  db.chips = (db.chips ?? 0) + DAILY_BONUS_CHIPS;
+  db.chips = (db.chips ?? 0) + amount;
   save(db);
-  return { ok: true, amount: DAILY_BONUS_CHIPS, chips: db.chips };
+  return { ok: true, amount, chips: db.chips };
 }
 
 export function availablePlays(_restaurantId?: string): number {
@@ -394,7 +425,7 @@ export function getProgress(): Progress {
   for (let i = 0; i < LEVELS.length; i++) if (xp >= LEVELS[i].min) idx = i;
   return {
     xp,
-    streak: db.streak ?? 0,
+    streak: streakVivo(db),
     level: idx + 1,
     levelName: LEVELS[idx].name,
     levelTitle: LEVELS[idx].title,

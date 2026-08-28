@@ -2,6 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import confetti from "canvas-confetti";
 import {
   canClaimDailyBonus,
+  dailyBonusAmount,
+  DAILY_BONUS_CHIPS,
+  STREAK_STEP_CHIPS,
+  STREAK_MAX_DAYS,
   CHIP_COST,
   claimDailyBonus,
   getChips,
@@ -184,6 +188,15 @@ export default function Hud() {
   // os dois a 390px com mudo + ajuda + bônus na mesma linha).
   const showCountdown = nextChip !== null && chips < CHIP_COST * 2;
 
+  // Valores derivados: o "+30" era digitado no JSX e virou mentira assim que o
+  // bônus passou a crescer com o streak (ciclo 60). Depois de resgatar, o que
+  // interessa é o de amanhã — que já conta o dia de hoje na sequência.
+  const bonusHoje = dailyBonusAmount();
+  const bonusAmanha = Math.min(
+    bonusHoje + (progress.streak > 0 ? STREAK_STEP_CHIPS : 0),
+    DAILY_BONUS_CHIPS + (STREAK_MAX_DAYS - 1) * STREAK_STEP_CHIPS,
+  );
+
   const pct =
     progress.levelCeil === null
       ? 100
@@ -285,11 +298,11 @@ export default function Hud() {
               onClick={claim}
               className="press inline-flex h-11 shrink-0 items-center rounded-full bg-gradient-to-r from-accent2 to-brand-500 px-3 text-[11px] font-black uppercase tracking-wide text-white whitespace-nowrap shadow-lg shadow-accent2/40 motion-safe:animate-pulse"
             >
-              Bônus +30
+              Bônus +{bonusHoje}
             </button>
           ) : (
             <span className="inline-flex h-11 shrink-0 items-center whitespace-nowrap rounded-full bg-surface px-3 text-[10px] font-bold uppercase tracking-wide text-ink/65">
-              Amanhã +30
+              Amanhã +{bonusAmanha}
             </span>
           )}
         </div>

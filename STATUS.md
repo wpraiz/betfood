@@ -1,6 +1,6 @@
 # STATUS — BetFood POC
 
-Atualizado: 2026-08-27 (ciclo 59 do loop de melhoria contínua)
+Atualizado: 2026-08-27 (ciclo 60 do loop de melhoria contínua)
 
 ## Onde está
 
@@ -52,6 +52,34 @@ acessibilidade (axe-core, zero violações nas telas principais).
 ---
 
 # Histórico dos ciclos
+
+## Ciclo 60 — o streak virou motivo pra voltar amanhã
+
+Mesmo defeito do ciclo 59, no outro pilar da progressão: o streak era um número
+com chama no HUD e **não fazia nada**. E é justamente a mecânica que traz a
+pessoa de volta no dia seguinte — que é o que o restaurante está comprando.
+
+Pior: o número **mentia**. `db.streak` só é escrito quando alguém joga, então
+quem jogou cinco dias e sumiu por uma semana continuava vendo "5" no HUD.
+
+Feito:
+
+- **Bônus diário cresce com a sequência**: +30 no primeiro dia, +10 por dia
+  seguido, teto de +70 no 5º (`STREAK_STEP_CHIPS`, `STREAK_MAX_DAYS`).
+- **`streakVivo()`**: o calendário decide. Se a última jogada não foi hoje nem
+  ontem, a sequência é zero — some do HUD e o bônus volta pra base. `getProgress()`
+  passou a devolver esse valor, então a tela nunca mais mostra sequência morta.
+- **Declarado antes**, no "Como funciona": "Você está em 3 dias seguidos: o bônus
+  de hoje é +50 fichas. Cada dia seguido soma +10, até +70 no 5º dia. Faltou um
+  dia, a sequência recomeça."
+- **`Bônus +30` estava escrito à mão no JSX do HUD** — violando a regra de número
+  derivado do próprio repo, e virou mentira no instante em que o bônus passou a
+  crescer. Agora HUD, tela de fim de fichas e o sheet leem do store. Depois de
+  resgatar, a pílula mostra o de amanhã ("AMANHÃ +60"), já contando o dia de hoje.
+
+Conferido no preview: streak 0 → +30, 1 → +30, 3 → +50, 7 → +70 (teto), e
+**5 dias com última jogada em janeiro → chama some e volta pra +30**. Resgate
+com streak 3 pagou exatamente 50 (100 → 150 fichas).
 
 ## Ciclo 59 — subir de nível passou a valer alguma coisa
 
@@ -161,7 +189,7 @@ Resultado: Welcome, trava, painel e folha de cartões — **zero violações**.
 ### Armadilha que quase virou falso positivo
 
 O primeiro teste do Escape falhou rodando um bundle antigo. **Culpei o service
-worker — e estava errado** (corrigido no ciclo 59, com prova): `playwright-cli
+worker — e estava errado** (corrigido no ciclo 60, com prova): `playwright-cli
 goto` para uma URL que só difere no **hash** não recarrega o documento. Eu tinha
 rebuildado e "navegado", mas o navegador seguia com o documento de antes. Provei
 marcando `window.__marca` e vendo o marcador sobreviver ao `goto`.
