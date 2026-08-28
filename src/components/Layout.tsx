@@ -26,6 +26,7 @@ import { Link, Outlet, useLocation } from "react-router-dom";
 import Hud from "./Hud";
 import LevelUpToast from "./LevelUpToast";
 import InstallHint from "./InstallHint";
+import AvisoDeVersao from "./AvisoDeVersao";
 
 export const ImmersiveContext = createContext<{ setImmersive: (v: boolean) => void }>({
   setImmersive: () => {},
@@ -143,6 +144,8 @@ export default function Layout() {
         {/* Fora do bloco imersivo: a subida de nível acontece DURANTE a partida e
           precisa de um dono que não desmonta. */}
       <LevelUpToast />
+      {/* Fora do <main>: vale pro app inteiro e não some durante a partida. */}
+      <AvisoDeVersao />
       {!immersive && <Hud />}
         <main className={`flex-1 ${immersive ? "" : "pb-24"}`}>
           <Outlet />

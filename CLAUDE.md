@@ -195,19 +195,15 @@ commit sobe mesmo se o build falhar — já aconteceu (ciclo 13) e produção fi
 quebrada por minutos, porque o deploy é automático a cada push.
 
 **Auditar acessibilidade**: injete o axe-core na página e rode nas rotas
-principais (exemplo completo no STATUS, ciclo 13). **Antes de auditar,
-desregistre o service worker e limpe os caches** — não basta recarregar: em
-build de produção o SW serve o bundle de ontem e você audita o app errado (deu
-falso negativo no ciclo 57):
+principais (exemplo completo no STATUS, ciclo 13).
 
-```js
-for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister();
-for (const k of await caches.keys()) await caches.delete(k);
-location.reload();
-```
-
-Confira qual bundle está rodando (`[...document.querySelectorAll('script[src]')]`)
-e compare com o `dist/index.html` antes de confiar no resultado.
+**Depois de rebuildar, force `location.reload()`.** `playwright-cli goto` para
+uma URL que só difere no **hash** NÃO recarrega o documento: você continua
+medindo o código de antes e vai "consertar" o que já estava certo (aconteceu no
+ciclo 57, onde culpei o service worker por engano). Antes de confiar em
+qualquer medição, confira o bundle que está rodando —
+`[...document.querySelectorAll('script[src]')].map(s => s.src)` — contra o
+`dist/index.html`.
 
 **Telas fora do `Layout` não herdam nada**: `/welcome` tem que trazer o próprio
 `<main>` e o próprio `<h1>` — o `h1` do splash some em 2,1s e não conta. Área
@@ -230,6 +226,17 @@ dentro e Escape fechando.
   (`curl -s https://betfood.vercel.app | grep -o 'assets/[^"]*\.js'`) com o
   `dist/index.html` local após `npm run build`.
 - GitHub Pages foi um plano B abandonado (branch `gh-pages` apagada). Ignorar.
+
+## Versão velha rodando: o app avisa sozinho
+
+`vite.config.ts` gera um `BUILD_ID` por build, injeta em `__BUILD_ID__` e emite
+`version.json`. `src/components/AvisoDeVersao.tsx` compara os dois na montagem e
+a cada volta pro app (máx. 1x/min) — diferente significa que ESTE documento está
+velho, e aparece uma pílula "Versão nova · toque pra atualizar". **Convite, não
+recarga automática**: ninguém perde jogada no meio.
+
+Não troque isso pelo evento de atualização do service worker: `sw.js` é idêntico
+entre builds (nunca dispara) e, quando dispara, o usuário já está na versão nova.
 
 ## Vocabulário fixo (uma coisa, um nome)
 

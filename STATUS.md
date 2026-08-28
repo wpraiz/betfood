@@ -1,6 +1,6 @@
 # STATUS — BetFood POC
 
-Atualizado: 2026-08-27 (ciclo 57 do loop de melhoria contínua)
+Atualizado: 2026-08-27 (ciclo 58 do loop de melhoria contínua)
 
 ## Onde está
 
@@ -53,6 +53,45 @@ acessibilidade (axe-core, zero violações nas telas principais).
 
 # Histórico dos ciclos
 
+## Ciclo 58 — o app avisa quando está rodando uma versão velha
+
+Começou como conferência do diagnóstico do ciclo 57 e virou correção mais o
+problema de verdade que estava por trás.
+
+**Correção:** o bundle velho no teste do ciclo 57 **não era culpa do service
+worker**. `playwright-cli goto` para uma URL que só muda o hash não recarrega o
+documento — provado marcando `window.__marca` e vendo o marcador sobreviver.
+Consertei o texto do ciclo 57 e a regra no CLAUDE.md, que tinha ganhado um
+ritual de limpar SW que não resolve nada.
+
+**O problema real:** navegação é network-first, então qualquer recarga completa
+já pega o deploy novo. Quem não recarrega é que fica pra trás — o app instalado
+na tela de início do iPhone fica aberto por dias, sem sinal nenhum de que saiu
+versão. Numa demonstração isso é mostrar o app de ontem achando que é o de hoje.
+Foi o custo do ciclo 46 em outra forma.
+
+Feito:
+
+- **`vite.config.ts`** gera um `BUILD_ID` por build, injeta em `__BUILD_ID__`
+  (congelado dentro do bundle) e emite `dist/version.json` com o mesmo id.
+- **`src/components/AvisoDeVersao.tsx`** compara os dois: o id que ESTE
+  documento carregou contra o que o servidor publica agora. Diferente = este
+  documento está velho. Consulta na montagem e a cada volta pro app
+  (`visibilitychange`), no máximo uma vez por minuto, e some sem barulho se
+  estiver offline. Aparece como pílula escura acima da barra de abas —
+  **convite, nunca recarga automática**: ninguém perde uma jogada no meio.
+
+**Por que não usei o evento de atualização do service worker** (foi minha
+primeira tentativa, descartada): `sw.js` é byte a byte idêntico entre builds,
+então o navegador não vê atualização nenhuma e o evento nunca dispara. E quando
+dispara, dispara justamente na carga em que o usuário **já está** na versão nova
+— avisaria errado.
+
+Conferido no preview: na versão corrente o aviso não aparece; rebuildando com o
+app aberto e simulando a volta pro app, ele surge; tocando nele, o bundle troca
+(`DkJmXsU9` → `Cdibfj9T`) e o aviso some. De quebra isso prova que **o SW não
+prende versão nova** — a recarga passou direto por ele.
+
 ## Ciclo 57 — a tela menos acessível do app era a primeira que todo mundo vê
 
 Três telas entraram nos ciclos 54-56 sem auditoria. Rodei o axe nelas: **as três
@@ -82,11 +121,14 @@ Resultado: Welcome, trava, painel e folha de cartões — **zero violações**.
 
 ### Armadilha que quase virou falso positivo
 
-O primeiro teste do Escape falhou. Não era o código: o **service worker serviu
-um bundle antigo** (`index-wqZcBonG` no lugar de `index-DbWd87YD`), exatamente o
-que o CLAUDE.md avisa. Desregistrar o SW e limpar os caches antes de reauditar
-resolveu. Vale reforçar: em preview de produção, **sempre limpar SW+cache antes
-de auditar**, senão você audita o app de ontem.
+O primeiro teste do Escape falhou rodando um bundle antigo. **Culpei o service
+worker — e estava errado** (corrigido no ciclo 58, com prova): `playwright-cli
+goto` para uma URL que só difere no **hash** não recarrega o documento. Eu tinha
+rebuildado e "navegado", mas o navegador seguia com o documento de antes. Provei
+marcando `window.__marca` e vendo o marcador sobreviver ao `goto`.
+
+A regra que vale: **depois de rebuildar, force `location.reload()`** — trocar o
+hash não traz código novo.
 
 ## Ciclo 56 — o painel do parceiro deixou de ficar aberto pro cliente
 
