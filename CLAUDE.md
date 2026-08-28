@@ -103,7 +103,14 @@ painel tem dezenas de hooks; early return lá dentro é hook condicional), e ela
   principal em lugar nenhum — o HUD mostra fichas e uma segunda unidade na mesma
   tela confunde (corrigido no ciclo 20). Se precisar falar de jogadas, use como
   legenda: "dá pra N jogadas · 10 fichas cada".
-- **XP/nível**: +10 por jogada, +25 por vitória; níveis Garfo de Bronze → Prata → Ouro → Chef da Casa → Lenda de Natal (`getProgress()`).
+- **XP/nível**: +10 por jogada, +25 por vitória; níveis Garfo de Bronze → Prata
+  → Ouro → Chef da Casa → Lenda de Natal (`getProgress()`). **Cada nível paga
+  fichas** (campo `bonus` em `LEVELS`: 30/50/80/120), e o valor é declarado no
+  sheet "Como funciona" antes de ser conquistado. O pagamento acontece dentro de
+  `takeLevelUp()`, na MESMA escrita que grava `seenLevel` — a tela nunca paga.
+  Tirar essa linha faz o bônus ser pago a cada consulta do toast, de 900 em 900
+  ms (aconteceu no ciclo 59). Ao mexer nessa função, **meça o saldo ao longo do
+  tempo**, não só o texto do toast.
 - **Streak**: dias seguidos jogando (qualquer casa).
 - **Cupom** tem `expiresAt` (24h após o ganho). A validação no caixa mora em
   `store.ts`, não na página: `findCouponByCode(restaurantId, code)` (busca

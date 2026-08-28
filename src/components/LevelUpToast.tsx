@@ -13,6 +13,7 @@ import { play } from "../lib/sound";
  */
 export default function LevelUpToast() {
   const [titulo, setTitulo] = useState<string | null>(null);
+  const [bonus, setBonus] = useState(0);
 
   useEffect(() => {
     let fecha = 0;
@@ -20,6 +21,7 @@ export default function LevelUpToast() {
       const novo = takeLevelUp();
       if (!novo) return;
       setTitulo(novo.title);
+      setBonus(novo.bonus);
       play("levelup", { volume: 0.6 });
       confetti({
         particleCount: 110,
@@ -61,6 +63,9 @@ export default function LevelUpToast() {
             Subiu de nível
           </div>
           <div className="font-display text-sm font-black text-white">{titulo}</div>
+          {bonus > 0 && (
+            <div className="font-display text-xs font-bold text-accent2">+{bonus} fichas</div>
+          )}
         </div>
       </div>
     </div>

@@ -298,12 +298,16 @@ export const XP_PER_PLAY = 10;
 export const XP_PER_WIN = 25;
 
 // name = curto pro HUD; title = completo pras telas com espaço
+// bonus = fichas pagas ao ALCANÇAR o nível. Subir de nível dava título e
+// confete e mais nada — a mecânica de retenção do app não pagava nada (ciclo
+// 59). Ficha é a moeda certa pra isso: sai do app, não do bolso do
+// restaurante, e recompensa jogar em vez de pressionar a gastar.
 const LEVELS = [
-  { name: "Bronze", title: "Garfo de Bronze", min: 0 },
-  { name: "Prata", title: "Garfo de Prata", min: 100 },
-  { name: "Ouro", title: "Garfo de Ouro", min: 250 },
-  { name: "Chef", title: "Chef da Casa", min: 500 },
-  { name: "Lenda", title: "Lenda de Natal", min: 1000 },
+  { name: "Bronze", title: "Garfo de Bronze", min: 0, bonus: 0 },
+  { name: "Prata", title: "Garfo de Prata", min: 100, bonus: 30 },
+  { name: "Ouro", title: "Garfo de Ouro", min: 250, bonus: 50 },
+  { name: "Chef", title: "Chef da Casa", min: 500, bonus: 80 },
+  { name: "Lenda", title: "Lenda de Natal", min: 1000, bonus: 120 },
 ];
 
 export interface Progress {
@@ -314,6 +318,8 @@ export interface Progress {
   levelTitle: string; // completo
   levelFloor: number; // xp onde o nível atual começa
   levelCeil: number | null; // xp do próximo nível (null no último)
+  nextLevelName: string | null; // nome do próximo nível (null no último)
+  nextLevelBonus: number | null; // fichas que o próximo nível paga
 }
 
 /** Atualiza streak e dá o XP da jogada. Chamado por consumePlay. */
@@ -334,7 +340,12 @@ function touchProgress(db: DB, today: string) {
  * partida (modo imersivo) — justamente quando o XP sobe. Um ref perderia a
  * memória e a subida passaria despercebida (foi o que aconteceu no ciclo 24).
  */
-export function takeLevelUp(): { level: number; name: string; title: string } | null {
+export function takeLevelUp(): {
+  level: number;
+  name: string;
+  title: string;
+  bonus: number;
+} | null {
   const db = load();
   const atual = getProgress();
   const visto = typeof db.seenLevel === "number" ? db.seenLevel : atual.level;
@@ -345,11 +356,23 @@ export function takeLevelUp(): { level: number; name: string; title: string } | 
     }
     return null;
   }
+  const subiu = atual.level > visto;
+  // As fichas do nível são pagas AQUI, na MESMA escrita que marca o nível como
+  // visto. Pagar na tela abriria porta pra pagar duas vezes (o toast pergunta
+  // de novo a cada 900ms) ou pra nenhuma (recarregar no meio da comemoração).
+  // Quem pula mais de um nível de uma vez recebe todos.
+  let bonus = 0;
+  if (subiu) {
+    for (let i = visto; i < atual.level; i++) bonus += LEVELS[i]?.bonus ?? 0;
+    if (bonus > 0) db.chips = (db.chips ?? 0) + bonus;
+  }
+  // Marcar o visto é o que fecha a torneira. Sem esta linha o bônus é pago a
+  // cada consulta do toast — 30 fichas a cada 900ms.
   db.seenLevel = atual.level;
   save(db);
   // Só comemora subida; queda (reset de estado) apenas re-sincroniza.
-  return atual.level > visto
-    ? { level: atual.level, name: atual.levelName, title: atual.levelTitle }
+  return subiu
+    ? { level: atual.level, name: atual.levelName, title: atual.levelTitle, bonus }
     : null;
 }
 
@@ -377,6 +400,8 @@ export function getProgress(): Progress {
     levelTitle: LEVELS[idx].title,
     levelFloor: LEVELS[idx].min,
     levelCeil: idx + 1 < LEVELS.length ? LEVELS[idx + 1].min : null,
+    nextLevelName: idx + 1 < LEVELS.length ? LEVELS[idx + 1].title : null,
+    nextLevelBonus: idx + 1 < LEVELS.length ? LEVELS[idx + 1].bonus : null,
   };
 }
 

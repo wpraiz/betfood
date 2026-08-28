@@ -19,6 +19,7 @@ import {
   REGEN_CAP,
   REGEN_INTERVAL_MS,
   WELCOME_CHIPS,
+  getProgress,
 } from "../lib/store";
 import { play } from "../lib/sound";
 
@@ -213,6 +214,10 @@ export default function HowItWorks({ open, onClose }: { open: boolean; onClose: 
 
   if (!open) return null;
 
+  // Lido na abertura do sheet: o XP muda a cada jogada e o sheet é montado na
+  // hora, então não há estado velho pra sincronizar.
+  const progresso = getProgress();
+
   function close() {
     play("tap", { volume: 0.35 });
     onCloseRef.current();
@@ -287,6 +292,38 @@ export default function HowItWorks({ open, onClose }: { open: boolean; onClose: 
               );
             })}
           </ul>
+
+          {/* O nível pagava só título e confete até o ciclo 59. Agora paga
+              ficha — e a regra aparece ANTES de ser conquistada, como toda
+              condição de prêmio neste app. Números vêm de LEVELS no store. */}
+          {progresso.nextLevelBonus !== null && progresso.levelCeil !== null && (
+            <div
+              className="anim-fade-up mt-5 flex items-start gap-3 rounded-card border border-ink/10 bg-paper p-4"
+              style={{ animationDelay: "260ms" }}
+            >
+              <span
+                aria-hidden="true"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-brand-600"
+              >
+                <svg {...lineProps} className="h-5 w-5">
+                  <path d="m12 3 2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.2l5.9-.9z" />
+                </svg>
+              </span>
+              <div className="min-w-0">
+                <p className="font-display text-[15px] font-bold leading-tight">
+                  Você é {progresso.levelTitle}
+                </p>
+                <p className="mt-1 text-[13px] leading-relaxed text-ink/70">
+                  Faltam {progresso.levelCeil - progresso.xp} XP pra{" "}
+                  {progresso.nextLevelName} — e{" "}
+                  <strong className="font-bold text-ink">
+                    +{progresso.nextLevelBonus} fichas
+                  </strong>{" "}
+                  caem na sua conta quando chegar lá. Cada jogada vale XP; ganhar vale mais.
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Selo de credibilidade — o ponto mais importante do sheet */}
           <div

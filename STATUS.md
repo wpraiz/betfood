@@ -1,6 +1,6 @@
 # STATUS — BetFood POC
 
-Atualizado: 2026-08-27 (ciclo 58 do loop de melhoria contínua)
+Atualizado: 2026-08-27 (ciclo 59 do loop de melhoria contínua)
 
 ## Onde está
 
@@ -52,6 +52,38 @@ acessibilidade (axe-core, zero violações nas telas principais).
 ---
 
 # Histórico dos ciclos
+
+## Ciclo 59 — subir de nível passou a valer alguma coisa
+
+A progressão é a mecânica de retenção do app: XP a cada jogada, cinco níveis de
+Garfo de Bronze a Lenda de Natal, barra no HUD, confete e toast na subida. E o
+prêmio por chegar lá era **um título**. Nada mais. Dez jogadas pra virar "Garfo
+de Prata" e receber zero.
+
+Feito:
+
+- **`LEVELS` no store ganhou `bonus`**: Prata +30, Ouro +50, Chef +80, Lenda
+  +120 fichas. Ficha é a moeda certa: sai do app, não do bolso do restaurante, e
+  recompensa **jogar** em vez de pressionar a gastar.
+- **Pagamento dentro de `takeLevelUp()`**, na mesma escrita que marca o nível
+  como visto — a tela nunca paga. Quem pula mais de um nível de uma vez recebe
+  todos (testado: 600 XP de uma vez pagou 50+80=130).
+- **Declarado ANTES**, como toda condição de prêmio neste app: o sheet "Como
+  funciona" mostra o nível atual, quanto falta e quantas fichas o próximo paga —
+  tudo derivado de `LEVELS`, nada digitado.
+- Toast mostra "+N fichas" junto do título.
+
+### Bug que eu mesmo criei e peguei no teste
+
+Ao editar `takeLevelUp` apaguei sem querer a linha `db.seenLevel = atual.level`.
+Resultado: o nível nunca era marcado como visto e o bônus era pago **a cada
+consulta do toast — 30 fichas a cada 900ms**. Peguei porque medi as fichas em
+três momentos (200 → 260 → 380) em vez de só olhar o toast, que mostrava "+30"
+corretinho. Depois do conserto: 200 → 230 e para, `seenLevel` = 2.
+
+Fica a lição pro repo: **ao mexer em `takeLevelUp`, teste as fichas ao longo do
+tempo**, não só o texto do toast. É a única função que escreve saldo e marca
+estado na mesma passada.
 
 ## Ciclo 58 — o app avisa quando está rodando uma versão velha
 
@@ -129,7 +161,7 @@ Resultado: Welcome, trava, painel e folha de cartões — **zero violações**.
 ### Armadilha que quase virou falso positivo
 
 O primeiro teste do Escape falhou rodando um bundle antigo. **Culpei o service
-worker — e estava errado** (corrigido no ciclo 58, com prova): `playwright-cli
+worker — e estava errado** (corrigido no ciclo 59, com prova): `playwright-cli
 goto` para uma URL que só difere no **hash** não recarrega o documento. Eu tinha
 rebuildado e "navegado", mas o navegador seguia com o documento de antes. Provei
 marcando `window.__marca` e vendo o marcador sobreviver ao `goto`.
