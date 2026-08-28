@@ -92,6 +92,22 @@ Cuidado ligado a isso: qualquer link de entrada com query precisa que
 `src/App.tsx` guarde `pathname + search` antes de desviar pro onboarding —
 guardar só o pathname faz o novato chegar na casa certa sem ficha.
 
+## Cupom atravessa aparelhos pelo QR (sem servidor)
+
+O estado é local: o cupom nasce no celular do cliente e o caixa valida no
+aparelho da casa, que nunca o viu. `src/lib/cupomToken.ts` empacota o cupom num
+token; a carteira mostra o QR (link **absoluto** pra `#/parceiro?v=<token>`), a
+câmera nativa do caixa abre o painel, e `redeemExternalCoupon()` registra a baixa
+**no aparelho da casa** — que é onde o livro-caixa dela deve ficar. O painel
+limpa o `?v=` da URL na hora.
+
+**Não é assinatura**: o dígito verificador pega corrupção, não fraude. Está dito
+no código; não venda isso como segurança.
+
+**Qualquer uso de QR passa por `src/components/QrCodeLazy.tsx`.** Importar
+`QrCode` direto joga o encoder (~23 KB) no bundle inicial — aconteceu neste
+mesmo ciclo e custou 22 KB a todo mundo.
+
 ## O painel do parceiro é trancado (PIN)
 
 A aba "Parceiro" gera código de mesa e dá baixa em cupom — nas mãos do cliente

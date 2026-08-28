@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import QrCode from "./QrCode";
+import QrCode from "./QrCodeLazy";
 import { CHIP_COST } from "../lib/store";
 import type { TableCode } from "../lib/types";
 

@@ -1,10 +1,18 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getCoupons, getPlayerStats, getRestaurant, redeemCoupon } from "../lib/store";
+import {
+  couponExpiresAt,
+  getCoupons,
+  getPlayerStats,
+  getRestaurant,
+  redeemCoupon,
+} from "../lib/store";
+import { empacotarCupom } from "../lib/cupomToken";
 import type { Coupon } from "../lib/types";
 import { play } from "../lib/sound";
 import FoodPhoto, { thumb } from "../components/FoodPhoto";
 import HowItWorks from "../components/HowItWorks";
+import QrCode from "../components/QrCodeLazy";
 
 function ClockIcon({ className }: { className?: string }) {
   return (
@@ -63,11 +71,16 @@ function expiryInfo(expiresAt: string | undefined, now: number) {
   return { expired: false, label: `Vale até ${hora} de ${quando}` };
 }
 
+/** URL do app sem a rota — o QR precisa de link absoluto pra abrir em OUTRO aparelho. */
+function linkBase(): string {
+  return `${window.location.origin}${window.location.pathname}`;
+}
+
 export default function Wallet() {
   const [, forceUpdate] = useState(0);
   const [helpOpen, setHelpOpen] = useState(false);
   const [historicoAberto, setHistoricoAberto] = useState(false);
-  const [ampliado, setAmpliado] = useState<{ code: string; casa: string; premio: string } | null>(
+  const [ampliado, setAmpliado] = useState<{ code: string; casa: string; premio: string; token: string } | null>(
     null
   );
   // Cupom vence em 24h: sem este tick a tela mostraria "Vale até" pra sempre em
@@ -241,7 +254,12 @@ export default function Wallet() {
                     disabled={used || expired}
                     onClick={() => {
                       play("tap");
-                      setAmpliado({ code: c.code, casa: r?.name ?? "", premio: c.prizeLabel });
+                      setAmpliado({
+                        code: c.code,
+                        casa: r?.name ?? "",
+                        premio: c.prizeLabel,
+                        token: empacotarCupom(c, new Date(couponExpiresAt(c)).getTime()),
+                      });
                     }}
                     className="press min-w-0 text-left disabled:cursor-default"
                   >
@@ -399,10 +417,22 @@ export default function Wallet() {
             </p>
             <p className="mt-2 font-display text-lg font-bold text-white/90">{ampliado.premio}</p>
           </div>
-          <p className="font-display text-[15vw] font-black leading-none tracking-[0.08em] text-white">
+          <p className="font-display text-[12vw] font-black leading-none tracking-[0.08em] text-white">
             {ampliado.code}
           </p>
-          <p className="text-xs text-white/60">Toque pra fechar</p>
+
+          {/* O cupom nasce no celular do cliente e o caixa valida no aparelho da
+              CASA, que nunca viu esse código (nesta POC o estado é local). O QR
+              faz o cupom viajar: a câmera nativa do caixa abre o painel já com
+              ele. Digitar o código continua funcionando quando é o mesmo
+              aparelho. Ver src/lib/cupomToken.ts. */}
+          <div className="rounded-2xl bg-white p-2.5">
+            <QrCode value={`${linkBase()}#/parceiro?v=${ampliado.token}`} size={168} />
+          </div>
+          <p className="max-w-[26ch] text-xs leading-relaxed text-white/60">
+            O caixa pode apontar a câmera no código — ou digitar {ampliado.code}.
+            Toque pra fechar.
+          </p>
         </div>
       )}
 

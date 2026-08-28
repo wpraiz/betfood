@@ -661,3 +661,48 @@ export function lockPartner(): void {
     /* nada a fazer */
   }
 }
+
+/**
+ * Dá baixa num cupom que chegou de FORA (QR do celular do cliente).
+ *
+ * O aparelho da casa nunca viu esse cupom, então não há o que procurar: se
+ * ainda não existe aqui, ele é registrado já resgatado — o livro-caixa da casa
+ * passa a ter o que ela honrou. Se já existe, cai na regra normal e o mesmo
+ * cupom não passa duas vezes, que é o ponto todo de registrar.
+ */
+export function redeemExternalCoupon(
+  restaurantId: string,
+  dados: { code: string; prizeLabel: string; expiresAt: string }
+): RedeemByCodeResult {
+  const norm = normalizeCode(dados.code);
+  if (!norm) return { ok: false, reason: "nao-encontrado" };
+
+  const db = load();
+  const existente = db.coupons.find(
+    (c) => c.restaurantId === restaurantId && normalizeCode(c.code) === norm
+  );
+  if (existente) {
+    if (existente.redeemedAt) return { ok: false, reason: "ja-usado", coupon: existente };
+    if (isCouponExpired(existente)) return { ok: false, reason: "expirado", coupon: existente };
+    existente.redeemedAt = new Date().toISOString();
+    save(db);
+    return { ok: true, coupon: existente };
+  }
+
+  const agora = new Date();
+  const novo: Coupon = {
+    id: `qr-${restaurantId}-${norm}`,
+    restaurantId,
+    gameId: "qr",
+    prizeLabel: dados.prizeLabel,
+    code: dados.code,
+    wonAt: new Date(new Date(dados.expiresAt).getTime() - 86_400_000).toISOString(),
+    expiresAt: dados.expiresAt,
+    redeemedAt: null,
+  };
+  if (isCouponExpired(novo)) return { ok: false, reason: "expirado", coupon: novo };
+  novo.redeemedAt = agora.toISOString();
+  db.coupons.push(novo);
+  save(db);
+  return { ok: true, coupon: novo };
+}

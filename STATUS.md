@@ -1,6 +1,6 @@
 # STATUS — BetFood POC
 
-Atualizado: 2026-08-27 (ciclo 63 do loop de melhoria contínua)
+Atualizado: 2026-08-27 (ciclo 64 do loop de melhoria contínua)
 
 ## Onde está
 
@@ -52,6 +52,49 @@ acessibilidade (axe-core, zero violações nas telas principais).
 ---
 
 # Histórico dos ciclos
+
+## Ciclo 64 — o cupom passou a atravessar de um celular pro outro
+
+Buraco que quebraria a demonstração com o Allan: **nesta POC o estado mora no
+localStorage de cada aparelho**. O cupom nasce no celular do CLIENTE; o caixa
+valida no aparelho da CASA, que nunca viu aquele cupom e responderia "código não
+encontrado". Com um telefone só funcionava; com dois, não fechava.
+
+Resolvido sem servidor — o cupom viaja dentro do próprio QR:
+
+- **`src/lib/cupomToken.ts`**: empacota código + casa + prêmio + vencimento num
+  texto base64url com dígito verificador.
+- **Carteira**: o cupom em tela cheia agora mostra o QR junto do código gigante.
+  O link é absoluto (`origin + pathname + #/parceiro?v=<token>`) — sem isso não
+  abre em outro aparelho.
+- **Painel do parceiro**: lê o `?v=`, dá a baixa, limpa o parâmetro da URL na
+  hora (recarregar não pode tentar de novo nem deixar cupom de terceiro no
+  endereço) e troca a casa selecionada pra do cupom.
+- **`redeemExternalCoupon()` no store**: se o cupom ainda não existe neste
+  aparelho, entra já resgatado — o livro-caixa da casa passa a ter o que ela
+  honrou. Se já existe, cai na regra normal e **não passa duas vezes**.
+- **Câmera nativa, nenhuma câmera dentro do app**: o caixa aponta o celular, o
+  sistema abre o link. Digitar as 6 letras continua valendo.
+- QR ilegível tem mensagem própria: dizer "nenhum cupom com esse código nesta
+  casa" mandaria o caixa conferir letras que ele não digitou.
+
+**Limite honesto, documentado no código**: isto não é assinatura. O dígito
+verificador pega QR corrompido e digitação errada, **não fraude** — quem
+entender o formato forja um cupom. Serve pra POC; validade real vem com servidor.
+
+Testado com dois "aparelhos" (localStorage zerado no meio): o segundo aparelho
+não conhecia `EQE8AM`, recebeu pelo QR, registrou e deu baixa ("CUPOM VÁLIDO ·
+RESGATADO AGORA"); na segunda leitura respondeu "Esse cupom já foi usado em
+28/08 às 03:11". Token corrompido: "Não deu pra ler esse QR". axe: zero
+violações no painel e no cupom em tela cheia.
+
+### Regressão de performance pega no mesmo ciclo
+
+Importar o `QrCode` na carteira jogou o encoder (~23 KB) no **bundle inicial**:
+285 → 307 KB, desfazendo parte do ciclo 63. Criei
+`src/components/QrCodeLazy.tsx`, que os três pontos de uso compartilham — o
+encoder virou chunk próprio (21,7 KB) baixado só quando um QR precisa existir.
+Bundle de volta a 285,9 KB.
 
 ## Ciclo 63 — a primeira carga caiu de 583 KB para 202 KB
 
@@ -300,7 +343,7 @@ Resultado: Welcome, trava, painel e folha de cartões — **zero violações**.
 ### Armadilha que quase virou falso positivo
 
 O primeiro teste do Escape falhou rodando um bundle antigo. **Culpei o service
-worker — e estava errado** (corrigido no ciclo 63, com prova): `playwright-cli
+worker — e estava errado** (corrigido no ciclo 64, com prova): `playwright-cli
 goto` para uma URL que só difere no **hash** não recarrega o documento. Eu tinha
 rebuildado e "navegado", mas o navegador seguia com o documento de antes. Provei
 marcando `window.__marca` e vendo o marcador sobreviver ao `goto`.

@@ -1,4 +1,5 @@
-import { useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useSearchParams } from "react-router-dom";
 import confetti from "canvas-confetti";
 import {
   clearDemoData,
@@ -19,13 +20,15 @@ import {
   resetPrizeLabels,
   setPrizeLabel,
   redeemCouponByCode,
+  redeemExternalCoupon,
   type RedeemByCodeResult,
 } from "../lib/store";
 import { play } from "../lib/sound";
 import FoodPhoto, { thumb } from "../components/FoodPhoto";
-import QrCode from "../components/QrCode";
+import QrCode from "../components/QrCodeLazy";
 import CartoesDeMesa from "../components/CartoesDeMesa";
 import TravaParceiro from "../components/TravaParceiro";
+import { desempacotarCupom } from "../lib/cupomToken";
 
 const CONFETTI_COLORS = ["#e31b28", "#f5a623", "#ffffff"];
 const CODIGOS_VISIVEIS = 5; // resto entra em "ver todos"
@@ -222,6 +225,7 @@ function PainelParceiro({ aoSair }: { aoSair: () => void }) {
   const [typedCode, setTypedCode] = useState("");
   const [check, setCheck] = useState<{ typed: string; res: RedeemByCodeResult } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [qrIlegivel, setQrIlegivel] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
   // A lista de códigos é material de consulta: mostrar 12 de uma vez empurrava
@@ -229,6 +233,43 @@ function PainelParceiro({ aoSair }: { aoSair: () => void }) {
   const [verTodosCodigos, setVerTodosCodigos] = useState(false);
   // Argumento de venda: começa fechado pra não atrapalhar quem só quer operar.
   const [whyOpen, setWhyOpen] = useState(false);
+
+  // Cupom que chegou pelo QR do celular do cliente (`#/parceiro?v=<token>`).
+  // A câmera nativa do caixa abre este link; a baixa é dada aqui, no aparelho
+  // da casa, que é onde o livro-caixa dela deve ficar.
+  const [params, setParams] = useSearchParams();
+  const token = params.get("v");
+  const lidoRef = useRef(false);
+  useEffect(() => {
+    if (!token || lidoRef.current) return;
+    lidoRef.current = true;
+    const dados = desempacotarCupom(token);
+    // Tira o token da URL na hora: recarregar não pode tentar de novo, e o
+    // endereço não fica carregando um cupom de terceiro.
+    setParams({}, { replace: true });
+    if (!dados) {
+      // Mensagem própria: dizer "nenhum cupom com esse código nesta casa"
+      // mandaria o caixa conferir letras que ele nem digitou.
+      play("wrong");
+      setQrIlegivel(true);
+      return;
+    }
+    setQrIlegivel(false);
+    setSelected(dados.restaurantId);
+    const res = redeemExternalCoupon(dados.restaurantId, dados);
+    play(res.ok ? "coupon" : "wrong");
+    if (res.ok) {
+      confetti({
+        particleCount: 70,
+        spread: 70,
+        origin: { y: 0.25 },
+        colors: ["#ea1d2c", "#f5a623", "#ffffff"],
+        disableForReducedMotion: true,
+      });
+    }
+    setCheck({ typed: dados.code, res });
+    forceUpdate((n) => n + 1);
+  }, [token, setParams]);
 
   const now = Date.now();
   const codes = getTableCodes(selected);
@@ -389,8 +430,24 @@ function PainelParceiro({ aoSair }: { aoSair: () => void }) {
               hierarquia precisa ser h1 → h2 → h3 pra leitor de tela. */}
           <h2 className="font-display text-base font-bold">Validar cupom</h2>
           <p className="mt-1 text-xs leading-relaxed text-ink/70">
-            Digite o código que o cliente mostrou. Se estiver valendo, a baixa é dada na hora.
+            Aponte a câmera do celular no QR que o cliente mostra na carteira —
+            ou digite o código. Se estiver valendo, a baixa é dada na hora.
           </p>
+
+          {qrIlegivel && (
+            <div
+              role="alert"
+              className="anim-fade-up mt-3 rounded-xl border border-brand-500/40 bg-brand-50 p-3"
+            >
+              <p className="font-display text-sm font-bold text-brand-600">
+                Não deu pra ler esse QR
+              </p>
+              <p className="mt-1 text-xs leading-relaxed text-ink/70">
+                O código veio incompleto. Peça pro cliente abrir o cupom de novo — ou
+                digite as 6 letras aqui embaixo.
+              </p>
+            </div>
+          )}
 
           <form
             className="mt-3 flex gap-2"
