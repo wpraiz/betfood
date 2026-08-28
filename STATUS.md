@@ -1,6 +1,6 @@
 # STATUS — BetFood POC
 
-Atualizado: 2026-08-27 (ciclo 52 do loop de melhoria contínua)
+Atualizado: 2026-08-27 (ciclo 53 do loop de melhoria contínua)
 
 ## Onde está
 
@@ -52,6 +52,25 @@ acessibilidade (axe-core, zero violações nas telas principais).
 ---
 
 # Histórico dos ciclos
+
+## Ciclo 53 — o relógio do cupom passa a aparecer quando importa
+
+O ciclo 52 pôs o lembrete do cupom na Home, mas tratava igual um cupom que
+vence amanhã e um que vence em duas horas. O segundo é o único que exige
+sair de casa agora.
+
+Feito em `src/pages/Home.tsx`:
+
+- **Menos de 3h pra vencer muda o cartão**: título vira contagem regressiva
+  ("Seu prêmio vence em 2h 10min"), borda e fundo passam de âmbar pro vermelho
+  da marca. Acima de 3h o cartão continua exatamente como estava.
+- **A contagem é em horas + minutos** abaixo de 3h e só minutos na última hora
+  — "45min" lê melhor que "0h 45min".
+- **A urgência é real**: o prazo é o `expiresAt` do cupom, avisado no momento
+  em que ele foi ganho (ciclo 51). Nada de contador inventado pra pressionar.
+
+Conferido no preview com cupom injetado a 2h10 do vencimento: cartão vermelho,
+texto correto, casa certa. Texto quase preto sobre rosa claro — contraste ok.
 
 ## Ciclo 52 — o prêmio que espera some da vista
 

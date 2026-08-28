@@ -58,6 +58,9 @@ editorial serifado Broadsheet ("não tem cara de app").
 - **Condição do prêmio se declara ANTES da ficha sair**: se o jogo pode
   terminar sem sortear (quiz precisa de 2 de 3, memória precisa fechar no
   limite), diga isso na tela inicial do jogo — nunca só no resultado (ciclo 42).
+- **Urgência só quando é real**: contagem regressiva, cor de alerta e "vence em"
+  só aparecem apoiados num prazo verdadeiro já declarado ao jogador. Nunca
+  inventar pressa pra forçar visita.
 - **Copy honesta**: não prometer prêmio garantido (40% do peso é "não foi dessa
   vez"); casas fictícias levam selo "Casa exemplo".
 

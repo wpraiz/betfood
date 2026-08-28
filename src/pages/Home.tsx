@@ -110,7 +110,15 @@ export default function Home() {
         : d.toDateString() === amanha
           ? `amanhã às ${hora}`
           : `${d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })} às ${hora}`;
-    return { total: validos.length, casa, prazo: quando };
+    // Menos de 3h pra vencer muda o tom: o prazo vira contagem e o cartão
+    // ganha destaque. A urgência é real e foi avisada quando o cupom nasceu —
+    // não é pressão inventada.
+    const restaMs = d ? d.getTime() - agora : Infinity;
+    const urgente = restaMs < 3 * 3_600_000;
+    const horas = Math.floor(restaMs / 3_600_000);
+    const minutos = Math.max(1, Math.round((restaMs % 3_600_000) / 60_000));
+    const contagem = horas >= 1 ? `${horas}h${minutos > 0 ? ` ${minutos}min` : ""}` : `${minutos}min`;
+    return { total: validos.length, casa, prazo: quando, urgente, contagem };
   })();
 
   return (
@@ -141,9 +149,17 @@ export default function Home() {
           <Link
             to="/cupons"
             onClick={() => play("tap")}
-            className="press flex items-center gap-3 rounded-card border border-accent2/40 bg-accent2/10 p-3.5"
+            className={`press flex items-center gap-3 rounded-card border p-3.5 ${
+              cupomAtivo.urgente
+                ? "border-brand-500/50 bg-brand-50"
+                : "border-accent2/40 bg-accent2/10"
+            }`}
           >
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-[#8a5a00] shadow-sm">
+            <span
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white shadow-sm ${
+                cupomAtivo.urgente ? "text-brand-600" : "text-[#8a5a00]"
+              }`}
+            >
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
@@ -160,12 +176,14 @@ export default function Home() {
             </span>
             <span className="min-w-0 flex-1">
               <span className="block text-[13px] font-bold text-ink">
-                {cupomAtivo.total === 1
-                  ? "Você tem um prêmio pra usar"
-                  : `Você tem ${cupomAtivo.total} prêmios pra usar`}
+                {cupomAtivo.urgente
+                  ? `Seu prêmio vence em ${cupomAtivo.contagem}`
+                  : cupomAtivo.total === 1
+                    ? "Você tem um prêmio pra usar"
+                    : `Você tem ${cupomAtivo.total} prêmios pra usar`}
               </span>
               <span className="mt-0.5 block truncate text-[11px] text-ink/70">
-                {cupomAtivo.casa} · vale até {cupomAtivo.prazo}
+                {cupomAtivo.casa} · {cupomAtivo.urgente ? `até ${cupomAtivo.prazo}` : `vale até ${cupomAtivo.prazo}`}
               </span>
             </span>
             <svg
