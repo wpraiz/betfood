@@ -195,6 +195,10 @@ comandos, e um "placar zerado" que era a contagem animada ainda não ter rodado.
 
 Faça a partida inteira dentro de um `playwright-cli eval "async () => {...}"`:
 clique, `await sleep(...)` do tamanho da animação real e só então leia o DOM.
+**Detectar derrota num teste**: compare `totalWins` antes e depois. Não procure
+a manchete no texto — são três frases sorteadas (`MANCHETES_DERROTA`), e olhar
+só uma produz "dez rodadas sem derrota" num jogo que perde 40% das vezes.
+
 Respostas certas do quiz: em `QUESTION_BANK` a correta é sempre a **primeira**
 do array `options` (as alternativas são embaralhadas na tela, o texto não muda).
 Antes de "consertar" um jogo, reproduza o defeito com esse método.

@@ -1,6 +1,6 @@
 # STATUS — BetFood POC
 
-Atualizado: 2026-08-27 (ciclo 60 do loop de melhoria contínua)
+Atualizado: 2026-08-27 (ciclo 61 do loop de melhoria contínua)
 
 ## Onde está
 
@@ -52,6 +52,41 @@ acessibilidade (axe-core, zero violações nas telas principais).
 ---
 
 # Histórico dos ciclos
+
+## Ciclo 61 — a tela mais frequente do app era a mais vazia
+
+Antes de escolher a melhoria, joguei o loop inteiro ponta a ponta (fazia vários
+ciclos que eu só mexia em infra e economia). **Os quatro jogos estão corretos**:
+abrir não custa, a ficha sai no gesto real, XP +10 por jogada e +25 por vitória,
+cupom criado com casa/código/prazo/endereço, condição declarada antes (memória:
+"feche os 8 pares em até 20 tentativas"). Nada quebrado.
+
+O que apareceu foi outra coisa: a **tela de derrota**. É o desfecho de ~40% das
+rodadas — a tela mais vista do app — e era meia tela em branco com um ícone, uma
+frase e um botão. A rodada rendeu +10 XP, mas o selo sumia com a animação e nada
+mais restava.
+
+Feito em `src/pages/GamePlay.tsx`:
+
+- **Cartão de progresso na derrota**: nível atual, barra, XP total e "faltam
+  N XP pra {próximo} — e +{bônus} fichas". Desde o ciclo 59 o nível paga
+  fichas, então esse XP vale dinheiro do app: o que a rodada rendeu de verdade
+  passa a ficar na tela. Tudo derivado de `getProgress()` — nenhum consolo
+  inventado, nenhuma promessa.
+- **Segunda saída**: "Escolher outro jogo". Repetir o mesmo jogo era a única
+  ação oferecida depois de perder.
+- Some sozinho no último nível (não existe "próximo" pra Lenda de Natal).
+
+Conferido no preview com derrota real: "Ficou pra próxima · +10 XP · GARFO DE
+BRONZE 85 XP · Faltam 15 XP pra Garfo de Prata — e +30 fichas". axe: zero
+violações.
+
+### Nota de método
+
+Minha primeira busca por uma derrota deu "10 rodadas sem derrota", o que seria
+0,6% de chance. Não era bug do sorteio: as manchetes de derrota são **três**
+(`MANCHETES_DERROTA`) e eu procurava só uma no texto. O jeito certo de detectar
+derrota num teste é comparar `totalWins` antes e depois, não ler a manchete.
 
 ## Ciclo 60 — o streak virou motivo pra voltar amanhã
 
@@ -189,7 +224,7 @@ Resultado: Welcome, trava, painel e folha de cartões — **zero violações**.
 ### Armadilha que quase virou falso positivo
 
 O primeiro teste do Escape falhou rodando um bundle antigo. **Culpei o service
-worker — e estava errado** (corrigido no ciclo 60, com prova): `playwright-cli
+worker — e estava errado** (corrigido no ciclo 61, com prova): `playwright-cli
 goto` para uma URL que só difere no **hash** não recarrega o documento. Eu tinha
 rebuildado e "navegado", mas o navegador seguia com o documento de antes. Provei
 marcando `window.__marca` e vendo o marcador sobreviver ao `goto`.

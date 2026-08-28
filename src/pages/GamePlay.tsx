@@ -9,6 +9,7 @@ import {
   awardCoupon,
   canClaimDailyBonus,
   dailyBonusAmount,
+  getProgress,
   CHIP_COST,
   claimDailyBonus,
   consumePlay,
@@ -423,6 +424,17 @@ export default function GamePlay() {
       );
 
     // Derrota: leve e encorajadora.
+    // Lido AQUI e não na montagem: o XP desta rodada já entrou quando o
+    // resultado chegou, então o número na tela é o depois, não o antes.
+    const progressoPosRodada = getProgress();
+    const pctNivel =
+      progressoPosRodada.levelCeil === null
+        ? 100
+        : Math.round(
+            ((progressoPosRodada.xp - progressoPosRodada.levelFloor) /
+              (progressoPosRodada.levelCeil - progressoPosRodada.levelFloor)) *
+              100
+          );
     return (
       <div className="px-6 pb-12 pt-16 text-center">
         <div className="anim-pop mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-surface text-ink/65">
@@ -454,13 +466,60 @@ export default function GamePlay() {
         >
           {consolo}
         </p>
-        <div className="anim-fade-up mt-8" style={{ animationDelay: "220ms" }}>
+        {/* O XP é a única coisa que a rodada perdida REALMENTE rendeu — e desde
+            que o nível paga fichas (ciclo 59), ele vale dinheiro do app. Mostrar
+            o quanto faltou transforma o desfecho mais comum do jogo (40% das
+            rodadas) em avanço visível, sem inventar consolo que não existe.
+            Nada aqui é promessa: os números saem de getProgress(). */}
+        {progressoPosRodada.levelCeil !== null && (
+          <div
+            className="anim-fade-up mx-auto mt-7 max-w-xs rounded-card border border-ink/10 bg-white p-4 text-left shadow-sm"
+            style={{ animationDelay: "200ms" }}
+          >
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-ink/70">
+                {progressoPosRodada.levelTitle}
+              </span>
+              <span className="font-display text-xs font-bold tabular-nums text-ink/70">
+                {progressoPosRodada.xp} XP
+              </span>
+            </div>
+            <div className="mt-2 h-2 overflow-hidden rounded-full bg-surface">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-brand-500 to-accent2 transition-all duration-700"
+                style={{ width: `${Math.max(4, pctNivel)}%` }}
+              />
+            </div>
+            <p className="mt-2 text-xs leading-relaxed text-ink/70">
+              Faltam{" "}
+              <strong className="font-bold text-ink">
+                {progressoPosRodada.levelCeil! - progressoPosRodada.xp} XP
+              </strong>{" "}
+              pra {progressoPosRodada.nextLevelName} — e{" "}
+              <strong className="font-bold text-ink">
+                +{progressoPosRodada.nextLevelBonus} fichas
+              </strong>
+              .
+            </p>
+          </div>
+        )}
+
+        <div className="anim-fade-up mt-7 grid gap-2.5" style={{ animationDelay: "260ms" }}>
           <button
-            className="press rounded-full bg-brand-500 px-8 py-3.5 text-sm font-bold text-white transition-colors active:bg-brand-600"
+            className="press mx-auto min-h-11 rounded-full bg-brand-500 px-8 py-3.5 text-sm font-bold text-white transition-colors active:bg-brand-600"
             onClick={() => navigate(`/r/${restaurant.id}`)}
           >
             Tentar de novo
           </button>
+          {/* Repetir o mesmo jogo era a única saída oferecida. Trocar de jogo é
+              uma escolha legítima depois de perder — e a casa é a mesma. */}
+          <Link
+            to={`/r/${restaurant.id}`}
+            onClick={() => play("tap")}
+            className="press mx-auto flex min-h-11 items-center justify-center text-xs font-semibold text-ink/70 underline underline-offset-4"
+          >
+            Escolher outro jogo
+          </Link>
         </div>
       </div>
     );
