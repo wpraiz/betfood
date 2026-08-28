@@ -131,3 +131,23 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/* Impressão dos cartões de mesa (src/components/CartoesDeMesa.tsx).
+   O cartão é um portal irmão de #root, então basta esconder o app inteiro:
+   nada de barra de navegação, HUD ou fundo colorido gastando tinta. */
+@media print {
+  #root {
+    display: none !important;
+  }
+  #impressao {
+    position: static !important;
+    overflow: visible !important;
+    padding: 0 !important;
+  }
+  .nao-imprime {
+    display: none !important;
+  }
+  @page {
+    margin: 10mm;
+  }
+}

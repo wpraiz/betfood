@@ -1,6 +1,6 @@
 # STATUS — BetFood POC
 
-Atualizado: 2026-08-27 (ciclo 53 do loop de melhoria contínua)
+Atualizado: 2026-08-27 (ciclo 54 do loop de melhoria contínua)
 
 ## Onde está
 
@@ -52,6 +52,36 @@ acessibilidade (axe-core, zero violações nas telas principais).
 ---
 
 # Histórico dos ciclos
+
+## Ciclo 54 — o cartão da mesa deixou de ser instrução e virou papel
+
+O painel do parceiro dizia "imprime como QR na mesa" e não gerava QR nenhum: o
+dono da casa teria que produzir isso por fora. Sem esse papel, o fluxo inteiro
+do código de mesa era teoria.
+
+Feito:
+
+- **`src/components/QrCode.tsx`** — QR em SVG puro (lib `qrcode-generator`,
+  sem dependências, ~12 kB). SVG e não canvas nem API externa: o cartão é pra
+  imprimir, canvas serrilha no papel e `<img>` de terceiro some se a casa
+  estiver sem internet na hora de imprimir. Correção de erro nível M (aguenta
+  ~15% de dano — mesa de restaurante leva respingo).
+- **`src/components/CartoesDeMesa.tsx`** — folha de cartões pra recortar, dois
+  por linha, um por código **ainda não usado**. Cada cartão: "JOGUE ENQUANTO
+  ESPERA", QR da casa, o código em tipo grande, e quantas fichas ele vale
+  (derivado de `credits × CHIP_COST`). Vai num portal em `document.body`.
+- **Impressão** (`src/index.css`): `@media print` esconde `#root` inteiro. Como
+  a folha é irmã do app, não herda barra, HUD nem fundo colorido gastando tinta.
+  O cabeçalho com os botões leva `.nao-imprime`.
+- O QR também aparece no bloco "Link desta casa", ao lado do link.
+
+Custo pro jogador: **zero**. Tudo caiu no chunk do Partner (48,6 kB), que já é
+lazy e só o dono do restaurante carrega.
+
+Conferido no preview: 4 cartões com códigos reais, QR renderizado (7326 chars
+de path), e com `emulateMedia({media:'print'})` o `#root` fica `display:none` e
+a folha `position:static`. **Não testado ainda**: escanear com celular de
+verdade — entra na lista do teste no iPhone.
 
 ## Ciclo 53 — o relógio do cupom passa a aparecer quando importa
 

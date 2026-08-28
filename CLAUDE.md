@@ -64,6 +64,17 @@ editorial serifado Broadsheet ("não tem cara de app").
 - **Copy honesta**: não prometer prêmio garantido (40% do peso é "não foi dessa
   vez"); casas fictícias levam selo "Casa exemplo".
 
+## Cartão de mesa e QR (a ponte física)
+
+`src/components/QrCode.tsx` gera QR em **SVG no aparelho** (`qrcode-generator`,
+nível M) — nunca canvas nem API externa: o alvo é papel, e a casa pode estar sem
+internet na hora de imprimir. `src/components/CartoesDeMesa.tsx` monta a folha
+recortável (um cartão por código **não usado**, com QR + código + fichas
+derivadas de `credits × CHIP_COST`) num **portal em `document.body`**; o
+`@media print` em `src/index.css` esconde `#root` inteiro, então a folha não
+herda barra, HUD nem fundo colorido. Botões do cabeçalho levam `.nao-imprime`.
+Tudo isso mora no chunk lazy do Partner — o jogador não baixa nada disso.
+
 ## Economia e progressão (store.ts)
 
 - **Fichas** (moeda global): boas-vindas 50, jogada custa `CHIP_COST` 10, bônus diário +30 (`claimDailyBonus`), código da mesa credita `credits × 10` fichas. Recarrega sozinha: `REGEN_AMOUNT` 10 a cada `REGEN_INTERVAL_MS` 10min até `REGEN_CAP` 50.

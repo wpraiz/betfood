@@ -19,6 +19,8 @@ import {
 } from "../lib/store";
 import { play } from "../lib/sound";
 import FoodPhoto, { thumb } from "../components/FoodPhoto";
+import QrCode from "../components/QrCode";
+import CartoesDeMesa from "../components/CartoesDeMesa";
 
 const CONFETTI_COLORS = ["#e31b28", "#f5a623", "#ffffff"];
 const CODIGOS_VISIVEIS = 5; // resto entra em "ver todos"
@@ -219,6 +221,9 @@ export default function Partner() {
   const pending = getPendingCoupons(selected);
   const codesVisiveis = verTodosCodigos ? codes : codes.slice(0, CODIGOS_VISIVEIS);
   const codesUsed = codes.filter((c) => c.usedAt).length;
+  // Só código ainda não usado vira cartão: imprimir um código gasto é papel
+  // fora e cliente frustrado na mesa.
+  const naoUsados = codes.filter((c) => !c.usedAt);
   const couponsRedeemed = coupons.filter((c) => c.redeemedAt).length;
   const restaurantName = restaurants.find((r) => r.id === selected)?.name ?? "esta casa";
   const showClearDemo = hasDemoData();
@@ -238,6 +243,7 @@ export default function Partner() {
 
   const linkDaCasa = `${window.location.origin}${window.location.pathname}#/r/${selected}`;
   const [copiado, setCopiado] = useState(false);
+  const [imprimindo, setImprimindo] = useState(false);
   function copiarLink() {
     play("tap");
     navigator.clipboard?.writeText(linkDaCasa).then(
@@ -760,18 +766,32 @@ export default function Partner() {
             Manda pro cliente ou imprime como QR na mesa. Quem abrir cai direto
             em {restaurantName}, mesmo sem nunca ter usado o app.
           </p>
-          <div className="mt-3 flex items-center gap-2">
-            <code className="min-w-0 flex-1 truncate rounded-full bg-paper px-3 py-2.5 text-[12px] text-ink/70">
-              {linkDaCasa}
-            </code>
+          <div className="mt-3 flex items-center gap-3">
+            <div className="shrink-0 rounded-xl border border-ink/10 bg-white p-1.5">
+              <QrCode value={linkDaCasa} size={92} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <code className="block truncate rounded-full bg-paper px-3 py-2.5 text-[12px] text-ink/70">
+                {linkDaCasa}
+              </code>
+              <button
+                type="button"
+                onClick={copiarLink}
+                className="press mt-2 min-h-11 w-full rounded-full bg-ink px-4 text-xs font-bold text-white"
+              >
+                {copiado ? "Copiado" : "Copiar link"}
+              </button>
+            </div>
+          </div>
+          {naoUsados.length > 0 && (
             <button
               type="button"
-              onClick={copiarLink}
-              className="press min-h-11 shrink-0 rounded-full bg-ink px-4 text-xs font-bold text-white"
+              onClick={() => setImprimindo(true)}
+              className="press mt-3 min-h-11 w-full rounded-full border border-ink/15 px-4 text-xs font-bold text-ink/70"
             >
-              {copiado ? "Copiado" : "Copiar"}
+              Imprimir cartões de mesa ({naoUsados.length})
             </button>
-          </div>
+          )}
         </div>
 
         {/* Como funciona na prática — liga os blocos que já estão nesta tela */}
@@ -1058,6 +1078,15 @@ export default function Partner() {
           )}
         </div>
       </div>
+
+      {imprimindo && (
+        <CartoesDeMesa
+          codigos={naoUsados}
+          casa={restaurantName}
+          link={linkDaCasa}
+          onFechar={() => setImprimindo(false)}
+        />
+      )}
     </div>
   );
 }
