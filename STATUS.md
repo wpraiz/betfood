@@ -1,6 +1,6 @@
 # STATUS — BetFood POC
 
-Atualizado: 2026-08-27 (ciclo 51 do loop de melhoria contínua)
+Atualizado: 2026-08-27 (ciclo 52 do loop de melhoria contínua)
 
 ## Onde está
 
@@ -52,6 +52,22 @@ acessibilidade (axe-core, zero violações nas telas principais).
 ---
 
 # Histórico dos ciclos
+
+## Ciclo 52 — o prêmio que espera some da vista
+
+O motivo de a pessoa ir ao restaurante — um cupom válido na mão — ficava
+escondido na aba da carteira. Quem abria o app via a roleta e os jogos, e nada
+lembrava que havia prêmio pra usar antes de vencer.
+
+Agora, logo abaixo do herói e só quando existe cupom válido: **"Você tem um
+prêmio pra usar · Tapiocaria Sol Potiguar · vale até amanhã às 21:06"**, tocável,
+levando à carteira. Mostra a casa e o prazo do cupom **mais próximo do
+vencimento**, que é o que precisa de ação primeiro; com mais de um, o título
+conta quantos.
+
+Verificado nos dois estados: sem cupom o bloco não existe; depois de ganhar,
+aparece com casa e prazo corretos. É a mudança com efeito mais direto no negócio
+até aqui — leva gente ao salão do parceiro.
 
 ## Ciclo 51 — o prazo aparece no instante em que ele começa a correr
 

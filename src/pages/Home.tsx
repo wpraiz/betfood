@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { GAMES, prefetchGame } from "../games";
-import { getRestaurants } from "../lib/store";
+import { getCoupons, getRestaurants } from "../lib/store";
 import { play } from "../lib/sound";
 import type { Restaurant } from "../lib/types";
 import GameThumb, { WHEEL_GRADIENT } from "../components/GameThumb";
@@ -91,6 +91,28 @@ export default function Home() {
 
   const lastCasa = restaurants.find((r) => r.id === localStorage.getItem(LAST_CASA_KEY));
 
+  // Cupom válido mais próximo do vencimento: é o que a pessoa precisa usar antes.
+  const cupomAtivo = (() => {
+    const agora = Date.now();
+    const validos = getCoupons()
+      .filter((c) => !c.redeemedAt && (!c.expiresAt || new Date(c.expiresAt).getTime() > agora))
+      .sort((a, b) => (a.expiresAt ?? "").localeCompare(b.expiresAt ?? ""));
+    const primeiro = validos[0];
+    if (!primeiro) return null;
+    const casa = restaurants.find((r) => r.id === primeiro.restaurantId)?.name ?? "";
+    const d = primeiro.expiresAt ? new Date(primeiro.expiresAt) : null;
+    const hora = d?.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) ?? "";
+    const amanha = new Date(agora + 86_400_000).toDateString();
+    const quando = !d
+      ? ""
+      : d.toDateString() === new Date(agora).toDateString()
+        ? `hoje às ${hora}`
+        : d.toDateString() === amanha
+          ? `amanhã às ${hora}`
+          : `${d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })} às ${hora}`;
+    return { total: validos.length, casa, prazo: quando };
+  })();
+
   return (
     <div>
       {/* HERÓI: roleta viva */}
@@ -109,6 +131,58 @@ export default function Home() {
           Girar agora
         </span>
       </button>
+
+      {/* Cupom esperando: o motivo de ir ao restaurante estava escondido na aba
+          da carteira. Quem tem prêmio válido vê isso na primeira tela, com a
+          casa e o prazo — é a ação de maior valor que existe pro jogador (e pro
+          restaurante) num dado momento. */}
+      {cupomAtivo && (
+        <div className="anim-fade-up px-5 pt-1" style={{ animationDelay: "40ms" }}>
+          <Link
+            to="/cupons"
+            onClick={() => play("tap")}
+            className="press flex items-center gap-3 rounded-card border border-accent2/40 bg-accent2/10 p-3.5"
+          >
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-[#8a5a00] shadow-sm">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+                className="h-[18px] w-[18px]"
+              >
+                <path d="M3 8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v1.5a2.5 2.5 0 0 0 0 5V16a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1.5a2.5 2.5 0 0 0 0-5V8Z" />
+                <path d="M14 6v12" strokeDasharray="2.5 2.5" />
+              </svg>
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[13px] font-bold text-ink">
+                {cupomAtivo.total === 1
+                  ? "Você tem um prêmio pra usar"
+                  : `Você tem ${cupomAtivo.total} prêmios pra usar`}
+              </span>
+              <span className="mt-0.5 block truncate text-[11px] text-ink/70">
+                {cupomAtivo.casa} · vale até {cupomAtivo.prazo}
+              </span>
+            </span>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+              className="h-4 w-4 shrink-0 text-ink/65"
+            >
+              <path d="m9 6 6 6-6 6" />
+            </svg>
+          </Link>
+        </div>
+      )}
 
       {/* JOGOS */}
       <div className="px-5 pt-4">
